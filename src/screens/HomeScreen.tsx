@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,6 +12,10 @@ import { RootStackParamList } from "@/navigation/types";
 import HomeDropdownSelection from "@/common/components/HomeDropdownSelection";
 import { ProductList } from "@/features/catalog/products/components/ProductList";
 import { useHome } from "@/common/hooks/useHome";
+import {
+  getSelectedBranchId,
+  saveSelectedBranchId,
+} from "@/features/territory/branches";
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -19,37 +24,96 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { brands, categories, branches, products, isLoading, error, refresh } =
-    useHome();
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+  const [dropdownResetKey, setDropdownResetKey] = useState(0);
+
+  // Load saved branch id from local storage on mount
+  useEffect(() => {
+    getSelectedBranchId().then((storedId) => {
+      if (storedId) {
+        setSelectedBranchId(storedId);
+      }
+      setIsStorageLoaded(true);
+    });
+  }, []);
+
+  const {
+    brands,
+    categories,
+    branches,
+    products,
+    isLoading: isHomeLoading,
+    error: homeError,
+    refresh: refreshHome,
+  } = useHome(selectedBranchId, { enabled: isStorageLoaded });
+
+  const handleSelectBranch = (branchId: string | null) => {
+    setSelectedBranchId(branchId);
+    saveSelectedBranchId(branchId);
+  };
+
+  const handleSelectCategory = (categoryId: string | null) => {
+    setDropdownResetKey((prev) => prev + 1);
+    navigation.navigate("Menu", {
+      categoryId,
+      brandId: null,
+      branchId: selectedBranchId,
+    });
+  };
+
+  const handleSelectBrand = (brandId: string | null) => {
+    setDropdownResetKey((prev) => prev + 1);
+    navigation.navigate("Menu", {
+      categoryId: null,
+      brandId,
+      branchId: selectedBranchId,
+    });
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Trang chủ</Text>
-      {isLoading ? (
+      {isHomeLoading ? (
         <ActivityIndicator size="large" />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
+      ) : homeError ? (
+        <Text style={styles.errorText}>{homeError}</Text>
       ) : (
         <HomeDropdownSelection
+          key={`home-dropdown-${dropdownResetKey}`}
           categories={categories}
           brands={brands}
           branches={branches}
+          selectedBranchId={selectedBranchId}
+          onSelectCategory={handleSelectCategory}
+          onSelectBrand={handleSelectBrand}
+          onSelectBranch={handleSelectBranch}
         />
       )}
-      {isLoading ? (
+
+      {isHomeLoading ? (
         <ActivityIndicator size="large" />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
       ) : (
-        <ProductList
-          products={products}
-          refreshing={isLoading}
-          onRefresh={refresh}
-        />
+        <>
+          {Boolean(homeError) && (
+            <Text style={styles.errorText}>{homeError}</Text>
+          )}
+          <ProductList
+            products={products}
+            isLoading={isHomeLoading}
+            refreshing={isHomeLoading}
+            onRefresh={refreshHome}
+          />
+        </>
       )}
+
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate("Menu")}
+        onPress={() =>
+          navigation.navigate("Menu", {
+            branchId: selectedBranchId,
+          })
+        }
         activeOpacity={0.8}
       >
         <Text style={styles.buttonText}>Chuyển tới Menu</Text>

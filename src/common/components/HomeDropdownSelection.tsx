@@ -1,7 +1,5 @@
-import { CategoryDropdown } from "@/features/catalog/categories";
-import { BrandDropdown } from "@/features/catalog/brands";
-import { Category } from "@/features/catalog/categories";
-import { Brand } from "@/features/catalog/brands";
+import { CategoryDropdown, Category } from "@/features/catalog/categories";
+import { BrandDropdown, Brand } from "@/features/catalog/brands";
 import { BranchDropdown, Branch } from "@/features/territory/branches";
 import { View, StyleSheet, Text } from "react-native";
 
@@ -51,8 +49,8 @@ export default function HomeDropdownSelection({
         <Text style={styles.dropdownLabel}>Branch</Text>
         <BranchDropdown
           branches={branches}
-          value={selectedBrandId}
-          onSelect={onSelectBrand}
+          value={selectedBranchId}
+          onSelect={onSelectBranch}
         />
       </View>
     </View>
