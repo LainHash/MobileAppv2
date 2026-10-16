@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { useCategories } from "@/features/catalog/categories";
 import { useBrands } from "@/features/catalog/brands";
 import HomeDropdownSelection from "@/common/components/HomeDropdownSelection";
+import { useBranches } from "@/features/territory/branches";
 
 export default function MenuScreen() {
   const {
@@ -9,14 +10,15 @@ export default function MenuScreen() {
     isLoading: isLoadingCategory,
     error: errorCategory,
   } = useCategories();
+  const { brands, isLoading: isLoadingBrand, error: errorBrand } = useBrands();
   const {
-    brands,
-    isLoading: isLoadingBrand,
-    error: errorBrand,
-  } = useBrands();
+    branches,
+    isLoading: isLoadingBranch,
+    error: errorBranch,
+  } = useBranches();
 
-  const isLoading = isLoadingCategory || isLoadingBrand;
-  const error = errorCategory ?? errorBrand;
+  const isLoading = isLoadingCategory || isLoadingBrand || isLoadingBranch;
+  const error = errorCategory ?? errorBrand ?? errorBranch;
 
   if (isLoading) {
     return (
@@ -36,7 +38,11 @@ export default function MenuScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeDropdownSelection categories={categories} brands={brands} />
+      <HomeDropdownSelection
+        categories={categories}
+        brands={brands}
+        branches={branches}
+      />
     </View>
   );
 }

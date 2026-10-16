@@ -69,7 +69,6 @@ export function BranchDropdown({
         const finalId = rawId === ALL_BRANCH_ID ? null : rawId;
 
         setInternalSelectedId(rawId);
-        console.log("Selected Branch ID:", finalId);
 
         onSelect?.(finalId);
         onChange?.(finalId);

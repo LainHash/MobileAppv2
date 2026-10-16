@@ -61,7 +61,6 @@ export function BrandDropdown({
         const finalId = rawId === ALL_BRAND_ID ? null : rawId;
 
         setInternalSelectedId(rawId);
-        console.log("Selected Brand ID:", finalId);
 
         onSelect?.(finalId);
         onChange?.(finalId);
@@ -86,4 +85,3 @@ const styles = StyleSheet.create({
     cursor: "pointer",
   },
 });
-

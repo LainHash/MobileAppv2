@@ -64,7 +64,6 @@ export function CategoryDropdown({
         const finalId = rawId === ALL_CATEGORY_ID ? null : rawId;
 
         setInternalSelectedId(rawId);
-        console.log("Selected Category ID:", finalId);
 
         onSelect?.(finalId);
         onChange?.(finalId);
@@ -89,4 +88,3 @@ const styles = StyleSheet.create({
     cursor: "pointer",
   },
 });
-
