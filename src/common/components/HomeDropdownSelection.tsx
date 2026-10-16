@@ -2,6 +2,7 @@ import { CategoryDropdown } from "@/features/catalog/categories";
 import { BrandDropdown } from "@/features/catalog/brands";
 import { Category } from "@/features/catalog/categories";
 import { Brand } from "@/features/catalog/brands";
+import { View, StyleSheet, Text } from "react-native";
 
 interface Props {
   categories: Category[];
@@ -21,18 +22,40 @@ export default function HomeDropdownSelection({
   onSelectBrand,
 }: Props) {
   return (
-    <>
-      <CategoryDropdown
-        categories={categories}
-        value={selectedCategoryId}
-        onSelect={onSelectCategory}
-      />
-      <BrandDropdown
-        brands={brands}
-        value={selectedBrandId}
-        onSelect={onSelectBrand}
-      />
-    </>
+    <View style={styles.dropdownContainer}>
+      <View style={styles.dropdownItem}>
+        <Text style={styles.dropdownLabel}>Category</Text>
+        <CategoryDropdown
+          categories={categories}
+          value={selectedCategoryId}
+          onSelect={onSelectCategory}
+        />
+      </View>
+
+      <View style={styles.dropdownItem}>
+        <Text style={styles.dropdownLabel}>Brand</Text>
+        <BrandDropdown
+          brands={brands}
+          value={selectedBrandId}
+          onSelect={onSelectBrand}
+        />
+      </View>
+    </View>
   );
 }
 
+const styles = StyleSheet.create({
+  dropdownContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  dropdownItem: {
+    flex: 1,
+    gap: 6,
+  },
+  dropdownLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+});
