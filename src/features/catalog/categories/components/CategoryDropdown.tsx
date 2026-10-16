@@ -1,12 +1,10 @@
-import { ProductCategory } from "../types/Category";
+import { Category } from "../types/Category";
 import { Dropdown } from "react-native-element-dropdown";
 import { useState } from "react";
 import { StyleSheet } from "react-native";
 
 interface Props {
-  categories: ProductCategory[];
-  refreshing?: boolean;
-  onRefresh?: () => void;
+  categories: Category[];
 }
 
 export function CategoryDropdown({ categories }: Props) {

@@ -1,10 +1,10 @@
 // src/features/catalog/product-categories/hooks/useCategories.ts
 import { useState, useEffect, useCallback } from "react";
-import { ProductCategory } from "../types/Category";
+import { Category } from "../types/Category";
 import { fetchCategories } from "../api/categoryApi";
 
 export function useCategories() {
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

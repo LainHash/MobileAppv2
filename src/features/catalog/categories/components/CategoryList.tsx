@@ -1,9 +1,9 @@
 // src/features/catalog/product-categories/components/CategoryList.tsx
 import { FlatList, Text, View, StyleSheet } from "react-native";
-import { ProductCategory } from "../types/Category";
+import { Category } from "../types/Category";
 
 interface Props {
-  categories: ProductCategory[];
+  categories: Category[];
   refreshing?: boolean;
   onRefresh?: () => void;
 }
