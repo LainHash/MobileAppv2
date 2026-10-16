@@ -103,6 +103,13 @@ export default function HomeScreen() {
             isLoading={isHomeLoading}
             refreshing={isHomeLoading}
             onRefresh={refreshHome}
+            onProductPress={(product) =>
+              navigation.navigate("ProductDetail", {
+                productId: product.id,
+                product,
+                branchId: selectedBranchId,
+              })
+            }
           />
         </>
       )}

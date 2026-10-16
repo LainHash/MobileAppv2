@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
 import { useProducts } from "@/features/catalog/products/hooks/useProducts";
 import { ProductList } from "@/features/catalog/products/components/ProductList";
@@ -9,9 +10,15 @@ import { useBrands, BrandDropdown } from "@/features/catalog/brands";
 import { getSelectedBranchId } from "@/features/territory/branches";
 
 type MenuScreenRouteProp = RouteProp<RootStackParamList, "Menu">;
+type MenuScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Menu"
+>;
 
 export default function MenuScreen() {
   const route = useRoute<MenuScreenRouteProp>();
+  const navigation = useNavigation<MenuScreenNavigationProp>();
+
 
   const [prevParams, setPrevParams] = useState(route.params);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
@@ -154,6 +161,13 @@ export default function MenuScreen() {
         isLoading={isProductsLoading}
         refreshing={isProductsLoading}
         onRefresh={refreshProducts}
+        onProductPress={(product) =>
+          navigation.navigate("ProductDetail", {
+            productId: product.id,
+            product,
+            branchId: selectedBranchId,
+          })
+        }
       />
     </View>
   );

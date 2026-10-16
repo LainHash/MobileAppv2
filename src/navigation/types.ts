@@ -1,3 +1,5 @@
+import { Product } from "@/features/catalog/products";
+
 export type RootStackParamList = {
   Home: undefined;
   Menu:
@@ -7,5 +9,11 @@ export type RootStackParamList = {
         branchId?: string | null;
       }
     | undefined;
+  ProductDetail: {
+    productId: string;
+    product?: Product;
+    branchId?: string | null;
+  };
 };
+
 

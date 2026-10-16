@@ -1,4 +1,4 @@
-import { PaginationResult } from "@/common/types/Result";
+import { PaginationResult, Result } from "@/common/types/Result";
 import axios from "axios";
 import { Product } from "../types/Product";
 
@@ -34,4 +34,22 @@ export async function fetchProducts(
   const res = await axios.get<PaginationResult<Product[]>>(url);
   return res.data;
 }
+
+export async function fetchProductById(
+  id: string,
+  branchId?: string | null,
+): Promise<Result<Product>> {
+  const params = new URLSearchParams();
+  if (branchId) {
+    params.append("branchId", branchId);
+  }
+  const query = params.toString();
+  const url = query
+    ? `${BASE_URL}/api/catalog/products/${id}?${query}`
+    : `${BASE_URL}/api/catalog/products/${id}`;
+  const res = await axios.get<Result<Product>>(url);
+  return res.data;
+}
+
+
 
