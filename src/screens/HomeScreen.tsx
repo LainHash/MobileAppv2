@@ -1,7 +1,16 @@
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
+import HomeDropdownSelection from "@/common/components/HomeDropdownSelection";
+import { ProductList } from "@/features/catalog/products/components/ProductList";
+import { useHome } from "@/common/hooks/useHome";
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -10,10 +19,34 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const { brands, categories, branches, products, isLoading, error, refresh } =
+    useHome();
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Trang chủ</Text>
+      {isLoading ? (
+        <ActivityIndicator size="large" />
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : (
+        <HomeDropdownSelection
+          categories={categories}
+          brands={brands}
+          branches={branches}
+        />
+      )}
+      {isLoading ? (
+        <ActivityIndicator size="large" />
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : (
+        <ProductList
+          products={products}
+          refreshing={isLoading}
+          onRefresh={refresh}
+        />
+      )}
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate("Menu")}
@@ -53,5 +86,9 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 14,
   },
 });
