@@ -8,7 +8,6 @@ export function useProducts(filters?: ProductApiProps) {
   const [error, setError] = useState<string | null>(null);
 
   const categoryId = filters?.categoryId;
-  const brandId = filters?.brandId;
   const branchId = filters?.branchId;
 
   const loadData = useCallback(
@@ -17,7 +16,7 @@ export function useProducts(filters?: ProductApiProps) {
         setIsLoading(true);
         setError(null);
         const res = await fetchProducts(
-          customFilters ?? { categoryId, brandId, branchId },
+          customFilters ?? { categoryId, branchId },
         );
         setProducts(res.data);
       } catch (err: any) {
@@ -26,7 +25,7 @@ export function useProducts(filters?: ProductApiProps) {
         setIsLoading(false);
       }
     },
-    [categoryId, brandId, branchId],
+    [categoryId, branchId],
   );
 
   useEffect(() => {

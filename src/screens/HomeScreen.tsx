@@ -39,7 +39,6 @@ export default function HomeScreen() {
   }, []);
 
   const {
-    brands,
     categories,
     branches,
     products,
@@ -62,15 +61,6 @@ export default function HomeScreen() {
     });
   };
 
-  const handleSelectBrand = (brandId: string | null) => {
-    setDropdownResetKey((prev) => prev + 1);
-    navigation.navigate("Menu", {
-      categoryId: null,
-      brandId,
-      branchId: selectedBranchId,
-    });
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Trang chủ</Text>
@@ -82,11 +72,9 @@ export default function HomeScreen() {
         <HomeDropdownSelection
           key={`home-dropdown-${dropdownResetKey}`}
           categories={categories}
-          brands={brands}
           branches={branches}
           selectedBranchId={selectedBranchId}
           onSelectCategory={handleSelectCategory}
-          onSelectBrand={handleSelectBrand}
           onSelectBranch={handleSelectBranch}
         />
       )}
@@ -213,4 +201,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-

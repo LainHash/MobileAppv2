@@ -62,6 +62,15 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
           </Text>
         </View>
 
+        <View style={styles.metaRow}>
+          {Boolean(product.categoryName) && (
+            <Text style={styles.metaText}>{product.categoryName}</Text>
+          )}
+          {Boolean(product.brandName) && (
+            <Text style={styles.metaText}>{product.brandName}</Text>
+          )}
+        </View>
+
         {Boolean(product.description) && (
           <Text style={styles.description} numberOfLines={2}>
             {product.description}
@@ -221,5 +230,17 @@ const styles = StyleSheet.create({
   },
   stockTextOutOfStock: {
     color: "#DC2626",
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: "auto",
+    paddingTop: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 18,
   },
 });

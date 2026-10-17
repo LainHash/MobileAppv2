@@ -6,7 +6,6 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export interface ProductApiProps {
   categoryId?: string | null;
-  brandId?: string | null;
   branchId?: string | null;
 }
 
@@ -14,9 +13,6 @@ function buildQuery(props?: ProductApiProps): string {
   const params = new URLSearchParams();
   if (props?.categoryId) {
     params.append("categoryId", props.categoryId);
-  }
-  if (props?.brandId) {
-    params.append("brandId", props.brandId);
   }
   if (props?.branchId) {
     params.append("branchId", props.branchId);
@@ -50,6 +46,3 @@ export async function fetchProductById(
   const res = await axios.get<Result<Product>>(url);
   return res.data;
 }
-
-
-

@@ -6,7 +6,6 @@ import { RootStackParamList } from "@/navigation/types";
 import { useProducts } from "@/features/catalog/products/hooks/useProducts";
 import { ProductList } from "@/features/catalog/products/components/ProductList";
 import { useCategories, CategoryDropdown } from "@/features/catalog/categories";
-import { useBrands, BrandDropdown } from "@/features/catalog/brands";
 import { getSelectedBranchId } from "@/features/territory/branches";
 
 type MenuScreenRouteProp = RouteProp<RootStackParamList, "Menu">;
@@ -19,14 +18,11 @@ export default function MenuScreen() {
   const route = useRoute<MenuScreenRouteProp>();
   const navigation = useNavigation<MenuScreenNavigationProp>();
 
-
   const [prevParams, setPrevParams] = useState(route.params);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     route.params?.categoryId ?? null,
   );
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(
-    route.params?.brandId ?? null,
-  );
+
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(
     route.params?.branchId ?? null,
   );
@@ -36,9 +32,6 @@ export default function MenuScreen() {
     setPrevParams(route.params);
     if (route.params?.categoryId !== undefined) {
       setSelectedCategoryId(route.params.categoryId);
-    }
-    if (route.params?.brandId !== undefined) {
-      setSelectedBrandId(route.params.brandId);
     }
     if (route.params?.branchId !== undefined) {
       setSelectedBranchId(route.params.branchId);
@@ -61,7 +54,6 @@ export default function MenuScreen() {
   }, [route.params?.branchId]);
 
   const { categories } = useCategories();
-  const { brands } = useBrands();
 
   // Fetch products from api/catalog/products with active filters
   const {
@@ -71,13 +63,11 @@ export default function MenuScreen() {
     refresh: refreshProducts,
   } = useProducts({
     categoryId: selectedCategoryId,
-    brandId: selectedBrandId,
     branchId: selectedBranchId,
   });
 
   const activeCategory = categories.find((c) => c.id === selectedCategoryId);
-  const activeBrand = brands.find((b) => b.id === selectedBrandId);
-  const hasActiveFilter = Boolean(selectedCategoryId || selectedBrandId);
+  const hasActiveFilter = Boolean(selectedCategoryId);
 
   return (
     <View style={styles.container}>
@@ -106,7 +96,7 @@ export default function MenuScreen() {
         </View>
       </View>
 
-      {/* Filter Bar with Category and Brand Dropdowns */}
+      {/* Filter Bar with Category Dropdowns */}
       <View style={styles.filterContainer}>
         <View style={styles.filterItem}>
           <Text style={styles.filterLabel}>Danh mục</Text>
@@ -114,15 +104,6 @@ export default function MenuScreen() {
             categories={categories}
             value={selectedCategoryId}
             onSelect={(id) => setSelectedCategoryId(id)}
-          />
-        </View>
-
-        <View style={styles.filterItem}>
-          <Text style={styles.filterLabel}>Hãng</Text>
-          <BrandDropdown
-            brands={brands}
-            value={selectedBrandId}
-            onSelect={(id) => setSelectedBrandId(id)}
           />
         </View>
       </View>
@@ -142,22 +123,10 @@ export default function MenuScreen() {
               </TouchableOpacity>
             </View>
           )}
-          {Boolean(selectedBrandId && activeBrand) && (
-            <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>{activeBrand?.name}</Text>
-              <TouchableOpacity
-                onPress={() => setSelectedBrandId(null)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text style={styles.filterChipClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          )}
           <TouchableOpacity
             style={styles.clearAllButton}
             onPress={() => {
               setSelectedCategoryId(null);
-              setSelectedBrandId(null);
             }}
           >
             <Text style={styles.clearAllText}>Xóa tất cả</Text>
