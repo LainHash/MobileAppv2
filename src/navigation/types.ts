@@ -14,6 +14,9 @@ export type RootStackParamList = {
     product?: Product;
     branchId?: string | null;
   };
+  Cart:
+    | {
+        branchId?: string | null;
+      }
+    | undefined;
 };
-
-

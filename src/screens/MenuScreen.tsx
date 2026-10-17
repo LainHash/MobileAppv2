@@ -81,7 +81,18 @@ export default function MenuScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Thực đơn</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Thực đơn</Text>
+        <TouchableOpacity
+          style={styles.cartButton}
+          onPress={() =>
+            navigation.navigate("Cart", { branchId: selectedBranchId })
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={styles.cartButtonText}>🛒 Giỏ hàng</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Filter Bar with Category and Brand Dropdowns */}
       <View style={styles.filterContainer}>
@@ -179,10 +190,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 16,
   },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   title: {
     fontSize: 20,
     fontWeight: "600",
-    marginBottom: 12,
+  },
+  cartButton: {
+    backgroundColor: "#10B981",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  cartButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
   },
   filterContainer: {
     flexDirection: "row",

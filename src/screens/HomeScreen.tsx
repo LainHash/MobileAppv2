@@ -114,17 +114,31 @@ export default function HomeScreen() {
         </>
       )}
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() =>
-          navigation.navigate("Menu", {
-            branchId: selectedBranchId,
-          })
-        }
-        activeOpacity={0.8}
-      >
-        <Text style={styles.buttonText}>Chuyển tới Menu</Text>
-      </TouchableOpacity>
+      <View style={styles.actionRow}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            navigation.navigate("Menu", {
+              branchId: selectedBranchId,
+            })
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>Chuyển tới Menu</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.cartButton]}
+          onPress={() =>
+            navigation.navigate("Cart", {
+              branchId: selectedBranchId,
+            })
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>🛒 Giỏ hàng</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -142,10 +156,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 20,
   },
+  actionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 12,
+  },
   button: {
     backgroundColor: "#007AFF",
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     borderRadius: 8,
     elevation: 2,
     shadowColor: "#000",
@@ -153,9 +172,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  cartButton: {
+    backgroundColor: "#10B981",
+  },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   errorText: {

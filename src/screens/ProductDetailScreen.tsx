@@ -8,18 +8,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
 import { useProductDetail } from "@/features/catalog/products/hooks/useProductDetail";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { addCartItem, updateCartItemQuantity } from "@/features/commerce/carts";
 
 type ProductDetailScreenRouteProp = RouteProp<
+  RootStackParamList,
+  "ProductDetail"
+>;
+type ProductDetailScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "ProductDetail"
 >;
 
 export default function ProductDetailScreen() {
   const route = useRoute<ProductDetailScreenRouteProp>();
+  const navigation = useNavigation<ProductDetailScreenNavigationProp>();
   const {
     productId,
     product: initialProduct,
@@ -62,6 +69,21 @@ export default function ProductDetailScreen() {
   const [imageError, setImageError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Cart", { branchId })}
+          style={{ marginRight: 8, padding: 6 }}
+          accessibilityLabel="Giỏ hàng"
+        >
+          <Text style={{ fontSize: 20 }}>🛒</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, branchId]);
 
   // Collect all unique images into a gallery list
   const allImages = useMemo(() => {
@@ -120,11 +142,26 @@ export default function ProductDetailScreen() {
     product?.currency,
   );
 
-  const handleAddToCart = () => {
-    setIsAdded(true);
-    setTimeout(() => {
-      setIsAdded(false);
-    }, 2000);
+  const handleAddToCart = async () => {
+    if (!product || isAddingToCart) return;
+    try {
+      setIsAddingToCart(true);
+      await addCartItem({ productId: product.id }, { branchId });
+      if (quantity > 1) {
+        await updateCartItemQuantity(
+          { productId: product.id, quantity },
+          { branchId },
+        );
+      }
+      setIsAdded(true);
+      setTimeout(() => {
+        setIsAdded(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to add to cart", err);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   if (isLoading && !product) {
@@ -348,21 +385,23 @@ export default function ProductDetailScreen() {
         <TouchableOpacity
           style={[
             styles.actionButton,
-            isOutOfStock && styles.actionButtonDisabled,
+            (isOutOfStock || isAddingToCart) && styles.actionButtonDisabled,
             isAdded && styles.actionButtonSuccess,
           ]}
           onPress={handleAddToCart}
-          disabled={isOutOfStock}
+          disabled={isOutOfStock || isAddingToCart}
           activeOpacity={0.8}
         >
           <Text style={styles.actionButtonText}>
             {isAdded
               ? "✓ Đã thêm vào giỏ"
-              : isOutOfStock
-                ? "Hết hàng"
-                : totalPrice
-                  ? `Thêm vào giỏ • ${totalPrice}`
-                  : "Thêm vào giỏ"}
+              : isAddingToCart
+                ? "Đang thêm..."
+                : isOutOfStock
+                  ? "Hết hàng"
+                  : totalPrice
+                    ? `Thêm vào giỏ • ${totalPrice}`
+                    : "Thêm vào giỏ"}
           </Text>
         </TouchableOpacity>
       </View>
