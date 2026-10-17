@@ -9,6 +9,7 @@ export interface CartItem {
   id: string;
   quantity: number;
   product: Product;
+  productId?: string;
 }
 
 export interface AddCartItemRequest {

@@ -38,6 +38,8 @@ export function CartItemList({
           itemPrice !== undefined && itemPrice !== null
             ? itemPrice * item.quantity
             : undefined;
+        const productId =
+          item.product?.id || item.productId || (item as any).productId || item.id;
 
         return (
           <View style={styles.card}>
@@ -60,7 +62,7 @@ export function CartItemList({
                 </Text>
                 {onRemoveItem && (
                   <TouchableOpacity
-                    onPress={() => onRemoveItem(item.product?.id)}
+                    onPress={() => onRemoveItem(productId)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     style={styles.removeButton}
                   >
@@ -95,9 +97,9 @@ export function CartItemList({
                       style={styles.quantityButton}
                       onPress={() => {
                         if (item.quantity > 1) {
-                          onUpdateQuantity(item.product?.id, item.quantity - 1);
+                          onUpdateQuantity(productId, item.quantity - 1);
                         } else if (onRemoveItem) {
-                          onRemoveItem(item.product?.id);
+                          onRemoveItem(productId);
                         }
                       }}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -108,7 +110,7 @@ export function CartItemList({
                     <TouchableOpacity
                       style={styles.quantityButton}
                       onPress={() =>
-                        onUpdateQuantity(item.product?.id, item.quantity + 1)
+                        onUpdateQuantity(productId, item.quantity + 1)
                       }
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
