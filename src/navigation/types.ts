@@ -24,4 +24,7 @@ export type RootStackParamList = {
         branchId?: string | null;
       }
     | undefined;
+  Login: undefined;
+  Profile: undefined;
 };
+

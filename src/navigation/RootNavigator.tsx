@@ -5,6 +5,8 @@ import MenuScreen from "@/screens/MenuScreen";
 import ProductDetailScreen from "@/screens/ProductDetailScreen";
 import CartScreen from "@/screens/CartScreen";
 import WishlistScreen from "@/screens/WishlistScreen";
+import LoginScreen from "@/screens/LoginScreen";
+import ProfileScreen from "@/screens/ProfileScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -36,6 +38,17 @@ export function RootNavigator() {
         component={WishlistScreen}
         options={{ title: "Yêu thích" }}
       />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ title: "Đăng nhập" }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: "Thông tin cá nhân" }}
+      />
     </Stack.Navigator>
   );
 }
+

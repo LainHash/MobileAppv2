@@ -150,6 +150,14 @@ export default function HomeScreen() {
         >
           <Text style={styles.buttonText}>🛒 Giỏ hàng</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.profileButton]}
+          onPress={() => navigation.navigate("Profile")}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>👤 Cá nhân</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -170,13 +178,15 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: "row",
-    gap: 12,
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
     marginTop: 12,
   },
   button: {
     backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
     elevation: 2,
     shadowColor: "#000",
@@ -190,9 +200,12 @@ const styles = StyleSheet.create({
   cartButton: {
     backgroundColor: "#10B981",
   },
+  profileButton: {
+    backgroundColor: "#6366F1",
+  },
   buttonText: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
   },
   errorText: {
@@ -200,3 +213,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
