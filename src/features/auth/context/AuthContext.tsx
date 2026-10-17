@@ -7,9 +7,15 @@ import React, {
   ReactNode,
 } from "react";
 import { User, LoginRequest } from "../types/auth";
-import { Login as loginApi, getMe as getMeApi } from "../api/authApi";
+import {
+  Login as loginApi,
+  getMe as getMeApi,
+  logout as logoutApi,
+  refreshToken as refreshApi,
+} from "../api/authApi";
 import {
   getAuthToken,
+  getRefreshToken,
   saveAuthTokens,
   clearAuthStorage,
   getCachedUser,
@@ -27,6 +33,7 @@ export interface AuthContextType {
     data: LoginRequest,
   ) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => Promise<void>;
+  refreshTokens: () => Promise<string | null>;
   refreshMe: () => Promise<User | null>;
   clearError: () => void;
 }
@@ -39,6 +46,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const refreshTokens = useCallback(async (): Promise<string | null> => {
+    try {
+      const storedRefreshToken = await getRefreshToken();
+      if (!storedRefreshToken) {
+        return null;
+      }
+      const res = await refreshApi(storedRefreshToken);
+      const newAccessToken = res?.data?.token;
+      const newRefreshToken = res?.data?.refreshToken;
+      if (newAccessToken) {
+        await saveAuthTokens(newAccessToken, newRefreshToken);
+        setToken(newAccessToken);
+        return newAccessToken;
+      }
+      return null;
+    } catch (err) {
+      console.warn("Failed to refresh token", err);
+      return null;
+    }
+  }, []);
 
   // Initialize auth state from AsyncStorage on app launch
   const initializeAuth = useCallback(async () => {
@@ -61,8 +89,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await saveCachedUser(res.data);
           }
         } catch (apiErr: any) {
-          // If token has expired or is unauthorized, clear tokens
+          // If token has expired or is unauthorized, attempt refresh
           if (apiErr?.response?.status === 401) {
+            const newToken = await refreshTokens();
+            if (newToken) {
+              try {
+                const retryRes = await getMeApi(newToken);
+                if (retryRes?.data) {
+                  setUser(retryRes.data);
+                  await saveCachedUser(retryRes.data);
+                  return;
+                }
+              } catch {
+                // fall through to clear
+              }
+            }
             await clearAuthStorage();
             setToken(null);
             setUser(null);
@@ -74,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshTokens]);
 
   useEffect(() => {
     initializeAuth();
@@ -126,14 +167,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      const storedRefreshToken = await getRefreshToken();
+      const currentToken = token || (await getAuthToken());
+      if (storedRefreshToken) {
+        try {
+          await logoutApi(storedRefreshToken, currentToken);
+        } catch (apiErr) {
+          console.warn("Backend logout failed or token already invalid", apiErr);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to logout", err);
+    } finally {
       await clearAuthStorage();
       setToken(null);
       setUser(null);
       setError(null);
-    } catch (err) {
-      console.error("Failed to logout", err);
     }
-  }, []);
+  }, [token]);
 
   const refreshMe = useCallback(async (): Promise<User | null> => {
     const currentToken = token || (await getAuthToken());
@@ -149,11 +200,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     } catch (err: any) {
       if (err?.response?.status === 401) {
-        await logout();
+        const newToken = await refreshTokens();
+        if (newToken) {
+          try {
+            const retryRes = await getMeApi(newToken);
+            if (retryRes?.data) {
+              setUser(retryRes.data);
+              await saveCachedUser(retryRes.data);
+              return retryRes.data;
+            }
+          } catch {
+            await logout();
+          }
+        } else {
+          await logout();
+        }
       }
       return null;
     }
-  }, [token, logout]);
+  }, [token, logout, refreshTokens]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -168,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     login,
     logout,
+    refreshTokens,
     refreshMe,
     clearError,
   };

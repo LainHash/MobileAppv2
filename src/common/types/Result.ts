@@ -1,4 +1,4 @@
-export interface Result<T> {
+export interface Result<T = void> {
   isSucceed: boolean;
   message: string;
   data: T;

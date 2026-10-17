@@ -8,6 +8,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export type LogoutRequest = RefreshTokenRequest;
+
 export interface User {
   id: string;
   email: string;

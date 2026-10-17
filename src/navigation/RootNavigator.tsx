@@ -1,3 +1,5 @@
+import { StyleSheet, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./types";
 import HomeScreen from "@/screens/HomeScreen";
@@ -7,48 +9,68 @@ import CartScreen from "@/screens/CartScreen";
 import WishlistScreen from "@/screens/WishlistScreen";
 import LoginScreen from "@/screens/LoginScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
+import { useAuthContext } from "@/features/auth";
+import RoleNoticeBanner from "@/common/components/RoleNoticeBanner";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const { user, isAuthenticated } = useAuthContext();
+
+  const isNonCustomer =
+    isAuthenticated &&
+    Boolean(user?.roleName) &&
+    user?.roleName?.trim().toLowerCase() !== "customer";
+
   return (
-    <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: "Trang chủ" }}
-      />
-      <Stack.Screen
-        name="Menu"
-        component={MenuScreen}
-        options={{ title: "Thực đơn" }}
-      />
-      <Stack.Screen
-        name="ProductDetail"
-        component={ProductDetailScreen}
-        options={{ title: "Chi tiết sản phẩm" }}
-      />
-      <Stack.Screen
-        name="Cart"
-        component={CartScreen}
-        options={{ title: "Giỏ hàng" }}
-      />
-      <Stack.Screen
-        name="Wishlist"
-        component={WishlistScreen}
-        options={{ title: "Yêu thích" }}
-      />
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{ title: "Đăng nhập" }}
-      />
-      <Stack.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ title: "Thông tin cá nhân" }}
-      />
-    </Stack.Navigator>
+    <View style={styles.container}>
+      <StatusBar style={isNonCustomer ? "light" : "auto"} />
+      {isNonCustomer && <RoleNoticeBanner roleName={user!.roleName} />}
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ title: "Trang chủ" }}
+        />
+        <Stack.Screen
+          name="Menu"
+          component={MenuScreen}
+          options={{ title: "Thực đơn" }}
+        />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen}
+          options={{ title: "Chi tiết sản phẩm" }}
+        />
+        <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{ title: "Giỏ hàng" }}
+        />
+        <Stack.Screen
+          name="Wishlist"
+          component={WishlistScreen}
+          options={{ title: "Yêu thích" }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ title: "Đăng nhập" }}
+        />
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ title: "Thông tin cá nhân" }}
+        />
+      </Stack.Navigator>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
 
