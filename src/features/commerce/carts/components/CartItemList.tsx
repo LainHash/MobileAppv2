@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { Cart, CartItem } from "../types/Cart";
+import { Cart } from "../types/Cart";
+import getProductImageUrl from "@/common/helpers/getProductImageUrl";
 
 interface Props {
   cart?: Cart;
@@ -20,24 +21,6 @@ function formatPrice(price?: number, currency?: string) {
   if (price === undefined || price === null) return null;
   const formatted = price.toLocaleString("vi-VN");
   return currency ? `${formatted} ${currency}` : `${formatted} ₫`;
-}
-
-function getProductImageUrl(item: CartItem): string | null {
-  const rawUrl =
-    item.product?.primaryImage?.image?.url ||
-    item.product?.images?.[0]?.image?.url;
-  if (!rawUrl) return null;
-  if (
-    rawUrl.startsWith("http://") ||
-    rawUrl.startsWith("https://") ||
-    rawUrl.startsWith("data:")
-  ) {
-    return rawUrl;
-  }
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
-  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-  const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
-  return `${cleanBase}${cleanPath}`;
 }
 
 export function CartItemList({

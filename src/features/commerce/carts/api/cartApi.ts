@@ -6,7 +6,7 @@ import {
   RemoveCartItemRequest,
   UpdateCartItemQuantityRequest,
 } from "../types/Cart";
-import { getOrCreateCartSessionId } from "../utils/cartStorage";
+import { getOrCreateSessionId } from "@/common/utils/sessionStorage";
 import { getSelectedBranchId } from "@/features/territory/branches";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -39,7 +39,7 @@ async function buildCartRequestConfig(
 
   // Fallback to stored or newly generated session id if not provided
   if (!sessionId) {
-    sessionId = await getOrCreateCartSessionId();
+    sessionId = await getOrCreateSessionId();
   }
 
   const headers: Record<string, string> = {};
