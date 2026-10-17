@@ -9,6 +9,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { Product } from "../types/Product";
+import { getProductImageUrl, formatCurrency } from "@/common/helpers";
 
 export interface ProductCardProps {
   product: Product;
@@ -19,37 +20,9 @@ export interface ProductCardProps {
 export function ProductCard({ product, onPress, style }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
 
-  const getImageUrl = (): string | null => {
-    const rawUrl =
-      product.primaryImage?.image?.url ||
-      product.images?.find((img) => img.isPrimary)?.image?.url ||
-      product.images?.[0]?.image?.url;
-
-    if (!rawUrl) return null;
-    if (
-      rawUrl.startsWith("http://") ||
-      rawUrl.startsWith("https://") ||
-      rawUrl.startsWith("data:")
-    ) {
-      return rawUrl;
-    }
-
-    const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
-    const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-    const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
-    return `${cleanBase}${cleanPath}`;
-  };
-
-  const imageUrl = getImageUrl();
+  const imageUrl = getProductImageUrl(product);
   const showImage = Boolean(imageUrl && !imageError);
-
-  const formatPrice = (price?: number, currency?: string) => {
-    if (price === undefined || price === null) return null;
-    const formatted = price.toLocaleString("vi-VN");
-    return currency ? `${formatted} ${currency}` : `${formatted} ₫`;
-  };
-
-  const formattedPrice = formatPrice(product.unitPrice, product.currency);
+  const formattedPrice = formatCurrency(product.unitPrice, product.currency);
   const isOutOfStock =
     product.stockStatus?.toLowerCase().includes("out") ||
     product.stockStatus?.toLowerCase().includes("hết");

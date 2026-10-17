@@ -10,14 +10,9 @@ import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/navigation/types";
 import { useCart, CartItemList } from "@/features/commerce/carts";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { formatCurrency } from "@/common/helpers";
 
 type CartScreenRouteProp = RouteProp<RootStackParamList, "Cart">;
-
-function formatPrice(price?: number, currency?: string) {
-  if (price === undefined || price === null) return null;
-  const formatted = price.toLocaleString("vi-VN");
-  return currency ? `${formatted} ${currency}` : `${formatted} ₫`;
-}
 
 export default function CartScreen() {
   const route = useRoute<CartScreenRouteProp>();
@@ -142,7 +137,7 @@ export default function CartScreen() {
         <View style={styles.totalInfo}>
           <Text style={styles.totalLabel}>Tổng cộng ({totalQuantity} món)</Text>
           <Text style={styles.totalPrice}>
-            {formatPrice(totalPrice, currency)}
+            {formatCurrency(totalPrice, currency)}
           </Text>
         </View>
         <TouchableOpacity

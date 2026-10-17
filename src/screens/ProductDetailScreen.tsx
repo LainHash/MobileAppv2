@@ -14,6 +14,7 @@ import { RootStackParamList } from "@/navigation/types";
 import { useProductDetail } from "@/features/catalog/products/hooks/useProductDetail";
 import { getSelectedBranchId } from "@/features/territory/branches";
 import { addCartItem, updateCartItemQuantity } from "@/features/commerce/carts";
+import { getImageUrl, formatCurrency } from "@/common/helpers";
 
 type ProductDetailScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -94,18 +95,10 @@ export default function ProductDetailScreen() {
     const addImage = (rawUrl?: string, alt?: string, id?: string) => {
       if (!rawUrl || seen.has(rawUrl)) return;
       seen.add(rawUrl);
-      let cleanUrl = rawUrl;
-      if (
-        !rawUrl.startsWith("http://") &&
-        !rawUrl.startsWith("https://") &&
-        !rawUrl.startsWith("data:")
-      ) {
-        const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
-        const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-        const cleanPath = rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`;
-        cleanUrl = `${cleanBase}${cleanPath}`;
+      const cleanUrl = getImageUrl(rawUrl);
+      if (cleanUrl) {
+        list.push({ id: id || cleanUrl, url: cleanUrl, altText: alt });
       }
-      list.push({ id: id || cleanUrl, url: cleanUrl, altText: alt });
     };
 
     if (product.primaryImage?.image?.url) {
@@ -126,18 +119,12 @@ export default function ProductDetailScreen() {
 
   const activeImageUrl = allImages[selectedImageIndex]?.url;
 
-  const formatPrice = (price?: number, currency?: string) => {
-    if (price === undefined || price === null) return null;
-    const formatted = price.toLocaleString("vi-VN");
-    return currency ? `${formatted} ${currency}` : `${formatted} ₫`;
-  };
-
   const isOutOfStock =
     product?.stockStatus?.toLowerCase().includes("out") ||
     product?.stockStatus?.toLowerCase().includes("hết");
 
-  const formattedPrice = formatPrice(product?.unitPrice, product?.currency);
-  const totalPrice = formatPrice(
+  const formattedPrice = formatCurrency(product?.unitPrice, product?.currency);
+  const totalPrice = formatCurrency(
     (product?.unitPrice || 0) * quantity,
     product?.currency,
   );

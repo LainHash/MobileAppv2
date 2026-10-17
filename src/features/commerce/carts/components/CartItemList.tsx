@@ -7,7 +7,7 @@ import {
   Image,
 } from "react-native";
 import { Cart } from "../types/Cart";
-import getProductImageUrl from "@/common/helpers/getProductImageUrl";
+import { getProductImageUrl, formatCurrency } from "@/common/helpers";
 
 interface Props {
   cart?: Cart;
@@ -15,12 +15,6 @@ interface Props {
   onRefresh?: () => void;
   onUpdateQuantity?: (productId: string, quantity: number) => void;
   onRemoveItem?: (productId: string) => void;
-}
-
-function formatPrice(price?: number, currency?: string) {
-  if (price === undefined || price === null) return null;
-  const formatted = price.toLocaleString("vi-VN");
-  return currency ? `${formatted} ${currency}` : `${formatted} ₫`;
 }
 
 export function CartItemList({
@@ -85,12 +79,12 @@ export function CartItemList({
                 <View>
                   {totalItemPrice !== undefined ? (
                     <Text style={styles.price}>
-                      {formatPrice(totalItemPrice, item.product?.currency)}
+                      {formatCurrency(totalItemPrice, item.product?.currency)}
                     </Text>
                   ) : null}
                   {itemPrice !== undefined && item.quantity > 1 ? (
                     <Text style={styles.unitPrice}>
-                      {formatPrice(itemPrice, item.product?.currency)} / sp
+                      {formatCurrency(itemPrice, item.product?.currency)} / sp
                     </Text>
                   ) : null}
                 </View>
