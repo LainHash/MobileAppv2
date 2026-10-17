@@ -9,6 +9,7 @@ import CartScreen from "@/screens/CartScreen";
 import WishlistScreen from "@/screens/WishlistScreen";
 import LoginScreen from "@/screens/LoginScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
+import ContactScreen from "@/screens/ContactScreen";
 import { useAuthContext } from "@/features/auth";
 import RoleNoticeBanner from "@/common/components/RoleNoticeBanner";
 
@@ -61,6 +62,11 @@ export function RootNavigator() {
           name="Profile"
           component={ProfileScreen}
           options={{ title: "Thông tin cá nhân" }}
+        />
+        <Stack.Screen
+          name="Contact"
+          component={ContactScreen}
+          options={{ title: "Liên hệ & Góp ý" }}
         />
       </Stack.Navigator>
     </View>

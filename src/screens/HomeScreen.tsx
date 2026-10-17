@@ -146,6 +146,14 @@ export default function HomeScreen() {
         >
           <Text style={styles.buttonText}>👤 Cá nhân</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.contactButton]}
+          onPress={() => navigation.navigate("Contact")}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>✉️ Liên hệ</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -190,6 +198,9 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     backgroundColor: "#6366F1",
+  },
+  contactButton: {
+    backgroundColor: "#F59E0B",
   },
   buttonText: {
     color: "#fff",

@@ -26,5 +26,6 @@ export type RootStackParamList = {
     | undefined;
   Login: undefined;
   Profile: undefined;
+  Contact: undefined;
 };
 
