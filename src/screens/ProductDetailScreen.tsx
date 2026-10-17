@@ -14,6 +14,7 @@ import { RootStackParamList } from "@/navigation/types";
 import { useProductDetail } from "@/features/catalog/products/hooks/useProductDetail";
 import { getSelectedBranchId } from "@/features/territory/branches";
 import { addCartItem, updateCartItemQuantity } from "@/features/commerce/carts";
+import { useWishlist } from "@/features/commerce/wishlists";
 import { getImageUrl, formatCurrency } from "@/common/helpers";
 
 type ProductDetailScreenRouteProp = RouteProp<
@@ -72,19 +73,33 @@ export default function ProductDetailScreen() {
   const [isAdded, setIsAdded] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
+  const { isInWishlist, toggleItem: toggleWishlist } = useWishlist(branchId);
+  const isFavorite = product ? isInWishlist(product.id) : false;
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Cart", { branchId })}
-          style={{ marginRight: 8, padding: 6 }}
-          accessibilityLabel="Giỏ hàng"
-        >
-          <Text style={{ fontSize: 20 }}>🛒</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 8 }}>
+          <TouchableOpacity
+            onPress={() => {
+              if (product) toggleWishlist(product);
+            }}
+            style={{ padding: 4 }}
+            accessibilityLabel="Yêu thích"
+          >
+            <Text style={{ fontSize: 20 }}>{isFavorite ? "❤️" : "🤍"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Cart", { branchId })}
+            style={{ padding: 4 }}
+            accessibilityLabel="Giỏ hàng"
+          >
+            <Text style={{ fontSize: 20 }}>🛒</Text>
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation, branchId]);
+  }, [navigation, branchId, isFavorite, product, toggleWishlist]);
 
   // Collect all unique images into a gallery list
   const allImages = useMemo(() => {

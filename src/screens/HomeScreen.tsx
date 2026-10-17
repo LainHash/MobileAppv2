@@ -124,7 +124,19 @@ export default function HomeScreen() {
           }
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Chuyển tới Menu</Text>
+          <Text style={styles.buttonText}>Menu</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.wishlistButton]}
+          onPress={() =>
+            navigation.navigate("Wishlist", {
+              branchId: selectedBranchId,
+            })
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>❤️ Yêu thích</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -171,6 +183,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  wishlistButton: {
+    backgroundColor: "#EC4899",
   },
   cartButton: {
     backgroundColor: "#10B981",

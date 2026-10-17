@@ -4,6 +4,7 @@ import HomeScreen from "@/screens/HomeScreen";
 import MenuScreen from "@/screens/MenuScreen";
 import ProductDetailScreen from "@/screens/ProductDetailScreen";
 import CartScreen from "@/screens/CartScreen";
+import WishlistScreen from "@/screens/WishlistScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -29,6 +30,11 @@ export function RootNavigator() {
         name="Cart"
         component={CartScreen}
         options={{ title: "Giỏ hàng" }}
+      />
+      <Stack.Screen
+        name="Wishlist"
+        component={WishlistScreen}
+        options={{ title: "Yêu thích" }}
       />
     </Stack.Navigator>
   );

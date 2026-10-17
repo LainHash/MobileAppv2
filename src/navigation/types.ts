@@ -19,4 +19,9 @@ export type RootStackParamList = {
         branchId?: string | null;
       }
     | undefined;
+  Wishlist:
+    | {
+        branchId?: string | null;
+      }
+    | undefined;
 };

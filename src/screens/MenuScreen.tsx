@@ -83,15 +83,27 @@ export default function MenuScreen() {
     <View style={styles.container}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>Thực đơn</Text>
-        <TouchableOpacity
-          style={styles.cartButton}
-          onPress={() =>
-            navigation.navigate("Cart", { branchId: selectedBranchId })
-          }
-          activeOpacity={0.8}
-        >
-          <Text style={styles.cartButtonText}>🛒 Giỏ hàng</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtonRow}>
+          <TouchableOpacity
+            style={styles.wishlistButton}
+            onPress={() =>
+              navigation.navigate("Wishlist", { branchId: selectedBranchId })
+            }
+            activeOpacity={0.8}
+          >
+            <Text style={styles.headerButtonText}>❤️</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() =>
+              navigation.navigate("Cart", { branchId: selectedBranchId })
+            }
+            activeOpacity={0.8}
+          >
+            <Text style={styles.headerButtonText}>🛒 Giỏ hàng</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Filter Bar with Category and Brand Dropdowns */}
@@ -200,13 +212,24 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
   },
+  headerButtonRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  wishlistButton: {
+    backgroundColor: "#EC4899",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
   cartButton: {
     backgroundColor: "#10B981",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  cartButtonText: {
+  headerButtonText: {
     color: "#fff",
     fontSize: 13,
     fontWeight: "600",
