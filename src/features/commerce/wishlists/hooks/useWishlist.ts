@@ -5,6 +5,7 @@ import {
   fetchWishlist,
   addWishlistItem,
   removeWishlistItem,
+  moveAllToCart as moveAllToCartApi,
 } from "../api/wishlistApi";
 import { getSelectedBranchId } from "@/features/territory/branches";
 
@@ -90,6 +91,7 @@ export function useWishlist(
 
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isMovingAll, setIsMovingAll] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(
@@ -294,6 +296,66 @@ export function useWishlist(
     [isInWishlist, removeItem, addItem],
   );
 
+  const moveAllToCart = useCallback(
+    async (customBranchId?: string | null) => {
+      let targetBranchId =
+        customBranchId !== undefined ? customBranchId : initialBranchId;
+      if (targetBranchId === undefined) {
+        targetBranchId = await getSelectedBranchId();
+      }
+
+      try {
+        setIsMovingAll(true);
+        setError(null);
+        const res = await moveAllToCartApi({
+          branchId: targetBranchId,
+          sessionId: resolvedSessionId,
+        });
+
+        if (res?.isSucceed || res?.data) {
+          // Clear wishlist locally because all items are now moved to cart
+          setWishlist((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  wishlistItems: [],
+                  items: [],
+                }
+              : null,
+          );
+
+          // Background sync to ensure local state reflects the server state
+          try {
+            const synced = await fetchWishlist({
+              branchId: targetBranchId,
+              sessionId: resolvedSessionId,
+            });
+            if (synced?.data) {
+              setWishlist((current) =>
+                mergeWishlistWithProducts(synced.data, current),
+              );
+            }
+          } catch {
+            // ignore background sync error
+          }
+
+          return { success: true, cart: res.data };
+        } else {
+          const errMsg = res?.message || "Không thể chuyển tất cả vào giỏ hàng";
+          setError(errMsg);
+          return { success: false, error: errMsg };
+        }
+      } catch (err: any) {
+        const errMsg = err?.message || "Không thể chuyển tất cả vào giỏ hàng";
+        setError(errMsg);
+        return { success: false, error: errMsg };
+      } finally {
+        setIsMovingAll(false);
+      }
+    },
+    [initialBranchId, resolvedSessionId],
+  );
+
   useEffect(() => {
     if (enabled) {
       loadData();
@@ -303,11 +365,13 @@ export function useWishlist(
   return {
     wishlist,
     isLoading: !enabled || isLoading,
+    isMovingAll,
     error,
     refresh: loadData,
     addItem,
     removeItem,
     toggleItem,
     isInWishlist,
+    moveAllToCart,
   };
 }

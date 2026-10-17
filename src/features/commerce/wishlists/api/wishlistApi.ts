@@ -7,6 +7,7 @@ import {
 } from "../types/Wishlist";
 import { getOrCreateSessionId } from "@/common/utils/sessionStorage";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { Cart } from "../../carts";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -58,7 +59,8 @@ async function buildWishlistRequestConfig(
 export async function fetchWishlist(
   optionsOrBranchId?: string | null | WishlistApiOptions,
 ): Promise<Result<Wishlist>> {
-  const { headers, query } = await buildWishlistRequestConfig(optionsOrBranchId);
+  const { headers, query } =
+    await buildWishlistRequestConfig(optionsOrBranchId);
   const url = query
     ? `${BASE_URL}/api/commerce/wishlists/mine?${query}`
     : `${BASE_URL}/api/commerce/wishlists/mine`;
@@ -70,7 +72,8 @@ export async function addWishlistItem(
   data: AddWishlistItemRequest,
   optionsOrBranchId?: string | null | WishlistApiOptions,
 ): Promise<Result<Wishlist>> {
-  const { headers, query } = await buildWishlistRequestConfig(optionsOrBranchId);
+  const { headers, query } =
+    await buildWishlistRequestConfig(optionsOrBranchId);
   const url = query
     ? `${BASE_URL}/api/commerce/wishlists/mine/items?${query}`
     : `${BASE_URL}/api/commerce/wishlists/mine/items`;
@@ -82,10 +85,24 @@ export async function removeWishlistItem(
   data: RemoveWishlistItemRequest,
   optionsOrBranchId?: string | null | WishlistApiOptions,
 ): Promise<Result<Wishlist>> {
-  const { headers, query } = await buildWishlistRequestConfig(optionsOrBranchId);
+  const { headers, query } =
+    await buildWishlistRequestConfig(optionsOrBranchId);
   const url = query
     ? `${BASE_URL}/api/commerce/wishlists/mine/items?${query}`
     : `${BASE_URL}/api/commerce/wishlists/mine/items`;
   const res = await axios.delete<Result<Wishlist>>(url, { data, headers });
   return res.data;
 }
+
+export async function moveAllToCart(
+  optionsOrBranchId?: string | null | WishlistApiOptions,
+): Promise<Result<Cart>> {
+  const { headers, query } =
+    await buildWishlistRequestConfig(optionsOrBranchId);
+  const url = query
+    ? `${BASE_URL}/api/commerce/wishlists/mine/move-all-to-cart?${query}`
+    : `${BASE_URL}/api/commerce/wishlists/mine/move-all-to-cart`;
+  const res = await axios.post<Result<Cart>>(url, {}, { headers });
+  return res.data;
+}
+

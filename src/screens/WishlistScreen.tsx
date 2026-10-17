@@ -50,9 +50,11 @@ export default function WishlistScreen() {
   const {
     wishlist,
     isLoading,
+    isMovingAll,
     error,
     refresh,
     removeItem,
+    moveAllToCart,
   } = useWishlist(branchId, { enabled: isStorageLoaded });
 
   const { addItem: addToCart } = useCart(branchId);
@@ -72,6 +74,42 @@ export default function WishlistScreen() {
       product,
       branchId,
     });
+  };
+
+  const handleMoveAllToCart = () => {
+    if (items.length === 0 || isMovingAll) return;
+
+    Alert.alert(
+      "Chuyển vào giỏ hàng",
+      `Bạn có muốn chuyển tất cả ${items.length} sản phẩm yêu thích vào giỏ hàng không?`,
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Đồng ý",
+          onPress: async () => {
+            const res = await moveAllToCart();
+            if (res.success) {
+              Alert.alert(
+                "Thành công",
+                "Đã chuyển tất cả sản phẩm vào giỏ hàng!",
+                [
+                  { text: "Ở lại", style: "cancel" },
+                  {
+                    text: "Xem giỏ hàng",
+                    onPress: () => navigation.navigate("Cart", { branchId }),
+                  },
+                ],
+              );
+            } else {
+              Alert.alert(
+                "Lỗi",
+                res.error || "Không thể chuyển sản phẩm vào giỏ hàng.",
+              );
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (isLoading && !wishlist) {
@@ -118,14 +156,24 @@ export default function WishlistScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>
-          Sản phẩm yêu thích ({items.length})
-        </Text>
-        {branchId && (
-          <Text style={styles.headerSubtitle}>
-            Chi nhánh ID: {branchId.slice(0, 8)}...
+        <View style={styles.headerTitleGroup}>
+          <Text style={styles.headerTitle}>
+            Sản phẩm yêu thích ({items.length})
           </Text>
-        )}
+          {branchId && (
+            <Text style={styles.headerSubtitle}>
+              Chi nhánh ID: {branchId.slice(0, 8)}...
+            </Text>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.headerCartButton}
+          onPress={() => navigation.navigate("Cart", { branchId })}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.headerCartIcon}>🛒</Text>
+          <Text style={styles.headerCartText}>Giỏ hàng</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.listContainer}>
@@ -137,6 +185,32 @@ export default function WishlistScreen() {
           onAddToCart={handleAddToCart}
           onProductPress={handleProductPress}
         />
+      </View>
+
+      {/* Bottom Bar: Move All to Cart */}
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomInfo}>
+          <Text style={styles.bottomCountText}>{items.length} món đã lưu</Text>
+          <Text style={styles.bottomHintText}>Chuyển vào giỏ để thanh toán</Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.moveAllButton,
+            isMovingAll && styles.moveAllButtonDisabled,
+          ]}
+          onPress={handleMoveAllToCart}
+          disabled={isMovingAll}
+          activeOpacity={0.8}
+        >
+          {isMovingAll ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <Text style={styles.moveAllButtonIcon}>🛒</Text>
+              <Text style={styles.moveAllButtonText}>Chuyển tất cả vào giỏ</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -157,6 +231,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  headerTitleGroup: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
@@ -165,9 +242,77 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 12,
     color: "#64748B",
+    marginTop: 2,
+  },
+  headerCartButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1F5F9",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  headerCartIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  headerCartText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0F172A",
   },
   listContainer: {
     flex: 1,
+  },
+  bottomBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  bottomInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  bottomCountText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  bottomHintText: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  moveAllButton: {
+    backgroundColor: "#007AFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  moveAllButtonDisabled: {
+    backgroundColor: "#94A3B8",
+  },
+  moveAllButtonIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  moveAllButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   centerContainer: {
     flex: 1,
@@ -238,3 +383,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
