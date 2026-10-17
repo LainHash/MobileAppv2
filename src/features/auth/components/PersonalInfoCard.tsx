@@ -11,6 +11,11 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { User, PersonalProfile } from "../types/auth";
 
+type NameDisplayOrder = "given-family" | "family-given";
+
+const nameDisplayOrder = process.env
+  .EXPO_PUBLIC_NAME_DISPLAY_ORDER as NameDisplayOrder;
+
 export interface PersonalInfoCardProps {
   user?: User | null;
   onLogoutSuccess?: () => void;
@@ -90,14 +95,22 @@ export function PersonalInfoCard({
 
   const profile: PersonalProfile | undefined = currentUser.personalProfile;
 
+  const formatFullName = (
+    firstName?: string | null,
+    lastName?: string | null,
+  ): string => {
+    if (nameDisplayOrder === "given-family") {
+      return `${firstName ?? ""} ${lastName ?? ""}`.trim();
+    }
+    return `${lastName ?? ""} ${firstName ?? ""}`.trim();
+  };
+
   const fullName =
     profile?.firstName || profile?.lastName
-      ? `${profile?.lastName ?? ""} ${profile?.firstName ?? ""}`.trim()
+      ? formatFullName(profile?.firstName, profile?.lastName)
       : currentUser.userName;
 
-  const initials = (currentUser.userName || "U")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = (currentUser.userName || "U").slice(0, 2).toUpperCase();
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "Chưa cập nhật";
@@ -127,7 +140,9 @@ export function PersonalInfoCard({
         <Text style={styles.userName}>{fullName}</Text>
         <Text style={styles.userHandle}>@{currentUser.userName}</Text>
         <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{currentUser.roleName || "Thành viên"}</Text>
+          <Text style={styles.roleText}>
+            {currentUser.roleName || "Thành viên"}
+          </Text>
         </View>
       </View>
 
@@ -164,14 +179,18 @@ export function PersonalInfoCard({
 
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Ngày sinh</Text>
-          <Text style={styles.rowValue}>{formatDate(profile?.dateOfBirth)}</Text>
+          <Text style={styles.rowValue}>
+            {formatDate(profile?.dateOfBirth)}
+          </Text>
         </View>
 
         <View style={styles.separator} />
 
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Số điện thoại</Text>
-          <Text style={styles.rowValue}>{profile?.phone || "Chưa cập nhật"}</Text>
+          <Text style={styles.rowValue}>
+            {profile?.phone || "Chưa cập nhật"}
+          </Text>
         </View>
 
         <View style={styles.separator} />
@@ -224,9 +243,7 @@ export function PersonalInfoCard({
 
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Mã định danh (ID)</Text>
-          <Text style={[styles.rowValue, styles.idText]}>
-            {currentUser.id}
-          </Text>
+          <Text style={[styles.rowValue, styles.idText]}>{currentUser.id}</Text>
         </View>
       </View>
 

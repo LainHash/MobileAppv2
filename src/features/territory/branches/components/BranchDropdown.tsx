@@ -1,7 +1,7 @@
 import { Branch } from "../types/Branch";
 import { Dropdown } from "react-native-element-dropdown";
 import { useState, useMemo } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, StyleProp, ViewStyle } from "react-native";
 
 export const ALL_BRANCH_ID = "__ALL__";
 
@@ -12,6 +12,9 @@ interface Props {
   onSelect?: (id: string | null) => void;
   onChange?: (id: string | null) => void;
   placeholder?: string;
+  hideAllOption?: boolean;
+  style?: StyleProp<ViewStyle>;
+  renderItem?: (item: Branch, selected?: boolean) => React.ReactElement | null;
 }
 
 const ALL_BRANCH_OPTION: Branch = {
@@ -22,7 +25,7 @@ const ALL_BRANCH_OPTION: Branch = {
   email: "",
   address: "",
   latitude: "",
-  logitude: "",
+  longitude: "",
   status: "",
   openTime: "",
   closeTime: "",
@@ -35,23 +38,33 @@ export function BranchDropdown({
   onSelect,
   onChange,
   placeholder = "Chọn chi nhánh",
+  hideAllOption = false,
+  style,
+  renderItem,
 }: Props) {
   const [internalSelectedId, setInternalSelectedId] = useState<
     string | undefined
   >(
     defaultValue !== undefined
       ? defaultValue === null
-        ? ALL_BRANCH_ID
+        ? hideAllOption
+          ? undefined
+          : ALL_BRANCH_ID
         : defaultValue
       : undefined,
   );
 
-  const data = useMemo(() => [ALL_BRANCH_OPTION, ...branches], [branches]);
+  const data = useMemo(
+    () => (hideAllOption ? branches : [ALL_BRANCH_OPTION, ...branches]),
+    [branches, hideAllOption],
+  );
 
   const activeValue =
     value !== undefined
       ? value === null
-        ? ALL_BRANCH_ID
+        ? hideAllOption
+          ? undefined
+          : ALL_BRANCH_ID
         : value
       : internalSelectedId;
 
@@ -64,6 +77,7 @@ export function BranchDropdown({
       placeholder={placeholder}
       search
       searchPlaceholder="Tìm chi nhánh..."
+      renderItem={renderItem}
       onChange={(item: Branch) => {
         const rawId = item.id;
         const finalId = rawId === ALL_BRANCH_ID ? null : rawId;
@@ -73,7 +87,7 @@ export function BranchDropdown({
         onSelect?.(finalId);
         onChange?.(finalId);
       }}
-      style={styles.dropdown}
+      style={[styles.dropdown, style]}
     />
   );
 }

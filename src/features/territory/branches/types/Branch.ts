@@ -6,7 +6,7 @@ export interface Branch {
   email: string;
   address: string;
   latitude: string;
-  logitude: string;
+  longitude: string;
   status: string;
   openTime: string;
   closeTime: string;

@@ -112,7 +112,7 @@ export default function HomeScreen() {
           }
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Menu</Text>
+          <Text style={styles.buttonText}>Thực đơn</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
