@@ -96,3 +96,45 @@ export async function saveCachedUser(user: User | null): Promise<void> {
     console.error("Failed to save cached user to storage", error);
   }
 }
+
+export const AUTH_PENDING_REGISTER_EMAIL_KEY = "@auth_pending_register_email";
+
+/**
+ * Gets the stored pending register email.
+ */
+export async function getPendingRegisterEmail(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(AUTH_PENDING_REGISTER_EMAIL_KEY);
+  } catch (error) {
+    console.error("Failed to get pending register email from storage", error);
+    return null;
+  }
+}
+
+/**
+ * Persists the pending register email into AsyncStorage.
+ */
+export async function savePendingRegisterEmail(
+  email: string | null,
+): Promise<void> {
+  try {
+    if (email) {
+      await AsyncStorage.setItem(AUTH_PENDING_REGISTER_EMAIL_KEY, email.trim());
+    } else {
+      await AsyncStorage.removeItem(AUTH_PENDING_REGISTER_EMAIL_KEY);
+    }
+  } catch (error) {
+    console.error("Failed to save pending register email to storage", error);
+  }
+}
+
+/**
+ * Clears the pending register email from AsyncStorage.
+ */
+export async function clearPendingRegisterEmail(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(AUTH_PENDING_REGISTER_EMAIL_KEY);
+  } catch (error) {
+    console.error("Failed to clear pending register email from storage", error);
+  }
+}

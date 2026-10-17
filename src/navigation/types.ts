@@ -25,11 +25,23 @@ export type RootStackParamList = {
       }
     | undefined;
   Login: undefined;
+  Register: undefined;
+  VerifyEmail:
+    | {
+        email?: string;
+      }
+    | undefined;
+  CompleteProfile:
+    | {
+        email?: string;
+      }
+    | undefined;
   Profile: undefined;
   Contact:
     | {
         branchId?: string | null;
       }
     | undefined;
+
 };
 

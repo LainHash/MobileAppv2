@@ -8,6 +8,9 @@ import ProductDetailScreen from "@/screens/ProductDetailScreen";
 import CartScreen from "@/screens/CartScreen";
 import WishlistScreen from "@/screens/WishlistScreen";
 import LoginScreen from "@/screens/LoginScreen";
+import RegisterScreen from "@/screens/RegisterScreen";
+import VerifyEmailScreen from "@/screens/VerifyEmailScreen";
+import CompleteProfileScreen from "@/screens/CompleteProfileScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import ContactScreen from "@/screens/ContactScreen";
 import { useAuthContext } from "@/features/auth";
@@ -58,6 +61,22 @@ export function RootNavigator() {
           component={LoginScreen}
           options={{ title: "Đăng nhập" }}
         />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+          options={{ title: "Đăng ký tài khoản" }}
+        />
+        <Stack.Screen
+          name="VerifyEmail"
+          component={VerifyEmailScreen}
+          options={{ title: "Xác thực email" }}
+        />
+        <Stack.Screen
+          name="CompleteProfile"
+          component={CompleteProfileScreen}
+          options={{ title: "Hoàn tất thông tin" }}
+        />
+
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}

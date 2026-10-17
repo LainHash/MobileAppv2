@@ -26,10 +26,46 @@ export interface PersonalProfile {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
-  gender: boolean; //true: name, false: nữ
+  gender: boolean; //true: nam, false: nữ
   address: string;
   city: string;
   country: string;
   phone: string;
   citizenCardId: string;
+}
+
+export interface RegisterRequest {
+  userName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface VerifyEmailRequest {
+  email?: string;
+  code: string;
+}
+
+export interface CompleteProfileRequest {
+  email?: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: boolean;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  citizenCardId: string;
+}
+
+export interface ResendVerificationRequest {
+  email?: string;
+  purpose?: OtpPurpose;
+}
+
+export enum OtpPurpose {
+  EmailVerification = "EmailVerification",
+  PasswordReset = "PasswordReset",
+  ChangeEmail = "ChangeEmail",
 }

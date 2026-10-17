@@ -29,6 +29,7 @@ export default function LoginScreen() {
       <View style={styles.formWrapper}>
         <LoginForm
           onSuccess={handleSuccess}
+          onRegisterPress={() => navigation.navigate("Register")}
         />
       </View>
     </ScrollView>
