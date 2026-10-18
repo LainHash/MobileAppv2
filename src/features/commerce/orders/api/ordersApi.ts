@@ -18,15 +18,11 @@ export interface OrdersApiOptions {
   token?: string | null;
 }
 
-/**
- * Resolves authentication headers and session ID for order endpoints.
- */
 async function buildOrderHeaders(options?: OrdersApiOptions) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
-  // 1. Session ID (for anonymous cart/order checkout support)
   const sessionId =
     options?.sessionId !== undefined
       ? options.sessionId
@@ -35,7 +31,6 @@ async function buildOrderHeaders(options?: OrdersApiOptions) {
     headers["X-Session-Id"] = sessionId;
   }
 
-  // 2. Auth token (for registered users)
   const token =
     options?.token !== undefined ? options.token : await getAuthToken();
   if (token) {
@@ -45,9 +40,6 @@ async function buildOrderHeaders(options?: OrdersApiOptions) {
   return headers;
 }
 
-/**
- * Creates a delivery order and generates payment QR (VietQR / SePay).
- */
 export async function checkoutOrder(
   payload: CreateDeliveryOrderRequest,
   options?: OrdersApiOptions,
@@ -62,13 +54,53 @@ export async function checkoutOrder(
   return res.data;
 }
 
-/**
- * Fetches order list with optional pagination and filters.
- */
+export async function fetchMyOrders(
+  params?: GetAllOrdersParams,
+  options?: OrdersApiOptions,
+): Promise<PaginationResult<OrderResponse[]>> {
+  const headers = await buildOrderHeaders(options);
+  const searchParams = new URLSearchParams();
+
+  if (params?.branchId) {
+    searchParams.append("branchId", params.branchId);
+  }
+  if (params?.status !== undefined) {
+    searchParams.append("status", String(params.status));
+  }
+  if (params?.type !== undefined) {
+    searchParams.append("type", String(params.type));
+  }
+  if (params?.page) {
+    searchParams.append("page", String(params.page));
+  }
+  if (params?.pageSize) {
+    searchParams.append("pageSize", String(params.pageSize));
+  }
+  if (params?.keyword) {
+    searchParams.append("keyword", params.keyword);
+  }
+
+  const query = searchParams.toString();
+  const url = query
+    ? `${BASE_URL}/api/sale/orders/mine?${query}`
+    : `${BASE_URL}/api/sale/orders/mine`;
+
+  const res = await axios.get<PaginationResult<OrderResponse[]>>(url, {
+    headers,
+  });
+  return res.data;
+}
+
 export async function fetchOrders(
   params?: GetAllOrdersParams,
   options?: OrdersApiOptions,
 ): Promise<PaginationResult<OrderResponse[]>> {
+  const token =
+    options?.token !== undefined ? options.token : await getAuthToken();
+  if (token) {
+    return fetchMyOrders(params, options);
+  }
+
   const headers = await buildOrderHeaders(options);
   const searchParams = new URLSearchParams();
 
@@ -105,22 +137,36 @@ export async function fetchOrders(
   return res.data;
 }
 
-/**
- * Fetches single order details by ID.
- */
+export async function fetchMyOrderById(
+  id: string,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${id}/mine`;
+  const res = await axios.get<Result<OrderDetailResponse>>(url, { headers });
+  return res.data;
+}
+
 export async function fetchOrderById(
   id: string,
   options?: OrdersApiOptions,
 ): Promise<Result<OrderDetailResponse>> {
+  const token =
+    options?.token !== undefined ? options.token : await getAuthToken();
+  if (token) {
+    try {
+      return await fetchMyOrderById(id, options);
+    } catch {
+      // Fallback to general order endpoint if /mine returns error
+    }
+  }
+
   const headers = await buildOrderHeaders(options);
   const url = `${BASE_URL}/api/sale/orders/${id}`;
   const res = await axios.get<Result<OrderDetailResponse>>(url, { headers });
   return res.data;
 }
 
-/**
- * Checks payment status for an order (used for VietQR polling).
- */
 export async function fetchOrderPaymentStatus(
   id: string,
   options?: OrdersApiOptions,
@@ -133,9 +179,6 @@ export async function fetchOrderPaymentStatus(
   return res.data;
 }
 
-/**
- * Cancels an order.
- */
 export async function cancelOrder(
   id: string,
   options?: OrdersApiOptions,

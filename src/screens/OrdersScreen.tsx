@@ -18,6 +18,7 @@ import {
   OrderStatus,
   OrderResponse,
 } from "@/features/commerce/orders";
+import { useAuth } from "@/features/auth";
 import { formatCurrency } from "@/common/helpers";
 
 type OrdersNavProp = NativeStackNavigationProp<RootStackParamList, "Orders">;
@@ -34,12 +35,14 @@ const STATUS_TABS: { label: string; status?: OrderStatus }[] = [
 
 export default function OrdersScreen() {
   const navigation = useNavigation<OrdersNavProp>();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<number>(0);
 
   const selectedStatus = STATUS_TABS[activeTab].status;
 
   const { orders, isLoading, isRefreshing, error, refresh } = useOrders({
     status: selectedStatus,
+    enabled: isAuthenticated,
   });
 
   const renderOrderItem = ({ item }: { item: OrderResponse }) => {
@@ -138,7 +141,27 @@ export default function OrdersScreen() {
       </View>
 
       {/* Main Content */}
-      {isLoading && !isRefreshing ? (
+      {isAuthLoading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Đang kiểm tra tài khoản...</Text>
+        </View>
+      ) : !isAuthenticated ? (
+        <View style={styles.centerContainer}>
+          <Text style={styles.emptyIcon}>👤</Text>
+          <Text style={styles.emptyTitle}>Chưa đăng nhập</Text>
+          <Text style={styles.emptySub}>
+            Vui lòng đăng nhập để theo dõi và xem lịch sử đơn hàng của bạn.
+          </Text>
+          <TouchableOpacity
+            style={styles.browseButton}
+            onPress={() => navigation.navigate("Login")}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.browseButtonText}>Đăng nhập ngay</Text>
+          </TouchableOpacity>
+        </View>
+      ) : isLoading && !isRefreshing ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>Đang tải danh sách đơn hàng...</Text>
