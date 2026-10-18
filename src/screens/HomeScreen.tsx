@@ -140,6 +140,18 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.button, styles.ordersButton]}
+          onPress={() =>
+            navigation.navigate("Orders", {
+              branchId: selectedBranchId,
+            })
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>📦 Đơn hàng</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.button, styles.profileButton]}
           onPress={() => navigation.navigate("Profile")}
           activeOpacity={0.8}
@@ -195,6 +207,9 @@ const styles = StyleSheet.create({
   },
   cartButton: {
     backgroundColor: "#10B981",
+  },
+  ordersButton: {
+    backgroundColor: "#8B5CF6",
   },
   profileButton: {
     backgroundColor: "#6366F1",

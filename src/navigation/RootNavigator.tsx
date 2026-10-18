@@ -13,6 +13,10 @@ import VerifyEmailScreen from "@/screens/VerifyEmailScreen";
 import CompleteProfileScreen from "@/screens/CompleteProfileScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import ContactScreen from "@/screens/ContactScreen";
+import CheckoutScreen from "@/screens/CheckoutScreen";
+import OrderSuccessScreen from "@/screens/OrderSuccessScreen";
+import OrdersScreen from "@/screens/OrdersScreen";
+import OrderDetailScreen from "@/screens/OrderDetailScreen";
 import { useAuthContext } from "@/features/auth";
 import RoleNoticeBanner from "@/common/components/RoleNoticeBanner";
 
@@ -86,6 +90,29 @@ export function RootNavigator() {
           name="Contact"
           component={ContactScreen}
           options={{ title: "Liên hệ & Góp ý" }}
+        />
+        <Stack.Screen
+          name="Checkout"
+          component={CheckoutScreen}
+          options={{ title: "Thanh toán đơn hàng" }}
+        />
+        <Stack.Screen
+          name="OrderSuccess"
+          component={OrderSuccessScreen}
+          options={{
+            title: "Đặt hàng thành công",
+            headerBackVisible: false,
+          }}
+        />
+        <Stack.Screen
+          name="Orders"
+          component={OrdersScreen}
+          options={{ title: "Lịch sử đơn hàng" }}
+        />
+        <Stack.Screen
+          name="OrderDetail"
+          component={OrderDetailScreen}
+          options={{ title: "Chi tiết đơn hàng" }}
         />
       </Stack.Navigator>
     </View>

@@ -7,16 +7,18 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
 import { useCart, CartItemList } from "@/features/commerce/carts";
 import { getSelectedBranchId } from "@/features/territory/branches";
 import { formatCurrency } from "@/common/helpers";
 
 type CartScreenRouteProp = RouteProp<RootStackParamList, "Cart">;
+type CartNavProp = NativeStackNavigationProp<RootStackParamList, "Cart">;
 
 export default function CartScreen() {
   const route = useRoute<CartScreenRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<CartNavProp>();
 
   const routeBranchId = route.params?.branchId ?? null;
   const [branchId, setBranchId] = useState<string | null>(routeBranchId);
@@ -142,6 +144,7 @@ export default function CartScreen() {
         </View>
         <TouchableOpacity
           style={styles.checkoutButton}
+          onPress={() => navigation.navigate("Checkout", { branchId })}
           activeOpacity={0.8}
         >
           <Text style={styles.checkoutButtonText}>Đặt hàng</Text>

@@ -42,6 +42,24 @@ export type RootStackParamList = {
         branchId?: string | null;
       }
     | undefined;
-
+  Checkout:
+    | {
+        branchId?: string | null;
+      }
+    | undefined;
+  OrderSuccess: {
+    orderId: string;
+    orderCode?: string;
+    payment?: any;
+    totalAmount?: number;
+  };
+  Orders:
+    | {
+        branchId?: string | null;
+      }
+    | undefined;
+  OrderDetail: {
+    orderId: string;
+  };
 };
 
