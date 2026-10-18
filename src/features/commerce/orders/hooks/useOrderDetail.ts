@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { OrderDetailResponse } from "../types/order";
-import { fetchOrderById, cancelOrder as apiCancelOrder } from "../api/ordersApi";
+import { OrderDetailResponse, ReportOrderRequest } from "../types/order";
+import {
+  fetchOrderById,
+  cancelOrder as apiCancelOrder,
+  confirmDeliveryReceived as apiConfirmDeliveryReceived,
+  reportOrder as apiReportOrder,
+} from "../api/ordersApi";
 
 export interface UseOrderDetailOptions {
   orderId?: string | null;
@@ -15,6 +20,8 @@ export function useOrderDetail({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
+  const [isConfirmingDelivery, setIsConfirmingDelivery] = useState<boolean>(false);
+  const [isReporting, setIsReporting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(
@@ -85,13 +92,74 @@ export function useOrderDetail({
     }
   }, [orderId, loadData]);
 
+  const confirmDelivery = useCallback(async (): Promise<boolean> => {
+    if (!orderId) return false;
+
+    try {
+      setIsConfirmingDelivery(true);
+      setError(null);
+      const res = await apiConfirmDeliveryReceived(orderId);
+      if (res.isSucceed) {
+        if (res.data) {
+          setOrder(res.data);
+        } else {
+          await loadData();
+        }
+        return true;
+      }
+      setError(res.message || "Không thể xác nhận đã nhận hàng");
+      return false;
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Có lỗi xảy ra khi xác nhận đã nhận hàng",
+      );
+      return false;
+    } finally {
+      setIsConfirmingDelivery(false);
+    }
+  }, [orderId, loadData]);
+
+  const report = useCallback(
+    async (payload: ReportOrderRequest): Promise<boolean> => {
+      if (!orderId) return false;
+
+      try {
+        setIsReporting(true);
+        setError(null);
+        const res = await apiReportOrder(orderId, payload);
+        if (res.isSucceed) {
+          return true;
+        }
+        setError(res.message || "Không thể gửi khiếu nại");
+        return false;
+      } catch (err: any) {
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Có lỗi xảy ra khi gửi khiếu nại",
+        );
+        return false;
+      } finally {
+        setIsReporting(false);
+      }
+    },
+    [orderId],
+  );
+
   return {
     order,
     isLoading,
     isRefreshing,
     isCancelling,
+    isConfirmingDelivery,
+    isReporting,
     error,
     refresh,
     cancel,
+    confirmDelivery,
+    report,
   };
 }
+

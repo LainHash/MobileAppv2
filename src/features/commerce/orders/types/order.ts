@@ -58,6 +58,14 @@ export interface CreateDeliveryOrderRequest {
   items?: CreateOrderItemRequest[];
 }
 
+export interface ReportOrderRequest {
+  subject?: string;
+  message: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+}
+
 export interface PaymentQrResponse {
   provider: string;
   bankCode: string;
@@ -186,6 +194,32 @@ export function normalizeOrderStatus(
     default:
       return OrderStatus.Draft;
   }
+}
+
+/**
+ * Normalizes type code/string to standard OrderType number
+ */
+export function normalizeOrderType(
+  type: OrderType | OrderTypeString | number | undefined,
+): OrderType {
+  if (typeof type === "number") return type as OrderType;
+  if (!type) return OrderType.Delivery;
+
+  switch (type.toString().toLowerCase()) {
+    case "dinein":
+      return OrderType.DineIn;
+    case "takeaway":
+      return OrderType.TakeAway;
+    case "delivery":
+    default:
+      return OrderType.Delivery;
+  }
+}
+
+export function isDeliveryOrder(
+  type: OrderType | OrderTypeString | number | undefined,
+): boolean {
+  return normalizeOrderType(type) === OrderType.Delivery;
 }
 
 /**

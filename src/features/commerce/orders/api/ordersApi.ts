@@ -9,6 +9,7 @@ import {
   OrderResponse,
   OrderStatus,
   PreparationStatus,
+  ReportOrderRequest,
 } from "../types/order";
 import { getOrCreateSessionId } from "@/common/utils/sessionStorage";
 import { getAuthToken } from "@/features/auth/utils/authStorage";
@@ -265,6 +266,31 @@ export async function batchUpdateItemPreparationStatus(
   const res = await axios.post<Result<OrderDetailResponse>>(
     url,
     { status, itemIds },
+    { headers },
+  );
+  return res.data;
+}
+
+export async function confirmDeliveryReceived(
+  orderId: string,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${orderId}/confirm-delivered`;
+  const res = await axios.post<Result<OrderDetailResponse>>(url, {}, { headers });
+  return res.data;
+}
+
+export async function reportOrder(
+  orderId: string,
+  payload: ReportOrderRequest,
+  options?: OrdersApiOptions,
+): Promise<Result<{ id: string; status: number }>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${orderId}/report`;
+  const res = await axios.post<Result<{ id: string; status: number }>>(
+    url,
+    payload,
     { headers },
   );
   return res.data;
