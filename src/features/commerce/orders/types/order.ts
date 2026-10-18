@@ -148,6 +148,7 @@ export interface OrderPaymentStatusResponse {
   orderCode: string;
   status: OrderStatus | OrderStatusString | number;
   isPaid: boolean;
+  success?: boolean;
   totalAmount: number;
   paidAt?: string;
 }
