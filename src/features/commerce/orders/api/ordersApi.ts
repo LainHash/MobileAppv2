@@ -7,6 +7,8 @@ import {
   OrderDetailResponse,
   OrderPaymentStatusResponse,
   OrderResponse,
+  OrderStatus,
+  PreparationStatus,
 } from "../types/order";
 import { getOrCreateSessionId } from "@/common/utils/sessionStorage";
 import { getAuthToken } from "@/features/auth/utils/authStorage";
@@ -186,5 +188,84 @@ export async function cancelOrder(
   const headers = await buildOrderHeaders(options);
   const url = `${BASE_URL}/api/sale/orders/${id}/cancel`;
   const res = await axios.post<Result<void>>(url, {}, { headers });
+  return res.data;
+}
+
+export async function advanceOrderStatus(
+  id: string,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${id}/advance-status`;
+  const res = await axios.post<Result<OrderDetailResponse>>(url, {}, { headers });
+  return res.data;
+}
+
+export async function updateOrderStatus(
+  id: string,
+  status: OrderStatus,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${id}/status`;
+  const res = await axios.patch<Result<OrderDetailResponse>>(
+    url,
+    { status },
+    { headers },
+  );
+  return res.data;
+}
+
+export async function advanceItemPreparation(
+  orderId: string,
+  itemId: string,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${orderId}/items/${itemId}/advance-preparation`;
+  const res = await axios.post<Result<OrderDetailResponse>>(url, {}, { headers });
+  return res.data;
+}
+
+export async function updateItemPreparationStatus(
+  orderId: string,
+  itemId: string,
+  status: PreparationStatus | number,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${orderId}/items/${itemId}/preparation-status`;
+  const res = await axios.patch<Result<OrderDetailResponse>>(
+    url,
+    { status },
+    { headers },
+  );
+  return res.data;
+}
+
+export async function cancelOrderItem(
+  orderId: string,
+  itemId: string,
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${orderId}/items/${itemId}/cancel`;
+  const res = await axios.post<Result<OrderDetailResponse>>(url, {}, { headers });
+  return res.data;
+}
+
+export async function batchUpdateItemPreparationStatus(
+  orderId: string,
+  status: PreparationStatus | number,
+  itemIds?: string[],
+  options?: OrdersApiOptions,
+): Promise<Result<OrderDetailResponse>> {
+  const headers = await buildOrderHeaders(options);
+  const url = `${BASE_URL}/api/sale/orders/${orderId}/preparation-status/batch`;
+  const res = await axios.post<Result<OrderDetailResponse>>(
+    url,
+    { status, itemIds },
+    { headers },
+  );
   return res.data;
 }

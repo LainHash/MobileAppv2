@@ -1,12 +1,28 @@
+export enum PreparationStatus {
+  Pending = 0,
+  Preparing = 1,
+  Ready = 2,
+  Served = 3,
+  Cancelled = 4,
+}
+
+export type PreparationStatusString =
+  | "Pending"
+  | "Preparing"
+  | "Ready"
+  | "Served"
+  | "Cancelled";
+
 export enum OrderStatus {
   Draft = 0,
   Pending = 1,
   Confirmed = 2,
   Preparing = 3,
-  Served = 4,
-  Delivering = 5,
-  Completed = 6,
-  Cancelled = 7,
+  Ready = 4,
+  Served = 5,
+  Delivering = 6,
+  Completed = 7,
+  Cancelled = 8,
 }
 
 export type OrderStatusString =
@@ -14,6 +30,7 @@ export type OrderStatusString =
   | "Pending"
   | "Confirmed"
   | "Preparing"
+  | "Ready"
   | "Served"
   | "Delivering"
   | "Completed"
@@ -61,6 +78,7 @@ export interface OrderItemResponse {
   lineTotal?: number;
   total?: number;
   note?: string;
+  preparationStatus?: PreparationStatus | PreparationStatusString | number;
   product?: {
     id: string;
     name: string;
@@ -154,6 +172,8 @@ export function normalizeOrderStatus(
       return OrderStatus.Confirmed;
     case "preparing":
       return OrderStatus.Preparing;
+    case "ready":
+      return OrderStatus.Ready;
     case "served":
       return OrderStatus.Served;
     case "delivering":
@@ -210,18 +230,25 @@ export function getOrderStatusMeta(
         bgColor: "#EDE9FE",
         icon: "🍳",
       };
+    case OrderStatus.Ready:
+      return {
+        label: "Món đã sẵn sàng",
+        color: "#0D9488",
+        bgColor: "#CCFBF1",
+        icon: "🍱",
+      };
     case OrderStatus.Served:
       return {
         label: "Đã lên món",
-        color: "#0D9488",
-        bgColor: "#CCFBF1",
+        color: "#0284C7",
+        bgColor: "#E0F2FE",
         icon: "🍽️",
       };
     case OrderStatus.Delivering:
       return {
         label: "Đang giao hàng",
-        color: "#0284C7",
-        bgColor: "#E0F2FE",
+        color: "#6366F1",
+        bgColor: "#EEF2FF",
         icon: "🛵",
       };
     case OrderStatus.Completed:
@@ -246,4 +273,41 @@ export function getOrderStatusMeta(
         icon: "📦",
       };
   }
+}
+
+/**
+ * Checks if an order can be cancelled by the user.
+ * Only orders in Pending or Draft status are cancellable.
+ */
+export function canCancelOrder(
+  status: OrderStatus | OrderStatusString | number | undefined,
+): boolean {
+  const norm = normalizeOrderStatus(status);
+  return norm === OrderStatus.Pending || norm === OrderStatus.Draft;
+}
+
+/**
+ * Returns label and colors for a dish preparation status.
+ */
+export function getPreparationStatusMeta(
+  status: PreparationStatus | PreparationStatusString | number | undefined,
+): { label: string; color: string; bg: string } | null {
+  if (status === undefined || status === null) return null;
+  const str = String(status).toLowerCase();
+  if (str === "0" || str === "pending") {
+    return { label: "Chờ chế biến", color: "#64748B", bg: "#F1F5F9" };
+  }
+  if (str === "1" || str === "preparing") {
+    return { label: "Đang nấu", color: "#7C3AED", bg: "#EDE9FE" };
+  }
+  if (str === "2" || str === "ready") {
+    return { label: "Đã xong", color: "#0D9488", bg: "#CCFBF1" };
+  }
+  if (str === "3" || str === "served") {
+    return { label: "Đã lên món", color: "#0284C7", bg: "#E0F2FE" };
+  }
+  if (str === "4" || str === "cancelled") {
+    return { label: "Đã hủy", color: "#DC2626", bg: "#FEE2E2" };
+  }
+  return null;
 }

@@ -10,6 +10,7 @@ export interface CreateContactMessageRequest {
 
 export interface ContactMessageResponse {
   id: string;
+  customerId?: string | null;
   fullName: string;
   email: string;
   phoneNumber?: string | null;

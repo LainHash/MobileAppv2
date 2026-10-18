@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View, Image } from "react-native";
-import { OrderItemResponse } from "../types/order";
+import { OrderItemResponse, getPreparationStatusMeta } from "../types/order";
 import { getImageUrl, formatCurrency } from "@/common/helpers";
 
 export interface OrderItemCardProps {
@@ -16,6 +16,7 @@ export function OrderItemCard({ item }: OrderItemCardProps) {
 
   const price = item.unitPrice ?? 0;
   const total = item.lineTotal ?? item.total ?? price * item.quantity;
+  const prepMeta = getPreparationStatusMeta(item.preparationStatus);
 
   return (
     <View style={styles.container}>
@@ -32,9 +33,18 @@ export function OrderItemCard({ item }: OrderItemCardProps) {
       )}
 
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={2}>
-          {item.productName || item.product?.name || "Món ăn"}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={2}>
+            {item.productName || item.product?.name || "Món ăn"}
+          </Text>
+          {prepMeta && (
+            <View style={[styles.prepBadge, { backgroundColor: prepMeta.bg }]}>
+              <Text style={[styles.prepBadgeText, { color: prepMeta.color }]}>
+                {prepMeta.label}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {Boolean(item.note) && (
           <Text style={styles.note} numberOfLines={1}>
@@ -76,11 +86,28 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
+  nameRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 8,
+  },
   name: {
+    flex: 1,
     fontSize: 14,
     fontWeight: "600",
     color: "#0F172A",
     lineHeight: 18,
+  },
+  prepBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  prepBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
   },
   note: {
     fontSize: 12,

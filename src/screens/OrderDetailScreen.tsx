@@ -17,6 +17,7 @@ import {
   OrderItemCard,
   OrderStatus,
   normalizeOrderStatus,
+  canCancelOrder,
 } from "@/features/commerce/orders";
 import { formatCurrency } from "@/common/helpers";
 
@@ -24,8 +25,9 @@ type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
 
 const STEPS = [
   { label: "Đặt hàng", desc: "Chờ thanh toán / xác nhận" },
-  { label: "Xác nhận", desc: "Bếp đã tiếp nhận" },
+  { label: "Xác nhận", desc: "Quán đã tiếp nhận" },
   { label: "Chuẩn bị", desc: "Đang chế biến món" },
+  { label: "Sẵn sàng", desc: "Món đã nấu xong" },
   { label: "Đang giao", desc: "Tài xế đang vận chuyển" },
   { label: "Hoàn thành", desc: "Giao món thành công" },
 ];
@@ -33,18 +35,19 @@ const STEPS = [
 function getStepIndex(status: OrderStatus): number {
   switch (status) {
     case OrderStatus.Draft:
-      return 0;
     case OrderStatus.Pending:
       return 0;
     case OrderStatus.Confirmed:
       return 1;
     case OrderStatus.Preparing:
-    case OrderStatus.Served:
       return 2;
-    case OrderStatus.Delivering:
+    case OrderStatus.Ready:
+    case OrderStatus.Served:
       return 3;
-    case OrderStatus.Completed:
+    case OrderStatus.Delivering:
       return 4;
+    case OrderStatus.Completed:
+      return 5;
     case OrderStatus.Cancelled:
       return -1;
     default:
@@ -70,11 +73,8 @@ export default function OrderDetailScreen() {
   const currentStep = getStepIndex(currentStatus);
   const isCancelled = currentStatus === OrderStatus.Cancelled;
 
-  // Can cancel if Draft or Pending/Confirmed
-  const canCancel =
-    currentStatus === OrderStatus.Draft ||
-    currentStatus === OrderStatus.Pending ||
-    currentStatus === OrderStatus.Confirmed;
+  // Only cancellable when Pending or Draft
+  const canCancel = canCancelOrder(currentStatus);
 
   const handleCancelPress = () => {
     Alert.alert(
