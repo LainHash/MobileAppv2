@@ -1,5 +1,4 @@
 import {
-  FlatList,
   StyleSheet,
   Text,
   View,
@@ -8,6 +7,8 @@ import {
 } from "react-native";
 import { Cart } from "../types/Cart";
 import { getProductImageUrl, formatCurrency } from "@/common/helpers";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   cart?: Cart;
@@ -19,19 +20,14 @@ interface Props {
 
 export function CartItemList({
   cart,
-  refreshing,
-  onRefresh,
   onUpdateQuantity,
   onRemoveItem,
 }: Props) {
   const items = cart?.cartItems ?? [];
 
   return (
-    <FlatList
-      data={items}
-      keyExtractor={(item) => item.id || item.product?.id}
-      contentContainerStyle={styles.listContainer}
-      renderItem={({ item }) => {
+    <View style={styles.listContainer}>
+      {items.map((item) => {
         const imageUrl = getProductImageUrl(item);
         const itemPrice = item.product?.unitPrice;
         const totalItemPrice =
@@ -42,19 +38,23 @@ export function CartItemList({
           item.product?.id || item.productId || (item as any).productId || item.id;
 
         return (
-          <View style={styles.card}>
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.thumbnail}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-                <Text style={styles.thumbnailPlaceholderText}>📦</Text>
-              </View>
-            )}
+          <View key={item.id || item.product?.id || productId} style={styles.card}>
+            {/* Image Thumbnail */}
+            <View style={styles.thumbnailWrapper}>
+              {imageUrl ? (
+                <Image
+                  source={{ uri: imageUrl }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.thumbnailPlaceholder}>
+                  <Ionicons name="restaurant-outline" size={24} color={Colors.outline} />
+                </View>
+              )}
+            </View>
 
+            {/* Info details */}
             <View style={styles.info}>
               <View style={styles.headerRow}>
                 <Text style={styles.name} numberOfLines={2}>
@@ -66,14 +66,14 @@ export function CartItemList({
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     style={styles.removeButton}
                   >
-                    <Text style={styles.removeButtonText}>✕</Text>
+                    <Ionicons name="close" size={18} color={Colors.outline} />
                   </TouchableOpacity>
                 )}
               </View>
 
-              {Boolean(item.product?.unitSymbol) && (
-                <Text style={styles.unitText}>
-                  Đơn vị: {item.product.unitSymbol}
+              {Boolean(item.product?.categoryName) && (
+                <Text style={styles.categoryText}>
+                  {item.product?.categoryName}
                 </Text>
               )}
 
@@ -86,7 +86,7 @@ export function CartItemList({
                   ) : null}
                   {itemPrice !== undefined && item.quantity > 1 ? (
                     <Text style={styles.unitPrice}>
-                      {formatCurrency(itemPrice, item.product?.currency)} / sp
+                      {formatCurrency(itemPrice, item.product?.currency)} / phần
                     </Text>
                   ) : null}
                 </View>
@@ -104,17 +104,17 @@ export function CartItemList({
                       }}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
-                      <Text style={styles.quantityButtonText}>-</Text>
+                      <Ionicons name="remove" size={14} color={Colors.primary} />
                     </TouchableOpacity>
                     <Text style={styles.quantityText}>{item.quantity}</Text>
                     <TouchableOpacity
-                      style={styles.quantityButton}
+                      style={[styles.quantityButton, styles.quantityPlusButton]}
                       onPress={() =>
                         onUpdateQuantity(productId, item.quantity + 1)
                       }
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
-                      <Text style={styles.quantityButtonText}>+</Text>
+                      <Ionicons name="add" size={14} color={Colors.onPrimary} />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -126,48 +126,47 @@ export function CartItemList({
             </View>
           </View>
         );
-      }}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-    />
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   listContainer: {
-    padding: 16,
+    padding: Spacing.md,
     paddingBottom: 24,
-    gap: 12,
+    gap: Spacing.sm,
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+  },
+  thumbnailWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: Radius.md,
+    overflow: "hidden",
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   thumbnail: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
+    width: "100%",
+    height: "100%",
   },
   thumbnailPlaceholder: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  thumbnailPlaceholderText: {
-    fontSize: 24,
-  },
   info: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: Spacing.md,
     justifyContent: "space-between",
   },
   headerRow: {
@@ -176,67 +175,74 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   name: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#0F172A",
+    ...Typography.headlineSm,
+    fontSize: 14,
+    color: Colors.onSurface,
     flex: 1,
-    marginRight: 8,
+    marginRight: 6,
+    lineHeight: 19,
   },
   removeButton: {
     padding: 2,
   },
-  removeButtonText: {
-    fontSize: 14,
-    color: "#94A3B8",
-    fontWeight: "bold",
-  },
-  unitText: {
-    fontSize: 12,
-    color: "#64748B",
+  categoryText: {
+    ...Typography.bodySm,
+    fontSize: 11,
+    color: Colors.outline,
     marginTop: 2,
   },
   bottomRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginTop: 8,
+    marginTop: Spacing.sm,
+    paddingTop: 4,
   },
   price: {
+    ...Typography.labelLg,
     fontSize: 15,
     fontWeight: "700",
-    color: "#2563EB",
+    color: Colors.primaryContainer,
   },
   unitPrice: {
-    fontSize: 11,
-    color: "#94A3B8",
+    ...Typography.bodySm,
+    fontSize: 10,
+    color: Colors.outline,
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Radius.full,
+    padding: 2,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 6,
-    backgroundColor: "#F8FAFC",
+    borderColor: Colors.borderSoft,
   },
   quantityButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.surfaceContainerLowest,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  quantityButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#0F172A",
+  quantityPlusButton: {
+    backgroundColor: Colors.primaryContainer,
   },
   quantityText: {
+    ...Typography.labelMd,
     fontSize: 13,
     fontWeight: "600",
-    color: "#0F172A",
-    minWidth: 20,
+    color: Colors.onSurface,
+    minWidth: 26,
     textAlign: "center",
   },
   quantityOnlyText: {
+    ...Typography.labelMd,
     fontSize: 13,
     fontWeight: "600",
-    color: "#475569",
+    color: Colors.primaryContainer,
   },
 });
+
+export default CartItemList;

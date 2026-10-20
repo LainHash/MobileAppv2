@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { useAuth } from "../hooks/useAuth";
 import { User } from "../types/auth";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface LoginFormProps {
   onSuccess?: (user?: User) => void;
@@ -28,14 +30,13 @@ export function LoginForm({
   onForgotPasswordPress,
   onRegisterPress,
   defaultIdentifier = "",
-  title = "Đăng nhập",
-  subtitle = "Chào mừng bạn quay trở lại!",
 }: LoginFormProps) {
   const { login, isLoggingIn, error, clearError } = useAuth();
 
   const [identifier, setIdentifier] = useState(defaultIdentifier);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [identifierError, setIdentifierError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
@@ -45,12 +46,12 @@ export function LoginForm({
     setPasswordError(null);
 
     if (!identifier.trim()) {
-      setIdentifierError("Vui lòng nhập email hoặc tên đăng nhập");
+      setIdentifierError("Vui lòng nhập số điện thoại hoặc email");
       isValid = false;
     }
 
     if (!password) {
-      setPasswordError("Vui lòng nhập mật khẩu");
+      setPasswordError("Vui lòng nhập mật khẩu của quý khách");
       isValid = false;
     } else if (password.length < 6) {
       setPasswordError("Mật khẩu phải có ít nhất 6 ký tự");
@@ -72,7 +73,7 @@ export function LoginForm({
     if (res.success) {
       onSuccess?.(res.user);
     } else {
-      onError?.(res.error || "Đăng nhập thất bại");
+      onError?.(res.error || "Đăng nhập không thành công");
     }
   };
 
@@ -82,34 +83,33 @@ export function LoginForm({
       style={styles.container}
     >
       <View style={styles.card}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          {Boolean(subtitle) && <Text style={styles.subtitle}>{subtitle}</Text>}
-        </View>
-
         {/* Global Error Banner */}
         {Boolean(error) && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerIcon}>⚠️</Text>
+            <Ionicons name="alert-circle" size={18} color={Colors.error} />
             <Text style={styles.errorBannerText}>{error}</Text>
           </View>
         )}
 
         {/* Identifier Field */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email hoặc Tên đăng nhập</Text>
+          <Text style={styles.label}>Số điện thoại hoặc Email</Text>
           <View
             style={[
               styles.inputContainer,
               Boolean(identifierError) && styles.inputError,
             ]}
           >
-            <Text style={styles.inputIcon}>👤</Text>
+            <Ionicons
+              name="person-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
-              placeholder="Nhập email hoặc username..."
-              placeholderTextColor="#94A3B8"
+              placeholder="0912 345 678 hoặc email@domain.vn"
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
               value={identifier}
               onChangeText={(text) => {
                 setIdentifier(text);
@@ -128,28 +128,23 @@ export function LoginForm({
 
         {/* Password Field */}
         <View style={styles.inputGroup}>
-          <View style={styles.passwordLabelRow}>
-            <Text style={styles.label}>Mật khẩu</Text>
-            {onForgotPasswordPress && (
-              <TouchableOpacity
-                onPress={onForgotPasswordPress}
-                disabled={isLoggingIn}
-              >
-                <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <Text style={styles.label}>Mật khẩu</Text>
           <View
             style={[
               styles.inputContainer,
               Boolean(passwordError) && styles.inputError,
             ]}
           >
-            <Text style={styles.inputIcon}>🔒</Text>
+            <Ionicons
+              name="lock-closed-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
-              placeholder="Nhập mật khẩu..."
-              placeholderTextColor="#94A3B8"
+              placeholder="Nhập mật khẩu của quý khách"
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -165,7 +160,11 @@ export function LoginForm({
               onPress={() => setShowPassword((prev) => !prev)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.eyeIcon}>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={18}
+                color={Colors.outline}
+              />
             </TouchableOpacity>
           </View>
           {Boolean(passwordError) && (
@@ -173,30 +172,89 @@ export function LoginForm({
           )}
         </View>
 
-        {/* Submit Button */}
+        {/* Options Row: Remember Me & Forgot Password */}
+        <View style={styles.optionsRow}>
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => setRememberMe((prev) => !prev)}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.checkboxBox,
+                rememberMe && styles.checkboxBoxActive,
+              ]}
+            >
+              {rememberMe && (
+                <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Ghi nhớ đăng nhập</Text>
+          </TouchableOpacity>
+
+          {onForgotPasswordPress && (
+            <TouchableOpacity
+              onPress={onForgotPasswordPress}
+              disabled={isLoggingIn}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Submit Primary Button */}
         <TouchableOpacity
           style={[styles.submitButton, isLoggingIn && styles.submitButtonDisabled]}
           onPress={handleLogin}
           disabled={isLoggingIn}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           {isLoggingIn ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={Colors.onPrimary} size="small" />
           ) : (
-            <Text style={styles.submitButtonText}>Đăng nhập</Text>
+            <View style={styles.btnContent}>
+              <Text style={styles.submitButtonText}>Đăng nhập ngay</Text>
+              <Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />
+            </View>
           )}
         </TouchableOpacity>
 
-        {/* Register footer link */}
-        {onRegisterPress && (
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Chưa có tài khoản? </Text>
-            <TouchableOpacity onPress={onRegisterPress} disabled={isLoggingIn}>
-              <Text style={styles.registerLink}>Đăng ký ngay</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>HOẶC TIẾP TỤC VỚI</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Social Fast Login */}
+        <View style={styles.socialRow}>
+          <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
+            <Ionicons name="logo-apple" size={18} color={Colors.onSurface} />
+            <Text style={styles.socialBtnText}>Apple</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
+            <Ionicons name="logo-google" size={16} color={Colors.secondary} />
+            <Text style={styles.socialBtnText}>Google</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
+            <Ionicons name="chatbubble-ellipses" size={17} color="#0068FF" />
+            <Text style={styles.socialBtnText}>Zalo</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Register footer link */}
+      {onRegisterPress && (
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>Chưa có tài khoản? </Text>
+          <TouchableOpacity onPress={onRegisterPress} disabled={isLoggingIn}>
+            <Text style={styles.registerLink}>Đăng ký thành viên ngay</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -206,144 +264,181 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
-  },
-  header: {
-    marginBottom: 20,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#64748B",
-    textAlign: "center",
+    borderColor: Colors.borderSoft,
+    ...Shadows.card,
   },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#FCA5A5",
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorBannerIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: 8,
   },
   errorBannerText: {
     flex: 1,
-    fontSize: 13,
-    color: "#B91C1C",
-    lineHeight: 18,
+    ...Typography.bodySm,
+    color: Colors.onErrorContainer,
   },
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: Spacing.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#334155",
-    marginBottom: 8,
-  },
-  passwordLabelRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  forgotPasswordText: {
-    fontSize: 13,
-    color: "#007AFF",
-    fontWeight: "500",
+    ...Typography.labelMd,
+    color: Colors.onSurface,
+    marginBottom: 6,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 10,
+    backgroundColor: "#FDFBF7",
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    paddingHorizontal: 12,
-    minHeight: 48,
+    borderColor: Colors.borderSubtle,
+    paddingHorizontal: Spacing.md,
+    height: 48,
   },
   inputError: {
-    borderColor: "#EF4444",
+    borderColor: Colors.error,
     backgroundColor: "#FFF5F5",
   },
   inputIcon: {
-    fontSize: 16,
-    marginRight: 10,
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: "#0F172A",
-    paddingVertical: 10,
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
+    height: "100%",
   },
   eyeButton: {
-    padding: 4,
-  },
-  eyeIcon: {
-    fontSize: 16,
+    padding: 6,
   },
   errorText: {
-    color: "#DC2626",
-    fontSize: 12,
+    ...Typography.bodySm,
+    fontSize: 11,
+    color: Colors.error,
     marginTop: 4,
-    marginLeft: 2,
+  },
+  optionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.lg,
+    marginTop: 2,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  checkboxBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: Colors.outline,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FDFBF7",
+  },
+  checkboxBoxActive: {
+    backgroundColor: Colors.primaryContainer,
+    borderColor: Colors.primaryContainer,
+  },
+  checkboxLabel: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+  },
+  forgotPasswordText: {
+    ...Typography.labelMd,
+    color: Colors.primaryContainer,
+    fontWeight: "600",
   },
   submitButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 10,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.full,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    ...Shadows.card,
   },
   submitButtonDisabled: {
-    backgroundColor: "#94A3B8",
+    backgroundColor: Colors.outline,
     shadowOpacity: 0,
     elevation: 0,
   },
+  btnContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    ...Typography.labelLg,
+    color: Colors.onPrimary,
     fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: Spacing.lg,
+    gap: 8,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.borderSoft,
+  },
+  dividerText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    color: Colors.outline,
+    letterSpacing: 0.6,
+  },
+  socialRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  socialBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    height: 42,
+    borderRadius: Radius.md,
+    backgroundColor: "#FDFBF7",
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+  },
+  socialBtnText: {
+    ...Typography.labelSm,
+    fontSize: 12,
+    color: Colors.onSurface,
   },
   footerRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
   footerText: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
   },
   registerLink: {
-    fontSize: 14,
+    ...Typography.labelMd,
+    color: Colors.primaryContainer,
     fontWeight: "700",
-    color: "#007AFF",
+    textDecorationLine: "underline",
   },
 });
+
+export default LoginForm;

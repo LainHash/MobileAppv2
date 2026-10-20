@@ -10,14 +10,22 @@ import {
 } from "react-native";
 import { Product } from "../types/Product";
 import { getProductImageUrl, formatCurrency } from "@/common/helpers";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 
 export interface ProductCardProps {
   product: Product;
   onPress?: (product: Product) => void;
+  onAddToCart?: (product: Product) => void;
   style?: StyleProp<ViewStyle>;
 }
 
-export function ProductCard({ product, onPress, style }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onPress,
+  onAddToCart,
+  style,
+}: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
 
   const imageUrl = getProductImageUrl(product);
@@ -29,12 +37,12 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
 
   return (
     <TouchableOpacity
-      style={styles.card}
-      activeOpacity={onPress ? 0.7 : 1}
+      style={[styles.card, style]}
+      activeOpacity={onPress ? 0.8 : 1}
       onPress={() => onPress?.(product)}
       disabled={!onPress}
     >
-      {/* Cột ảnh chính sản phẩm */}
+      {/* Product Image */}
       <View style={styles.imageWrapper}>
         {showImage ? (
           <Image
@@ -48,27 +56,27 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
           />
         ) : (
           <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderIcon}>📦</Text>
-            <Text style={styles.placeholderText}>Chưa có ảnh</Text>
+            <Ionicons name="restaurant-outline" size={28} color={Colors.outline} />
+            <Text style={styles.placeholderText}>Món ngon</Text>
+          </View>
+        )}
+
+        {/* Badge */}
+        {Boolean(product.categoryName) && (
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText} numberOfLines={1}>
+              {product.categoryName}
+            </Text>
           </View>
         )}
       </View>
 
-      {/* Cột thông tin chi tiết */}
+      {/* Info Column */}
       <View style={styles.infoWrapper}>
         <View style={styles.headerRow}>
           <Text style={styles.name} numberOfLines={2}>
             {product.name}
           </Text>
-        </View>
-
-        <View style={styles.metaRow}>
-          {Boolean(product.categoryName) && (
-            <Text style={styles.metaText}>{product.categoryName}</Text>
-          )}
-          {Boolean(product.brandName) && (
-            <Text style={styles.metaText}>{product.brandName}</Text>
-          )}
         </View>
 
         {Boolean(product.description) && (
@@ -89,15 +97,8 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
             ) : Boolean(product.unitSymbol) ? (
               <Text style={styles.unitOnly}>Đơn vị: {product.unitSymbol}</Text>
             ) : null}
-          </View>
 
-          {Boolean(product.stockStatus) && (
-            <View
-              style={[
-                styles.stockBadge,
-                isOutOfStock ? styles.stockOutOfStock : styles.stockInStock,
-              ]}
-            >
+            {Boolean(product.stockStatus) && (
               <Text
                 style={[
                   styles.stockText,
@@ -106,9 +107,20 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
                     : styles.stockTextInStock,
                 ]}
               >
-                {product.stockStatus}
+                {isOutOfStock ? "Tạm hết món" : "Đang phục vụ"}
               </Text>
-            </View>
+            )}
+          </View>
+
+          {onAddToCart && !isOutOfStock && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => onAddToCart(product)}
+              activeOpacity={0.8}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons name="add" size={18} color={Colors.onPrimary} />
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -119,27 +131,25 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    padding: 12,
-    gap: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    padding: Spacing.md,
+    gap: Spacing.md,
+    ...Shadows.subtle,
     alignItems: "center",
+    marginBottom: Spacing.sm,
   },
   imageWrapper: {
-    width: 90,
-    height: 90,
-    borderRadius: 8,
+    width: 100,
+    height: 100,
+    borderRadius: Radius.md,
     overflow: "hidden",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.surfaceContainer,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
+    position: "relative",
   },
   image: {
     width: "100%",
@@ -150,20 +160,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 4,
-  },
-  placeholderIcon: {
-    fontSize: 24,
-    marginBottom: 2,
+    backgroundColor: Colors.surfaceContainerLow,
   },
   placeholderText: {
-    fontSize: 10,
-    color: "#94A3B8",
-    fontWeight: "500",
+    ...Typography.labelSm,
+    fontSize: 9,
+    color: Colors.outline,
+    marginTop: 2,
+  },
+  categoryBadge: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    backgroundColor: "rgba(126, 37, 22, 0.88)",
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: Radius.full,
+    maxWidth: 90,
+  },
+  categoryBadgeText: {
+    color: Colors.onPrimary,
+    fontSize: 9,
+    fontWeight: "600",
   },
   infoWrapper: {
     flex: 1,
     justifyContent: "space-between",
-    minHeight: 90,
+    minHeight: 100,
   },
   headerRow: {
     flexDirection: "row",
@@ -171,18 +194,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   name: {
-    flex: 1,
+    ...Typography.headlineSm,
     fontSize: 15,
-    fontWeight: "600",
-    color: "#0F172A",
+    color: Colors.onSurface,
     lineHeight: 20,
+    flex: 1,
   },
   description: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     lineHeight: 18,
-    marginTop: 4,
-    marginBottom: 6,
+    marginTop: 2,
+    marginBottom: 4,
   },
   footerRow: {
     flexDirection: "row",
@@ -190,57 +213,50 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: "auto",
     paddingTop: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSoft,
   },
   priceContainer: {
     flex: 1,
     marginRight: 8,
   },
   price: {
+    ...Typography.labelLg,
     fontSize: 15,
     fontWeight: "700",
-    color: "#2563EB",
+    color: Colors.primaryContainer,
   },
   unit: {
-    fontSize: 12,
+    ...Typography.bodySm,
+    fontSize: 11,
     fontWeight: "400",
-    color: "#64748B",
+    color: Colors.outline,
   },
   unitOnly: {
-    fontSize: 12,
-    color: "#64748B",
-  },
-  stockBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: "flex-end",
-  },
-  stockInStock: {
-    backgroundColor: "#DCFCE7",
-  },
-  stockOutOfStock: {
-    backgroundColor: "#FEE2E2",
+    ...Typography.bodySm,
+    fontSize: 11,
+    color: Colors.outline,
   },
   stockText: {
-    fontSize: 11,
-    fontWeight: "600",
+    ...Typography.labelSm,
+    fontSize: 10,
+    marginTop: 1,
   },
   stockTextInStock: {
-    color: "#16A34A",
+    color: Colors.success,
   },
   stockTextOutOfStock: {
-    color: "#DC2626",
+    color: Colors.error,
   },
-  metaRow: {
-    flexDirection: "row",
+  addButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primaryContainer,
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: "auto",
-    paddingTop: 4,
-  },
-  metaText: {
-    fontSize: 12,
-    color: "#64748B",
-    lineHeight: 18,
+    justifyContent: "center",
+    ...Shadows.subtle,
   },
 });
+
+export default ProductCard;

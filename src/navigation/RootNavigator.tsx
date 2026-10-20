@@ -23,6 +23,7 @@ import MyReservationsScreen from "@/screens/MyReservationsScreen";
 import ReservationDetailScreen from "@/screens/ReservationDetailScreen";
 import { useAuthContext } from "@/features/auth";
 import RoleNoticeBanner from "@/common/components/RoleNoticeBanner";
+import { Colors } from "@/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -36,18 +37,33 @@ export function RootNavigator() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style={isNonCustomer ? "light" : "auto"} />
+      <StatusBar style={isNonCustomer ? "light" : "dark"} />
       {isNonCustomer && <RoleNoticeBanner roleName={user!.roleName} />}
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: Colors.surface,
+          },
+          headerTintColor: Colors.primary,
+          headerTitleStyle: {
+            color: Colors.primary,
+            fontWeight: "700",
+          },
+          contentStyle: {
+            backgroundColor: Colors.background,
+          },
+        }}
+      >
         <Stack.Screen
           name="Home"
           component={HomeScreen}
-          options={{ title: "Trang chủ" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Menu"
           component={MenuScreen}
-          options={{ title: "Thực đơn" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ProductDetail"
@@ -57,7 +73,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Cart"
           component={CartScreen}
-          options={{ title: "Giỏ hàng" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Wishlist"
@@ -67,7 +83,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-          options={{ title: "Đăng nhập" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Register"
@@ -121,7 +137,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Reservation"
           component={ReservationScreen}
-          options={{ title: "Đặt bàn" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ReservationSuccess"
@@ -149,7 +165,6 @@ export function RootNavigator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
 });
-
-

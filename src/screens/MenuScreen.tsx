@@ -1,12 +1,28 @@
-import { useState, useEffect } from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { useProducts } from "@/features/catalog/products/hooks/useProducts";
-import { ProductList } from "@/features/catalog/products/components/ProductList";
-import { useCategories, CategoryDropdown } from "@/features/catalog/categories";
+import { ProductCard } from "@/features/catalog/products/components/ProductCard";
+import { useCategories } from "@/features/catalog/categories";
+import { useCart } from "@/features/commerce/carts";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { HauteBottomBar } from "@/common/components/HauteBottomBar";
+import { formatCurrency } from "@/common/helpers";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
+import { Product } from "@/features/catalog/products";
 
 type MenuScreenRouteProp = RouteProp<RootStackParamList, "Menu">;
 type MenuScreenNavigationProp = NativeStackNavigationProp<
@@ -14,31 +30,39 @@ type MenuScreenNavigationProp = NativeStackNavigationProp<
   "Menu"
 >;
 
+// Dynamic sort options for API products
+const SORT_OPTIONS = [
+  { id: "default", label: "Mặc định", icon: "swap-vertical" },
+  { id: "price_asc", label: "Giá tăng dần", icon: "arrow-up" },
+  { id: "price_desc", label: "Giá giảm dần", icon: "arrow-down" },
+  { id: "name_asc", label: "Tên A-Z", icon: "text" },
+];
+
 export default function MenuScreen() {
   const route = useRoute<MenuScreenRouteProp>();
   const navigation = useNavigation<MenuScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
 
-  const [prevParams, setPrevParams] = useState(route.params);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     route.params?.categoryId ?? null,
   );
-
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(
     route.params?.branchId ?? null,
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSort, setActiveSort] = useState("default");
 
-  // Sync state during render when route.params change (e.g. from Home quick navigation)
-  if (route.params !== prevParams) {
-    setPrevParams(route.params);
+  // Sync state when route params change
+  useEffect(() => {
     if (route.params?.categoryId !== undefined) {
       setSelectedCategoryId(route.params.categoryId);
     }
     if (route.params?.branchId !== undefined) {
       setSelectedBranchId(route.params.branchId);
     }
-  }
+  }, [route.params?.categoryId, route.params?.branchId]);
 
-  // Load branch ID from storage if not explicitly passed in route params
+  // Load branch ID from storage if needed
   useEffect(() => {
     let isMounted = true;
     if (!route.params?.branchId) {
@@ -55,7 +79,7 @@ export default function MenuScreen() {
 
   const { categories } = useCategories();
 
-  // Fetch products from api/catalog/products with active filters
+  // Fetch products from backend
   const {
     products,
     isLoading: isProductsLoading,
@@ -66,227 +90,554 @@ export default function MenuScreen() {
     branchId: selectedBranchId,
   });
 
-  const activeCategory = categories.find((c) => c.id === selectedCategoryId);
-  const hasActiveFilter = Boolean(selectedCategoryId);
+  // Cart integration
+  const { cart, addItem } = useCart(selectedBranchId);
+
+  const cartTotalQty = useMemo(() => {
+    return cart?.cartItems?.reduce((acc, it) => acc + it.quantity, 0) ?? 0;
+  }, [cart?.cartItems]);
+
+  const cartTotalPrice = useMemo(() => {
+    return (
+      cart?.cartItems?.reduce(
+        (acc, it) => acc + (it.product?.unitPrice || 0) * it.quantity,
+        0,
+      ) ?? 0
+    );
+  }, [cart?.cartItems]);
+
+  // Filter products by search text and apply dynamic sort strictly on API data
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    let list = [...products];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.categoryName?.toLowerCase().includes(q),
+      );
+    }
+
+    if (activeSort === "price_asc") {
+      list.sort((a, b) => (a.unitPrice || 0) - (b.unitPrice || 0));
+    } else if (activeSort === "price_desc") {
+      list.sort((a, b) => (b.unitPrice || 0) - (a.unitPrice || 0));
+    } else if (activeSort === "name_asc") {
+      list.sort((a, b) => a.name.localeCompare(b.name, "vi"));
+    }
+
+    return list;
+  }, [products, searchQuery, activeSort]);
+
+  const handleAddToCart = async (product: Product) => {
+    await addItem(product.id, selectedBranchId);
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>Thực đơn</Text>
-        <View style={styles.headerButtonRow}>
+    <View style={styles.screenWrapper}>
+      {/* Top App Bar */}
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="FINE ASIAN DINING"
+        cartCount={cartTotalQty}
+        onCartPress={() =>
+          navigation.navigate("Cart", { branchId: selectedBranchId })
+        }
+      />
+
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + (cartTotalQty > 0 ? 150 : 90) },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Search Bar & Tune Filter */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchInputWrap}>
+            <Ionicons
+              name="search-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Tìm kiếm món ăn, dimsum, lẩu..."
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              returnKeyType="search"
+            />
+            {Boolean(searchQuery) && (
+              <TouchableOpacity
+                onPress={() => setSearchQuery("")}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close-circle" size={16} color={Colors.outline} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Dynamic Sort Options */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickFilterReel}
+        >
+          {SORT_OPTIONS.map((s) => {
+            const isActive = activeSort === s.id;
+            return (
+              <TouchableOpacity
+                key={s.id}
+                style={[
+                  styles.filterPill,
+                  isActive && styles.filterPillActive,
+                ]}
+                onPress={() => setActiveSort(s.id)}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name={s.icon as any}
+                  size={14}
+                  color={isActive ? Colors.primaryContainer : Colors.outline}
+                />
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    isActive && styles.filterPillTextActive,
+                  ]}
+                >
+                  {s.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Categories Tab Bar */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryTabReel}
+        >
           <TouchableOpacity
-            style={styles.wishlistButton}
-            onPress={() =>
-              navigation.navigate("Wishlist", { branchId: selectedBranchId })
-            }
-            activeOpacity={0.8}
+            style={[
+              styles.categoryTab,
+              selectedCategoryId === null && styles.categoryTabActive,
+            ]}
+            onPress={() => setSelectedCategoryId(null)}
+            activeOpacity={0.7}
           >
-            <Text style={styles.headerButtonText}>❤️</Text>
+            <Text
+              style={[
+                styles.categoryTabText,
+                selectedCategoryId === null && styles.categoryTabTextActive,
+              ]}
+            >
+              Tất cả
+            </Text>
           </TouchableOpacity>
 
+          {categories.map((cat) => {
+            const isCatActive = selectedCategoryId === cat.id;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.categoryTab,
+                  isCatActive && styles.categoryTabActive,
+                ]}
+                onPress={() => setSelectedCategoryId(cat.id)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.categoryTabText,
+                    isCatActive && styles.categoryTabTextActive,
+                  ]}
+                >
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Section Heading */}
+        <View style={styles.menuHeaderRow}>
+          <View>
+            <Text style={styles.menuHeaderTitle}>Tinh hoa Ẩm thực</Text>
+            <Text style={styles.menuHeaderSubtitle}>
+              Tuyển chọn nghệ thuật ẩm thực đương đại từ Bếp trưởng
+            </Text>
+          </View>
+          <View style={styles.itemCountBadge}>
+            <Text style={styles.itemCountText}>
+              {filteredProducts.length} Món
+            </Text>
+          </View>
+        </View>
+
+        {/* Error message */}
+        {Boolean(productsError) && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{productsError}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => refreshProducts()}
+            >
+              <Text style={styles.retryButtonText}>Thử lại</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Products List */}
+        {isProductsLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primaryContainer} />
+            <Text style={styles.loadingText}>Đang tải món ăn...</Text>
+          </View>
+        ) : filteredProducts.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="restaurant-outline" size={48} color={Colors.outline} />
+            <Text style={styles.emptyTitle}>Chưa tìm thấy món ăn phù hợp</Text>
+            <Text style={styles.emptySubtitle}>
+              Quý khách vui lòng thử tìm kiếm với từ khóa hoặc danh mục khác.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.productsList}>
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+                onPress={(p) =>
+                  navigation.navigate("ProductDetail", {
+                    productId: p.id,
+                    product: p,
+                    branchId: selectedBranchId,
+                  })
+                }
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Sticky Floating Cart Summary (Hovering above BottomNavBar) */}
+      {cartTotalQty > 0 && (
+        <View
+          style={[
+            styles.floatingCartBar,
+            { bottom: insets.bottom + 65 },
+          ]}
+        >
           <TouchableOpacity
-            style={styles.cartButton}
+            style={styles.floatingCartContent}
             onPress={() =>
               navigation.navigate("Cart", { branchId: selectedBranchId })
             }
-            activeOpacity={0.8}
+            activeOpacity={0.9}
           >
-            <Text style={styles.headerButtonText}>🛒 Giỏ hàng</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Filter Bar with Category Dropdowns */}
-      <View style={styles.filterContainer}>
-        <View style={styles.filterItem}>
-          <Text style={styles.filterLabel}>Danh mục</Text>
-          <CategoryDropdown
-            categories={categories}
-            value={selectedCategoryId}
-            onSelect={(id) => setSelectedCategoryId(id)}
-          />
-        </View>
-      </View>
-
-      {/* Active Filter Chips */}
-      {hasActiveFilter && (
-        <View style={styles.activeFilterRow}>
-          <Text style={styles.activeFilterLabel}>Đang lọc:</Text>
-          {Boolean(selectedCategoryId && activeCategory) && (
-            <View style={styles.filterChip}>
-              <Text style={styles.filterChipText}>{activeCategory?.name}</Text>
-              <TouchableOpacity
-                onPress={() => setSelectedCategoryId(null)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text style={styles.filterChipClose}>✕</Text>
-              </TouchableOpacity>
+            <View style={styles.floatingCartLeft}>
+              <View style={styles.floatingCartIconWrap}>
+                <Ionicons name="bag-handle" size={18} color="#FFFFFF" />
+                <View style={styles.floatingCartBadge}>
+                  <Text style={styles.floatingCartBadgeText}>
+                    {cartTotalQty}
+                  </Text>
+                </View>
+              </View>
+              <View>
+                <Text style={styles.floatingCartSubtitle}>
+                  Giỏ món ăn ({cartTotalQty} món)
+                </Text>
+                <Text style={styles.floatingCartTotal}>
+                  {formatCurrency(cartTotalPrice, "₫")}
+                </Text>
+              </View>
             </View>
-          )}
-          <TouchableOpacity
-            style={styles.clearAllButton}
-            onPress={() => {
-              setSelectedCategoryId(null);
-            }}
-          >
-            <Text style={styles.clearAllText}>Xóa tất cả</Text>
+
+            <View style={styles.floatingCartBtn}>
+              <Text style={styles.floatingCartBtnText}>Xem giỏ</Text>
+              <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+            </View>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Error message */}
-      {Boolean(productsError) && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{productsError}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => refreshProducts()}
-          >
-            <Text style={styles.retryButtonText}>Thử lại</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Product List */}
-      <ProductList
-        products={products}
-        isLoading={isProductsLoading}
-        refreshing={isProductsLoading}
-        onRefresh={refreshProducts}
-        onProductPress={(product) =>
-          navigation.navigate("ProductDetail", {
-            productId: product.id,
-            product,
-            branchId: selectedBranchId,
-          })
-        }
-      />
+      {/* Floating Bottom Nav Bar */}
+      <HauteBottomBar activeTab="Menu" cartCount={cartTotalQty} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screenWrapper: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 16,
+    backgroundColor: Colors.background,
   },
-  titleRow: {
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: Spacing.sm,
+  },
+
+  // Search Section
+  searchSection: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  searchInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    height: 44,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
+    height: "100%",
+  },
+
+  // Quick Filter Reel
+  quickFilterReel: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.xs,
+    paddingVertical: 6,
+  },
+  filterPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceContainer,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  filterPillActive: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderColor: Colors.primaryContainer,
+  },
+  filterPillText: {
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
+  },
+  filterPillTextActive: {
+    color: Colors.primaryContainer,
+    fontWeight: "700",
+  },
+
+  // Category Tab Reel
+  categoryTabReel: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  categoryTab: {
+    paddingBottom: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  categoryTabActive: {
+    borderBottomColor: Colors.primaryContainer,
+  },
+  categoryTabText: {
+    ...Typography.labelLg,
+    color: Colors.onSurfaceVariant,
+  },
+  categoryTabTextActive: {
+    color: Colors.primaryContainer,
+    fontWeight: "700",
+  },
+
+  // Menu Header Row
+  menuHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
+    alignItems: "flex-end",
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
+  menuHeaderTitle: {
+    ...Typography.headlineLg,
+    fontSize: 22,
+    color: Colors.primary,
   },
-  headerButtonRow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
+  menuHeaderSubtitle: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
   },
-  wishlistButton: {
-    backgroundColor: "#EC4899",
-    paddingVertical: 6,
+  itemCountBadge: {
+    backgroundColor: Colors.secondaryFixed,
     paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  cartButton: {
-    backgroundColor: "#10B981",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  headerButtonText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  filterContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 8,
-  },
-  filterItem: {
-    flex: 1,
-    gap: 4,
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-  },
-  activeFilterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 8,
-  },
-  activeFilterLabel: {
-    fontSize: 13,
-    color: "#64748B",
-    fontWeight: "500",
-  },
-  filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 16,
-    gap: 6,
+    borderRadius: Radius.full,
   },
-  filterChipText: {
-    fontSize: 12,
-    color: "#1D4ED8",
-    fontWeight: "500",
+  itemCountText: {
+    ...Typography.labelSm,
+    color: Colors.onSecondaryFixed,
+    fontWeight: "700",
   },
-  filterChipClose: {
-    fontSize: 12,
-    color: "#1D4ED8",
-    fontWeight: "bold",
+
+  // Products
+  productsList: {
+    paddingHorizontal: Spacing.lg,
   },
-  clearAllButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
-  clearAllText: {
-    fontSize: 12,
-    color: "#EF4444",
-    fontWeight: "500",
+  loadingText: {
+    ...Typography.bodySm,
+    color: Colors.outline,
+  },
+  emptyContainer: {
+    paddingVertical: 50,
+    paddingHorizontal: Spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyTitle: {
+    ...Typography.headlineSm,
+    fontSize: 16,
+    color: Colors.onSurface,
+    marginTop: Spacing.md,
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    textAlign: "center",
   },
   errorContainer: {
-    padding: 12,
-    backgroundColor: "#FEF2F2",
-    borderRadius: 8,
-    marginBottom: 12,
+    marginHorizontal: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Radius.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: Spacing.md,
   },
   errorText: {
-    color: "#DC2626",
-    fontSize: 14,
+    ...Typography.bodySm,
+    color: Colors.onErrorContainer,
     flex: 1,
   },
   retryButton: {
-    backgroundColor: "#DC2626",
+    backgroundColor: Colors.error,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
     marginLeft: 8,
   },
   retryButtonText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 12,
+    fontWeight: "600",
+  },
+
+  // Sticky Floating Cart Bar
+  floatingCartBar: {
+    position: "absolute",
+    left: Spacing.lg,
+    right: Spacing.lg,
+    zIndex: 45,
+  },
+  floatingCartContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.inverseSurface,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    ...Shadows.elevated,
+  },
+  floatingCartLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  floatingCartIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.primaryContainer,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  floatingCartBadge: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    backgroundColor: Colors.secondaryFixed,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  floatingCartBadgeText: {
+    color: Colors.onSecondaryFixed,
+    fontSize: 9,
+    fontWeight: "800",
+  },
+  floatingCartSubtitle: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    color: Colors.inversePrimary,
+  },
+  floatingCartTotal: {
+    ...Typography.headlineSm,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  floatingCartBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.primaryContainer,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.full,
+  },
+  floatingCartBtnText: {
+    ...Typography.labelMd,
+    color: Colors.onPrimary,
     fontWeight: "600",
   },
 });
