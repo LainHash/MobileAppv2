@@ -32,6 +32,23 @@ export default function ProfileScreen() {
         <Text style={styles.ordersChevron}>›</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.reservationsButton}
+        onPress={() => navigation.navigate("MyReservations")}
+        activeOpacity={0.8}
+      >
+        <View style={styles.reservationsIconWrap}>
+          <Text style={styles.ordersIcon}>🍽️</Text>
+        </View>
+        <View style={styles.ordersInfo}>
+          <Text style={styles.ordersTitle}>Lịch sử đặt bàn</Text>
+          <Text style={styles.ordersSubtitle}>
+            Theo dõi và quản lý các yêu cầu đặt bàn
+          </Text>
+        </View>
+        <Text style={styles.ordersChevron}>›</Text>
+      </TouchableOpacity>
+
       <PersonalInfoCard
         onLoginPress={() => navigation.navigate("Login")}
         onLogoutSuccess={() => navigation.navigate("Home")}
@@ -61,6 +78,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 2,
+  },
+  reservationsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 16,
+    marginTop: 6,
+    marginBottom: 8,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  reservationsIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF7ED",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
   ordersIconWrap: {
     width: 40,

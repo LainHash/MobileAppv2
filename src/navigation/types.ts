@@ -61,5 +61,21 @@ export type RootStackParamList = {
   OrderDetail: {
     orderId: string;
   };
+  Reservation:
+    | {
+        branchId?: string | null;
+      }
+    | undefined;
+  ReservationSuccess: {
+    reservationId: string;
+    reservationCode: string;
+    branchName: string;
+    partySize: number;
+    reservedFrom: string;
+  };
+  MyReservations: undefined;
+  ReservationDetail: {
+    reservationId: string;
+  };
 };
 

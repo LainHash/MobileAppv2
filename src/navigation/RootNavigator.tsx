@@ -17,6 +17,10 @@ import CheckoutScreen from "@/screens/CheckoutScreen";
 import OrderSuccessScreen from "@/screens/OrderSuccessScreen";
 import OrdersScreen from "@/screens/OrdersScreen";
 import OrderDetailScreen from "@/screens/OrderDetailScreen";
+import ReservationScreen from "@/screens/ReservationScreen";
+import ReservationSuccessScreen from "@/screens/ReservationSuccessScreen";
+import MyReservationsScreen from "@/screens/MyReservationsScreen";
+import ReservationDetailScreen from "@/screens/ReservationDetailScreen";
 import { useAuthContext } from "@/features/auth";
 import RoleNoticeBanner from "@/common/components/RoleNoticeBanner";
 
@@ -113,6 +117,29 @@ export function RootNavigator() {
           name="OrderDetail"
           component={OrderDetailScreen}
           options={{ title: "Chi tiết đơn hàng" }}
+        />
+        <Stack.Screen
+          name="Reservation"
+          component={ReservationScreen}
+          options={{ title: "Đặt bàn" }}
+        />
+        <Stack.Screen
+          name="ReservationSuccess"
+          component={ReservationSuccessScreen}
+          options={{
+            title: "Đặt bàn thành công",
+            headerBackVisible: false,
+          }}
+        />
+        <Stack.Screen
+          name="MyReservations"
+          component={MyReservationsScreen}
+          options={{ title: "Lịch sử đặt bàn" }}
+        />
+        <Stack.Screen
+          name="ReservationDetail"
+          component={ReservationDetailScreen}
+          options={{ title: "Chi tiết đặt bàn" }}
         />
       </Stack.Navigator>
     </View>

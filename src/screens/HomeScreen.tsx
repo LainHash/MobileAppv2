@@ -160,6 +160,18 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.button, styles.reservationButton]}
+          onPress={() =>
+            navigation.navigate("Reservation", {
+              branchId: selectedBranchId,
+            })
+          }
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>🍽️ Đặt bàn</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.button, styles.contactButton]}
           onPress={() => navigation.navigate("Contact")}
           activeOpacity={0.8}
@@ -213,6 +225,9 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     backgroundColor: "#6366F1",
+  },
+  reservationButton: {
+    backgroundColor: "#EA580C",
   },
   contactButton: {
     backgroundColor: "#F59E0B",
