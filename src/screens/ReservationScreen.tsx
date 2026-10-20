@@ -166,10 +166,16 @@ export default function ReservationScreen() {
       return;
     }
 
-    // Combine date & time into UTC ISO string
+    // Combine date & time into Vietnam Time (+07:00) then convert to UTC ISO string
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
     const [h, m] = selectedTime.split(":").map(Number);
-    const bookingDate = new Date(selectedDate);
-    bookingDate.setHours(h, m, 0, 0);
+    const hourStr = String(h).padStart(2, "0");
+    const minStr = String(m).padStart(2, "0");
+
+    // Explicitly format with Vietnam offset (+07:00) so booking hours remain exact regardless of device timezone
+    const bookingDate = new Date(`${year}-${month}-${day}T${hourStr}:${minStr}:00+07:00`);
 
     const reservedFromIso = bookingDate.toISOString();
     const reservedToDate = new Date(bookingDate.getTime() + 2 * 60 * 60 * 1000);
