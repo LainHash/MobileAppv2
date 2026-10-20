@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import {
   useMyReservations,
@@ -17,6 +19,8 @@ import {
   ReservationStatus,
 } from "@/features/schedule/reservations";
 import { useAuthContext } from "@/features/auth";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type MyReservationsNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -25,6 +29,7 @@ type MyReservationsNavigationProp = NativeStackNavigationProp<
 
 export default function MyReservationsScreen() {
   const navigation = useNavigation<MyReservationsNavigationProp>();
+  const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuthContext();
   const { reservations, isLoading, error, refresh } = useMyReservations();
 
@@ -48,72 +53,103 @@ export default function MyReservationsScreen() {
     });
   }, [reservations, activeTab]);
 
-  if (!isAuthenticated) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>🔒</Text>
-        <Text style={styles.emptyTitle}>Yêu cầu đăng nhập</Text>
-        <Text style={styles.emptySub}>
-          Vui lòng đăng nhập tài khoản để theo dõi và quản lý lịch sử đặt bàn của bạn.
-        </Text>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.actionButtonText}>Đăng nhập ngay</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      {/* Tabs */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === "upcoming" && styles.tabItemActive]}
-          onPress={() => setActiveTab("upcoming")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "upcoming" && styles.tabTextActive,
-            ]}
-          >
-            Sắp tới
-          </Text>
-        </TouchableOpacity>
+    <View style={styles.screenWrapper}>
+      {/* Luxury Haute Top Bar */}
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="LỊCH SỬ ĐẶT BÀN"
+        showBack={true}
+      />
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === "past" && styles.tabItemActive]}
-          onPress={() => setActiveTab("past")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "past" && styles.tabTextActive,
-            ]}
+      {/* Tabs */}
+      <View style={styles.tabBarContainer}>
+        <View style={styles.tabPillGroup}>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === "upcoming" && styles.tabItemActive]}
+            onPress={() => setActiveTab("upcoming")}
+            activeOpacity={0.8}
           >
-            Lịch sử
-          </Text>
-        </TouchableOpacity>
+            <Ionicons
+              name="calendar"
+              size={14}
+              color={activeTab === "upcoming" ? Colors.onPrimary : Colors.onSurfaceVariant}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "upcoming" && styles.tabTextActive,
+              ]}
+            >
+              Sắp tới
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === "past" && styles.tabItemActive]}
+            onPress={() => setActiveTab("past")}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="time"
+              size={14}
+              color={activeTab === "past" ? Colors.onPrimary : Colors.onSurfaceVariant}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "past" && styles.tabTextActive,
+              ]}
+            >
+              Lịch sử
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Content */}
-      {isLoading && reservations.length === 0 ? (
+      {/* Main Content Area */}
+      {!isAuthenticated ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <View style={styles.iconCircle}>
+            <Ionicons name="lock-closed-outline" size={40} color={Colors.secondary} />
+          </View>
+          <Text style={styles.emptyTitle}>Yêu cầu đăng nhập</Text>
+          <Text style={styles.emptySub}>
+            Vui lòng đăng nhập tài khoản để theo dõi và quản lý lịch sử đặt bàn tiệc của quý khách.
+          </Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate("Login")}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.actionButtonText}>Đăng nhập ngay</Text>
+          </TouchableOpacity>
+        </View>
+      ) : isLoading && reservations.length === 0 ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Đang tải lịch sử đặt bàn...</Text>
         </View>
       ) : Boolean(error) && reservations.length === 0 ? (
         <View style={styles.centerContainer}>
+          <View style={[styles.iconCircle, { backgroundColor: "rgba(186, 26, 26, 0.08)" }]}>
+            <Ionicons name="alert-circle-outline" size={40} color={Colors.error} />
+          </View>
+          <Text style={styles.emptyTitle}>Không thể tải dữ liệu</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.actionButton} onPress={refresh}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={refresh}
+            activeOpacity={0.85}
+          >
             <Text style={styles.actionButtonText}>Thử lại</Text>
           </TouchableOpacity>
         </View>
       ) : filteredReservations.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>🍽️</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="restaurant-outline" size={44} color={Colors.secondary} />
+          </View>
           <Text style={styles.emptyTitle}>
             {activeTab === "upcoming"
               ? "Chưa có lượt đặt bàn sắp tới"
@@ -121,15 +157,19 @@ export default function MyReservationsScreen() {
           </Text>
           <Text style={styles.emptySub}>
             {activeTab === "upcoming"
-              ? "Hãy chọn chi nhánh và khung giờ phù hợp để giữ chỗ cùng bạn bè và gia đình."
-              : "Các lượt đặt bàn đã hoàn tất hoặc đã hủy sẽ hiển thị tại đây."}
+              ? "Hãy chọn chi nhánh và khung giờ phù hợp để giữ chỗ cùng bạn bè, gia đình và đối tác."
+              : "Các lượt đặt bàn tiệc đã hoàn tất hoặc đã hủy sẽ được lưu giữ tại đây."}
           </Text>
           {activeTab === "upcoming" && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate("Reservation")}
+              activeOpacity={0.85}
             >
-              <Text style={styles.actionButtonText}>+ Đặt bàn ngay</Text>
+              <View style={styles.btnRow}>
+                <Ionicons name="calendar-outline" size={16} color={Colors.onPrimary} />
+                <Text style={styles.actionButtonText}>Đặt bàn tiệc ngay</Text>
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -137,9 +177,18 @@ export default function MyReservationsScreen() {
         <FlatList
           data={filteredReservations}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + 24 },
+          ]}
+          showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isLoading} onRefresh={refresh} />
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={refresh}
+              colors={[Colors.primary]}
+              tintColor={Colors.primary}
+            />
           }
           renderItem={({ item }) => (
             <ReservationCard
@@ -158,77 +207,106 @@ export default function MyReservationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screenWrapper: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.background,
   },
-  tabBar: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
+  tabBarContainer: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+  },
+  tabPillGroup: {
+    flexDirection: "row",
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: Radius.full,
+    padding: 4,
+    gap: 4,
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 14,
+    flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    justifyContent: "center",
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    gap: 6,
   },
   tabItemActive: {
-    borderBottomColor: "#007AFF",
+    backgroundColor: Colors.primary,
   },
   tabText: {
-    fontSize: 14,
+    ...Typography.labelSm,
     fontWeight: "600",
-    color: "#64748B",
+    color: Colors.onSurfaceVariant,
   },
   tabTextActive: {
-    color: "#007AFF",
+    color: Colors.onPrimary,
   },
   listContent: {
-    padding: 16,
+    padding: Spacing.lg,
   },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: Spacing.xl,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  loadingText: {
+    marginTop: Spacing.md,
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
   },
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
+    ...Typography.headlineSm,
+    fontSize: 18,
+    color: Colors.onSurface,
+    marginBottom: 8,
     textAlign: "center",
   },
   emptySub: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
-    lineHeight: 19,
-    marginBottom: 20,
-    maxWidth: 280,
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
+    maxWidth: 290,
   },
   actionButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 20,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: Radius.full,
+    ...Shadows.subtle,
+  },
+  btnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   actionButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    ...Typography.labelMd,
+    fontWeight: "700",
+    color: Colors.onPrimary,
   },
   errorText: {
-    color: "#EF4444",
-    fontSize: 14,
-    marginBottom: 12,
+    ...Typography.bodySm,
+    color: Colors.error,
+    marginBottom: Spacing.md,
     textAlign: "center",
   },
 });

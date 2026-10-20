@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -9,11 +9,15 @@ import {
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { useWishlist, WishlistItemList } from "@/features/commerce/wishlists";
 import { useCart } from "@/features/commerce/carts";
 import { getSelectedBranchId } from "@/features/territory/branches";
 import { Product } from "@/features/catalog/products";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type WishlistScreenRouteProp = RouteProp<RootStackParamList, "Wishlist">;
 type WishlistScreenNavigationProp = NativeStackNavigationProp<
@@ -24,6 +28,7 @@ type WishlistScreenNavigationProp = NativeStackNavigationProp<
 export default function WishlistScreen() {
   const route = useRoute<WishlistScreenRouteProp>();
   const navigation = useNavigation<WishlistScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
 
   const routeBranchId = route.params?.branchId ?? null;
   const [branchId, setBranchId] = useState<string | null>(routeBranchId);
@@ -57,14 +62,15 @@ export default function WishlistScreen() {
     moveAllToCart,
   } = useWishlist(branchId, { enabled: isStorageLoaded });
 
-  const { addItem: addToCart } = useCart(branchId);
+  const { cart, addItem: addToCart } = useCart(branchId);
+  const cartCount = cart?.cartItems?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
 
   const items = wishlist?.wishlistItems || wishlist?.items || [];
 
   const handleAddToCart = async (product: Product) => {
     const success = await addToCart(product.id);
     if (success) {
-      Alert.alert("Thành công", `Đã thêm "${product.name}" vào giỏ hàng.`);
+      Alert.alert("Thành công", `Đã thêm "${product.name}" vào giỏ hàng ẩm thực.`);
     }
   };
 
@@ -81,7 +87,7 @@ export default function WishlistScreen() {
 
     Alert.alert(
       "Chuyển vào giỏ hàng",
-      `Bạn có muốn chuyển tất cả ${items.length} sản phẩm yêu thích vào giỏ hàng không?`,
+      `Bạn có muốn chuyển tất cả ${items.length} món yêu thích vào giỏ hàng không?`,
       [
         { text: "Hủy", style: "cancel" },
         {
@@ -91,7 +97,7 @@ export default function WishlistScreen() {
             if (res.success) {
               Alert.alert(
                 "Thành công",
-                "Đã chuyển tất cả sản phẩm vào giỏ hàng!",
+                "Đã chuyển tất cả món ăn vào giỏ hàng!",
                 [
                   { text: "Ở lại", style: "cancel" },
                   {
@@ -103,7 +109,7 @@ export default function WishlistScreen() {
             } else {
               Alert.alert(
                 "Lỗi",
-                res.error || "Không thể chuyển sản phẩm vào giỏ hàng.",
+                res.error || "Không thể chuyển món ăn vào giỏ hàng.",
               );
             }
           },
@@ -112,154 +118,160 @@ export default function WishlistScreen() {
     );
   };
 
-  if (isLoading && !wishlist) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Đang tải danh sách yêu thích...</Text>
-      </View>
-    );
-  }
-
-  if (error && !wishlist) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorIcon}>⚠️</Text>
-        <Text style={styles.errorTitle}>Không thể tải danh sách yêu thích</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => refresh()}>
-          <Text style={styles.retryButtonText}>Thử lại</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>❤️</Text>
-        <Text style={styles.emptyTitle}>Danh sách yêu thích trống</Text>
-        <Text style={styles.emptySubtitle}>
-          Hãy lưu lại những món bạn yêu thích để dễ dàng tìm kiếm và đặt hàng sau nhé!
-        </Text>
-        <TouchableOpacity
-          style={styles.browseButton}
-          onPress={() => navigation.navigate("Menu", { branchId })}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.browseButtonText}>Khám phá thực đơn</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <View style={styles.headerBar}>
-        <View style={styles.headerTitleGroup}>
-          <Text style={styles.headerTitle}>
-            Sản phẩm yêu thích ({items.length})
+    <View style={styles.screenWrapper}>
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="DANH SÁCH YÊU THÍCH"
+        showBack={navigation.canGoBack()}
+        cartCount={cartCount}
+        onCartPress={() => navigation.navigate("Cart", { branchId })}
+      />
+
+      {isLoading && !wishlist ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primaryContainer} />
+          <Text style={styles.loadingText}>Đang tải danh sách món yêu thích...</Text>
+        </View>
+      ) : error && !wishlist ? (
+        <View style={styles.centerContainer}>
+          <View style={styles.errorIconCircle}>
+            <Ionicons name="alert-circle-outline" size={36} color={Colors.error} />
+          </View>
+          <Text style={styles.errorTitle}>Không thể tải danh sách yêu thích</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refresh()} activeOpacity={0.85}>
+            <Ionicons name="refresh-outline" size={16} color={Colors.onPrimary} style={{ marginRight: 6 }} />
+            <Text style={styles.retryButtonText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
+      ) : items.length === 0 ? (
+        <View style={styles.centerContainer}>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="heart-dislike-outline" size={40} color={Colors.secondaryGold} />
+          </View>
+          <Text style={styles.emptyTitle}>Chưa có món ăn yêu thích</Text>
+          <Text style={styles.emptySubtitle}>
+            Khám phá thực đơn thượng hạng của Haute De Hallen và lưu lại những phong vị tuyệt hảo bạn yêu thích.
           </Text>
-          {branchId && (
-            <Text style={styles.headerSubtitle}>
-              Chi nhánh ID: {branchId.slice(0, 8)}...
-            </Text>
-          )}
+          <TouchableOpacity
+            style={styles.browseButton}
+            onPress={() => navigation.navigate("Menu", { branchId })}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="restaurant-outline" size={16} color={Colors.onPrimary} style={{ marginRight: 6 }} />
+            <Text style={styles.browseButtonText}>Khám phá thực đơn</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.headerCartButton}
-          onPress={() => navigation.navigate("Cart", { branchId })}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.headerCartIcon}>🛒</Text>
-          <Text style={styles.headerCartText}>Giỏ hàng</Text>
-        </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={styles.contentContainer}>
+          {/* Subheader info bar */}
+          <View style={styles.subHeader}>
+            <View style={styles.subHeaderLeft}>
+              <Ionicons name="heart" size={16} color={Colors.primaryContainer} />
+              <Text style={styles.subHeaderCount}>
+                {items.length} món ẩm thực tinh tuyển
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.viewCartLink}
+              onPress={() => navigation.navigate("Cart", { branchId })}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewCartLinkText}>Giỏ hàng ({cartCount})</Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.secondaryGold} />
+            </TouchableOpacity>
+          </View>
 
-      <View style={styles.listContainer}>
-        <WishlistItemList
-          wishlist={wishlist}
-          refreshing={isLoading}
-          onRefresh={refresh}
-          onRemoveItem={(productId) => removeItem(productId)}
-          onAddToCart={handleAddToCart}
-          onProductPress={handleProductPress}
-        />
-      </View>
+          <View style={styles.listContainer}>
+            <WishlistItemList
+              wishlist={wishlist}
+              refreshing={isLoading}
+              onRefresh={refresh}
+              onRemoveItem={(productId) => removeItem(productId)}
+              onAddToCart={handleAddToCart}
+              onProductPress={handleProductPress}
+            />
+          </View>
 
-      {/* Bottom Bar: Move All to Cart */}
-      <View style={styles.bottomBar}>
-        <View style={styles.bottomInfo}>
-          <Text style={styles.bottomCountText}>{items.length} món đã lưu</Text>
-          <Text style={styles.bottomHintText}>Chuyển vào giỏ để thanh toán</Text>
+          {/* Bottom Bar: Move All to Cart */}
+          <View
+            style={[
+              styles.bottomBar,
+              { paddingBottom: Math.max(insets.bottom, 12) + 8 },
+            ]}
+          >
+            <View style={styles.bottomInfo}>
+              <Text style={styles.bottomCountText}>{items.length} món đã lưu</Text>
+              <Text style={styles.bottomHintText}>Chuyển toàn bộ vào bàn tiệc</Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.moveAllButton,
+                isMovingAll && styles.moveAllButtonDisabled,
+              ]}
+              onPress={handleMoveAllToCart}
+              disabled={isMovingAll}
+              activeOpacity={0.85}
+            >
+              {isMovingAll ? (
+                <ActivityIndicator size="small" color={Colors.onPrimary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="bag-handle"
+                    size={18}
+                    color={Colors.onPrimary}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.moveAllButtonText}>Chuyển tất cả vào giỏ</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-        <TouchableOpacity
-          style={[
-            styles.moveAllButton,
-            isMovingAll && styles.moveAllButtonDisabled,
-          ]}
-          onPress={handleMoveAllToCart}
-          disabled={isMovingAll}
-          activeOpacity={0.8}
-        >
-          {isMovingAll ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <>
-              <Text style={styles.moveAllButtonIcon}>🛒</Text>
-              <Text style={styles.moveAllButtonText}>Chuyển tất cả vào giỏ</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screenWrapper: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.background,
   },
-  headerBar: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: "#E2E8F0",
+  contentContainer: {
+    flex: 1,
+  },
+  subHeader: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSoft,
   },
-  headerTitleGroup: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: "#64748B",
-    marginTop: 2,
-  },
-  headerCartButton: {
+  subHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
+    gap: 6,
   },
-  headerCartIcon: {
-    fontSize: 14,
-    marginRight: 4,
+  subHeaderCount: {
+    ...Typography.labelSm,
+    color: Colors.onSurface,
+    fontWeight: "700",
   },
-  headerCartText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#0F172A",
+  viewCartLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  viewCartLinkText: {
+    ...Typography.labelSm,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
   },
   listContainer: {
     flex: 1,
@@ -268,119 +280,131 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    backgroundColor: "rgba(252, 249, 243, 0.98)",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 8,
+    borderColor: Colors.borderSoft,
+    ...Shadows.floating,
   },
   bottomInfo: {
     flex: 1,
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   bottomCountText: {
-    fontSize: 14,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
   },
   bottomHintText: {
-    fontSize: 12,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    fontSize: 11,
     marginTop: 2,
   },
   moveAllButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primaryContainer,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    ...Shadows.subtle,
   },
   moveAllButtonDisabled: {
-    backgroundColor: "#94A3B8",
-  },
-  moveAllButtonIcon: {
-    fontSize: 16,
-    marginRight: 6,
+    backgroundColor: Colors.surfaceContainer,
   },
   moveAllButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
+    ...Typography.labelSm,
+    color: Colors.onPrimary,
     fontWeight: "700",
   },
   centerContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#FFFFFF",
+    padding: Spacing.xl,
+    backgroundColor: Colors.background,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    marginTop: Spacing.md,
+    color: Colors.onSurfaceVariant,
   },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+  errorIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
   },
   errorTitle: {
-    fontSize: 18,
+    ...Typography.titleMedium,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
     marginBottom: 6,
   },
   errorText: {
-    color: "#DC2626",
-    fontSize: 14,
+    ...Typography.bodySm,
+    color: Colors.error,
     textAlign: "center",
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  emptyIcon: {
-    fontSize: 56,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: "#64748B",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 24,
+    marginBottom: Spacing.lg,
     maxWidth: 280,
   },
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primaryContainer,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.md,
+  },
+  retryButtonText: {
+    ...Typography.labelSm,
+    color: Colors.onPrimary,
+    fontWeight: "700",
+  },
+  emptyIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 2,
+    borderColor: Colors.borderSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+    ...Shadows.subtle,
+  },
+  emptyTitle: {
+    ...Typography.headlineSm,
+    color: Colors.onSurface,
+    fontWeight: "700",
+    marginBottom: Spacing.xs,
+  },
+  emptySubtitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
+    maxWidth: 300,
+  },
   browseButton: {
-    backgroundColor: "#007AFF",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primaryContainer,
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.md,
+    ...Shadows.subtle,
   },
   browseButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
+    ...Typography.labelSm,
+    color: Colors.onPrimary,
+    fontWeight: "700",
   },
 });
-

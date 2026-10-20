@@ -11,7 +11,10 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { ContactForm } from "@/features/contact";
 import {
@@ -21,11 +24,20 @@ import {
   getSelectedBranchId,
   saveSelectedBranchId,
 } from "@/features/territory/branches";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type ContactScreenRouteProp = RouteProp<RootStackParamList, "Contact">;
+type ContactScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Contact"
+>;
 
 export default function ContactScreen() {
   const route = useRoute<ContactScreenRouteProp>();
+  const navigation = useNavigation<ContactScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
+
   const {
     branches,
     isLoading: isBranchesLoading,
@@ -96,8 +108,8 @@ export default function ContactScreen() {
     if (!currentBranch) {
       const defaultUrl =
         Platform.select({
-          ios: "maps:0,0?q=Restaurant",
-          android: "geo:0,0?q=Restaurant",
+          ios: "maps:0,0?q=Haute+De+Hallen",
+          android: "geo:0,0?q=Haute+De+Hallen",
           default: "https://maps.google.com",
         }) || "https://maps.google.com";
       Linking.openURL(defaultUrl);
@@ -171,18 +183,18 @@ export default function ContactScreen() {
     if (!status) return null;
     const s = status.toLowerCase();
     if (s === "active") {
-      return { text: "Đang hoạt động", color: "#16A34A", bg: "#DCFCE7" };
+      return { text: "Đang mở cửa", color: Colors.secondaryGold, bg: Colors.surfaceContainerLow };
     }
     if (s === "closed") {
-      return { text: "Tạm đóng cửa", color: "#DC2626", bg: "#FEE2E2" };
+      return { text: "Tạm đóng cửa", color: Colors.error, bg: "#FEE2E2" };
     }
     if (s === "undermaintenance") {
       return { text: "Đang bảo trì", color: "#D97706", bg: "#FEF3C7" };
     }
     if (s === "inactive") {
-      return { text: "Ngưng hoạt động", color: "#64748B", bg: "#F1F5F9" };
+      return { text: "Ngưng hoạt động", color: Colors.outline, bg: Colors.surfaceContainerLow };
     }
-    return { text: status, color: "#4F46E5", bg: "#EEF2FF" };
+    return { text: status, color: Colors.primary, bg: Colors.surfaceContainerLow };
   };
 
   const statusBadge = getStatusBadge(currentBranch?.status);
@@ -215,193 +227,216 @@ export default function ContactScreen() {
           </View>
           {Boolean(item.address) && (
             <Text style={styles.dropdownItemSub} numberOfLines={1}>
-              📍 {item.address}
+              {item.address}
             </Text>
           )}
         </View>
-        {isSelected && <Text style={styles.dropdownCheck}>✓</Text>}
+        {isSelected && (
+          <Ionicons name="checkmark" size={18} color={Colors.primary} />
+        )}
       </View>
     );
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardContainer}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.contentWrapper}>
-          {/* Header Banner */}
-          <View style={styles.headerBanner}>
-            <Text style={styles.headerTag}>TRUNG TÂM HỖ TRỢ</Text>
-            <Text style={styles.headerTitle}>
-              Chúng tôi luôn sẵn sàng lắng nghe bạn
-            </Text>
-            <Text style={styles.headerDescription}>
-              Mọi đóng góp, câu hỏi hoặc yêu cầu đặt tiệc của quý khách đều là
-              động lực để chúng tôi hoàn thiện mỗi ngày.
-            </Text>
-          </View>
+    <View style={styles.screenWrapper}>
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="LIÊN HỆ & GÓP Ý"
+        showBack={navigation.canGoBack()}
+      />
 
-          {/* Branch Selection Card */}
-          <View style={styles.branchSelectCard}>
-            <View style={styles.branchSelectHeader}>
-              <View style={styles.branchSelectHeaderLeft}>
-                <Text style={styles.branchSelectTitle}>
-                  🏢 Chi nhánh liên hệ
-                </Text>
-                <Text style={styles.branchSelectSubtitle}>
-                  Xem thông tin hotline và địa chỉ theo chi nhánh
-                </Text>
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { paddingBottom: insets.bottom + 40 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.contentWrapper}>
+            {/* Header Luxury Banner */}
+            <View style={styles.headerBanner}>
+              <View style={styles.bannerTagRow}>
+                <Ionicons name="sparkles" size={12} color={Colors.secondaryFixed} />
+                <Text style={styles.headerTag}>CHĂM SÓC KHÁCH HÀNG THƯỢNG HẠNG</Text>
               </View>
-              {statusBadge && (
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: statusBadge.bg },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.statusDot,
-                      { backgroundColor: statusBadge.color },
-                    ]}
-                  />
-                  <Text
-                    style={[styles.statusText, { color: statusBadge.color }]}
-                  >
-                    {statusBadge.text}
+              <Text style={styles.headerTitle}>
+                Lắng nghe & Đồng hành cùng Quý khách
+              </Text>
+              <Text style={styles.headerDescription}>
+                Mọi đóng góp, ý kiến trải nghiệm ẩm thực hoặc yêu cầu đặt tiệc riêng của quý khách đều là nguồn cảm hứng để Haute De Hallen phụng sự chu đáo hơn.
+              </Text>
+            </View>
+
+            {/* Branch Selection Card */}
+            <View style={styles.branchSelectCard}>
+              <View style={styles.branchSelectHeader}>
+                <View style={styles.branchSelectHeaderLeft}>
+                  <Text style={styles.branchSelectTitle}>
+                    Chi nhánh phục vụ
+                  </Text>
+                  <Text style={styles.branchSelectSubtitle}>
+                    Hotline & địa chỉ không gian ẩm thực theo chi nhánh
                   </Text>
                 </View>
-              )}
+                {statusBadge && (
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: statusBadge.bg },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.statusDot,
+                        { backgroundColor: statusBadge.color },
+                      ]}
+                    />
+                    <Text
+                      style={[styles.statusText, { color: statusBadge.color }]}
+                    >
+                      {statusBadge.text}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {isBranchesLoading && branches.length === 0 ? (
+                <View style={styles.branchLoadingBox}>
+                  <ActivityIndicator size="small" color={Colors.primaryContainer} />
+                  <Text style={styles.branchLoadingText}>
+                    Đang kết nối danh sách chi nhánh...
+                  </Text>
+                </View>
+              ) : branches.length > 0 ? (
+                <BranchDropdown
+                  branches={branches}
+                  value={currentBranch?.id ?? null}
+                  onSelect={handleSelectBranch}
+                  placeholder="Chọn chi nhánh liên hệ"
+                  hideAllOption={true}
+                  renderItem={renderBranchItem}
+                  style={styles.branchDropdown}
+                />
+              ) : Boolean(branchesError) ? (
+                <View style={styles.branchErrorBox}>
+                  <Text style={styles.branchErrorText}>
+                    Không thể kết nối danh sách chi nhánh
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.retryBtn}
+                    onPress={refreshBranches}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.retryBtnText}>Thử lại</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
 
-            {isBranchesLoading && branches.length === 0 ? (
-              <View style={styles.branchLoadingBox}>
-                <ActivityIndicator size="small" color="#4F46E5" />
-                <Text style={styles.branchLoadingText}>
-                  Đang tải danh sách chi nhánh...
-                </Text>
-              </View>
-            ) : branches.length > 0 ? (
-              <BranchDropdown
-                branches={branches}
-                value={currentBranch?.id ?? null}
-                onSelect={handleSelectBranch}
-                placeholder="Chọn chi nhánh liên hệ"
-                hideAllOption={true}
-                renderItem={renderBranchItem}
-                style={styles.branchDropdown}
-              />
-            ) : Boolean(branchesError) ? (
-              <View style={styles.branchErrorBox}>
-                <Text style={styles.branchErrorText}>
-                  Không thể tải danh sách chi nhánh
-                </Text>
-                <TouchableOpacity
-                  style={styles.retryBtn}
-                  onPress={refreshBranches}
-                >
-                  <Text style={styles.retryBtnText}>Thử lại ↻</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
-          </View>
-
-          {/* Quick Channels Grid */}
-          <View style={styles.quickChannelsContainer}>
-            <TouchableOpacity
-              style={styles.channelCard}
-              onPress={handleCallHotline}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[styles.channelIconBox, { backgroundColor: "#FEF3C7" }]}
+            {/* Quick Channels Grid */}
+            <View style={styles.quickChannelsContainer}>
+              <TouchableOpacity
+                style={styles.channelCard}
+                onPress={handleCallHotline}
+                activeOpacity={0.8}
               >
-                <Text style={styles.channelIcon}>📞</Text>
-              </View>
-              <Text style={styles.channelTitle}>Hotline đặt bàn</Text>
-              <Text style={styles.channelValue} numberOfLines={1}>
-                {currentBranch?.phoneNumber || "1900 8888"}
-              </Text>
-              <Text style={styles.channelAction}>Nhấn để gọi ➔</Text>
-            </TouchableOpacity>
+                <View style={styles.channelIconBox}>
+                  <Ionicons name="call" size={18} color={Colors.primary} />
+                </View>
+                <Text style={styles.channelTitle}>Hotline phục vụ</Text>
+                <Text style={styles.channelValue} numberOfLines={1}>
+                  {currentBranch?.phoneNumber || "1900 8888"}
+                </Text>
+                <View style={styles.channelActionRow}>
+                  <Text style={styles.channelAction}>Gọi ngay</Text>
+                  <Ionicons name="arrow-forward" size={12} color={Colors.secondaryGold} />
+                </View>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.channelCard}
-              onPress={handleSendEmail}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[styles.channelIconBox, { backgroundColor: "#DBEAFE" }]}
+              <TouchableOpacity
+                style={styles.channelCard}
+                onPress={handleSendEmail}
+                activeOpacity={0.8}
               >
-                <Text style={styles.channelIcon}>✉️</Text>
-              </View>
-              <Text style={styles.channelTitle}>Hòm thư hỗ trợ</Text>
-              <Text style={styles.channelValue} numberOfLines={1}>
-                {currentBranch?.email || "support@res.vn"}
-              </Text>
-              <Text style={styles.channelAction}>Gửi email ➔</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Office Hours & Address Bar */}
-          <View style={styles.infoBar}>
-            <View style={styles.infoBarItem}>
-              <Text style={styles.infoBarIcon}>⏰</Text>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoBarLabel}>Thời gian hoạt động</Text>
-                <Text style={styles.infoBarValue}>{formattedHours}</Text>
-              </View>
+                <View style={styles.channelIconBox}>
+                  <Ionicons name="mail" size={18} color={Colors.primary} />
+                </View>
+                <Text style={styles.channelTitle}>Hòm thư điện tử</Text>
+                <Text style={styles.channelValue} numberOfLines={1}>
+                  {currentBranch?.email || "concierge@hautedehallen.vn"}
+                </Text>
+                <View style={styles.channelActionRow}>
+                  <Text style={styles.channelAction}>Gửi email</Text>
+                  <Ionicons name="arrow-forward" size={12} color={Colors.secondaryGold} />
+                </View>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[styles.infoBarItem, styles.addressItem]}
-              onPress={handleOpenMap}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.infoBarIcon}>📍</Text>
-              <View style={styles.infoTextWrapper}>
-                <Text style={styles.infoBarLabel}>
-                  {currentBranch
-                    ? `Chi nhánh ${currentBranch.city || currentBranch.branchCode}`
-                    : "Hệ thống chi nhánh"}
-                </Text>
-                <Text style={styles.infoBarValue} numberOfLines={2}>
-                  {currentBranch?.address
-                    ? `${currentBranch.address}${currentBranch.city ? `, ${currentBranch.city}` : ""}`
-                    : "Xem địa chỉ trên bản đồ"}
-                </Text>
-                <Text style={styles.mapHintText}>
-                  Chạm để mở bản đồ & chỉ đường ›
-                </Text>
+            {/* Office Hours & Address Bar */}
+            <View style={styles.infoBar}>
+              <View style={styles.infoBarItem}>
+                <View style={styles.infoIconBox}>
+                  <Ionicons name="time-outline" size={18} color={Colors.secondaryGold} />
+                </View>
+                <View style={styles.infoTextWrapper}>
+                  <Text style={styles.infoBarLabel}>Thời gian mở cửa</Text>
+                  <Text style={styles.infoBarValue}>{formattedHours}</Text>
+                </View>
               </View>
-              <Text style={styles.arrowIcon}>›</Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* Contact Form */}
-          <ContactForm />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+              <TouchableOpacity
+                style={[styles.infoBarItem, styles.addressItem]}
+                onPress={handleOpenMap}
+                activeOpacity={0.7}
+              >
+                <View style={styles.infoIconBox}>
+                  <Ionicons name="location-outline" size={18} color={Colors.secondaryGold} />
+                </View>
+                <View style={styles.infoTextWrapper}>
+                  <Text style={styles.infoBarLabel}>
+                    {currentBranch
+                      ? `Chi nhánh ${currentBranch.city || currentBranch.branchCode}`
+                      : "Không gian nhà hàng"}
+                  </Text>
+                  <Text style={styles.infoBarValue} numberOfLines={2}>
+                    {currentBranch?.address
+                      ? `${currentBranch.address}${currentBranch.city ? `, ${currentBranch.city}` : ""}`
+                      : "Chạm để xem địa chỉ trên bản đồ"}
+                  </Text>
+                  <Text style={styles.mapHintText}>
+                    Chạm để xem bản đồ & chỉ đường ›
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.outline} style={{ alignSelf: "center" }} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Contact Form */}
+            <ContactForm />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   keyboardContainer: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 16,
-    paddingBottom: 40,
+    padding: Spacing.lg,
   },
   contentWrapper: {
     width: "100%",
@@ -409,74 +444,75 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   headerBanner: {
-    backgroundColor: "#1E1B4B",
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 16,
-    shadowColor: "#1E1B4B",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.card,
+  },
+  bannerTagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: Spacing.xs,
   },
   headerTag: {
-    fontSize: 11,
+    ...Typography.labelSm,
+    color: Colors.secondaryFixed,
+    letterSpacing: 1,
     fontWeight: "700",
-    color: "#818CF8",
-    letterSpacing: 1.2,
-    marginBottom: 6,
   },
   headerTitle: {
-    fontSize: 22,
+    ...Typography.headlineSm,
+    color: Colors.onPrimary,
     fontWeight: "800",
-    color: "#FFFFFF",
-    lineHeight: 28,
-    marginBottom: 8,
+    lineHeight: 26,
+    marginBottom: Spacing.sm,
   },
   headerDescription: {
-    fontSize: 13,
-    color: "#C7D2FE",
+    ...Typography.bodySm,
+    color: "rgba(255, 255, 255, 0.85)",
     lineHeight: 20,
   },
   branchSelectCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   branchSelectHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
   },
   branchSelectHeaderLeft: {
     flex: 1,
-    paddingRight: 8,
+    paddingRight: Spacing.sm,
   },
   branchSelectTitle: {
-    fontSize: 14,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 2,
   },
   branchSelectSubtitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     fontSize: 12,
-    color: "#64748B",
   },
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
     gap: 4,
   },
   statusDot: {
@@ -485,6 +521,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusText: {
+    ...Typography.labelSm,
     fontSize: 11,
     fontWeight: "600",
   },
@@ -492,23 +529,23 @@ const styles = StyleSheet.create({
     margin: 0,
     marginTop: 4,
     height: 48,
-    backgroundColor: "#F8FAFC",
-    borderColor: "#E2E8F0",
+    backgroundColor: Colors.surfaceContainerLow,
+    borderColor: Colors.borderSoft,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
   },
   dropdownItemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    paddingHorizontal: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderSoft,
   },
   dropdownItemSelectedRow: {
-    backgroundColor: "#EEF2FF",
+    backgroundColor: Colors.surfaceContainerLow,
   },
   dropdownItemTextCol: {
     flex: 1,
@@ -516,164 +553,160 @@ const styles = StyleSheet.create({
   dropdownItemTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: Spacing.sm,
     marginBottom: 2,
   },
   dropdownItemTitle: {
-    fontSize: 14,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "600",
-    color: "#1E293B",
   },
   dropdownItemTitleSelected: {
-    color: "#4F46E5",
+    color: Colors.primary,
     fontWeight: "700",
   },
   codeBadge: {
-    backgroundColor: "#E0E7FF",
+    backgroundColor: Colors.surfaceContainer,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: Radius.xs,
   },
   codeBadgeText: {
+    ...Typography.labelSm,
     fontSize: 10,
     fontWeight: "700",
-    color: "#4338CA",
+    color: Colors.primary,
   },
   dropdownItemSub: {
+    ...Typography.bodySm,
     fontSize: 12,
-    color: "#64748B",
-  },
-  dropdownCheck: {
-    fontSize: 16,
-    color: "#4F46E5",
-    fontWeight: "700",
-    marginLeft: 8,
+    color: Colors.onSurfaceVariant,
   },
   branchLoadingBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingVertical: 12,
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
   branchLoadingText: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   branchErrorBox: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
   },
   branchErrorText: {
-    fontSize: 12,
-    color: "#DC2626",
+    ...Typography.bodySm,
+    color: Colors.error,
   },
   retryBtn: {
-    paddingHorizontal: 10,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     backgroundColor: "#FEE2E2",
-    borderRadius: 6,
+    borderRadius: Radius.xs,
   },
   retryBtnText: {
-    fontSize: 12,
-    color: "#DC2626",
-    fontWeight: "600",
+    ...Typography.labelSm,
+    color: Colors.error,
+    fontWeight: "700",
   },
   quickChannelsContainer: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   channelCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   channelIconBox: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLow,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
-  },
-  channelIcon: {
-    fontSize: 18,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   channelTitle: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#64748B",
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
     marginBottom: 4,
   },
   channelValue: {
-    fontSize: 14,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+  channelActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
   },
   channelAction: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#4F46E5",
+    ...Typography.labelSm,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
   },
   infoBar: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    gap: 12,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+    gap: Spacing.md,
   },
   infoBarItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: Spacing.md,
+  },
+  infoIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   infoTextWrapper: {
     flex: 1,
   },
   addressItem: {
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
-  },
-  infoBarIcon: {
-    fontSize: 20,
-    marginTop: 1,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderSoft,
   },
   infoBarLabel: {
-    fontSize: 11,
-    color: "#64748B",
-    fontWeight: "500",
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
     marginBottom: 2,
   },
   infoBarValue: {
-    fontSize: 13,
+    ...Typography.bodyMedium,
     fontWeight: "600",
-    color: "#1E293B",
+    color: Colors.onSurface,
     lineHeight: 18,
   },
   mapHintText: {
-    fontSize: 11,
-    color: "#4F46E5",
-    fontWeight: "500",
+    ...Typography.labelSm,
+    color: Colors.secondaryGold,
+    fontWeight: "600",
     marginTop: 4,
-  },
-  arrowIcon: {
-    fontSize: 20,
-    color: "#94A3B8",
-    fontWeight: "700",
-    alignSelf: "center",
   },
 });

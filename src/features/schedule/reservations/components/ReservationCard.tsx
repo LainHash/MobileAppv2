@@ -1,7 +1,9 @@
 import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Reservation } from "../types/Reservation";
 import { ReservationStatusBadge } from "./ReservationStatusBadge";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 interface ReservationCardProps {
   reservation: Reservation;
@@ -32,9 +34,12 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
       <View style={styles.topRow}>
         <View>
           <Text style={styles.codeText}>#{reservation.reservationCode}</Text>
-          <Text style={styles.branchText}>
-            Chi nhánh {reservation.branchCode || "nhà hàng"}
-          </Text>
+          <View style={styles.branchRow}>
+            <Ionicons name="storefront-outline" size={13} color={Colors.secondary} />
+            <Text style={styles.branchText}>
+              Chi nhánh {reservation.branchCode || "nhà hàng"}
+            </Text>
+          </View>
         </View>
         <ReservationStatusBadge status={reservation.status} />
       </View>
@@ -43,28 +48,34 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
 
       <View style={styles.infoRow}>
         <View style={styles.infoCol}>
-          <Text style={styles.infoLabel}>Thời gian đến</Text>
-          <Text style={styles.infoValue}>
-            🕒 {formattedTime} • {formattedDate}
-          </Text>
+          <Text style={styles.infoLabel}>THỜI GIAN ĐẾN</Text>
+          <View style={styles.timeRow}>
+            <Ionicons name="time-outline" size={15} color={Colors.primary} />
+            <Text style={styles.infoValue}>
+              {formattedTime} • {formattedDate}
+            </Text>
+          </View>
         </View>
       </View>
 
       <View style={styles.detailsRow}>
-        <Text style={styles.metaText}>
-          👥 <Text style={styles.metaValue}>{reservation.partySize} khách</Text>
-        </Text>
+        <View style={styles.metaBadge}>
+          <Ionicons name="people-outline" size={14} color={Colors.onSurfaceVariant} />
+          <Text style={styles.metaValue}>{reservation.partySize} khách</Text>
+        </View>
+
         {reservation.tableNumbers && reservation.tableNumbers.length > 0 ? (
-          <Text style={styles.metaText}>
-            🪑 Bàn:{" "}
+          <View style={styles.metaBadge}>
+            <Ionicons name="restaurant-outline" size={14} color={Colors.secondary} />
             <Text style={styles.metaValue}>
-              {reservation.tableNumbers.join(", ")}
+              Bàn: {reservation.tableNumbers.join(", ")}
             </Text>
-          </Text>
+          </View>
         ) : (
-          <Text style={styles.metaText}>
-            🪑 <Text style={styles.metaMuted}>Nhà hàng xếp bàn</Text>
-          </Text>
+          <View style={styles.metaBadge}>
+            <Ionicons name="restaurant-outline" size={14} color={Colors.outline} />
+            <Text style={styles.metaMuted}>Nhà hàng xếp bàn</Text>
+          </View>
         )}
       </View>
     </TouchableOpacity>
@@ -73,17 +84,13 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   topRow: {
     flexDirection: "row",
@@ -91,50 +98,70 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   codeText: {
-    fontSize: 15,
+    ...Typography.labelLg,
     fontWeight: "700",
-    color: "#0F172A",
+    color: Colors.onSurface,
+  },
+  branchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
   },
   branchText: {
-    fontSize: 13,
-    color: "#64748B",
-    marginTop: 2,
+    ...Typography.bodySm,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
   },
   divider: {
     height: 1,
-    backgroundColor: "#F1F5F9",
-    marginVertical: 10,
+    backgroundColor: Colors.borderSoft,
+    marginVertical: 12,
   },
   infoRow: {
-    marginBottom: 6,
+    marginBottom: 10,
   },
-  infoCol: {},
+  infoCol: {
+    gap: 4,
+  },
   infoLabel: {
-    fontSize: 11,
-    color: "#94A3B8",
-    fontWeight: "500",
+    ...Typography.labelSm,
+    fontSize: 10,
+    color: Colors.outline,
+    letterSpacing: 0.8,
+    fontWeight: "700",
+  },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   infoValue: {
-    fontSize: 14,
+    ...Typography.bodyMd,
     fontWeight: "600",
-    color: "#1E293B",
-    marginTop: 2,
+    color: Colors.onSurface,
   },
   detailsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 4,
+    alignItems: "center",
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSoft,
   },
-  metaText: {
-    fontSize: 13,
-    color: "#64748B",
+  metaBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   metaValue: {
+    ...Typography.bodySm,
     fontWeight: "600",
-    color: "#0F172A",
+    color: Colors.onSurface,
   },
   metaMuted: {
+    ...Typography.bodySm,
     fontStyle: "italic",
-    color: "#94A3B8",
+    color: Colors.outline,
   },
 });

@@ -15,7 +15,10 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import {
   useOrderDetail,
@@ -27,22 +30,25 @@ import {
   canCancelOrder,
 } from "@/features/commerce/orders";
 import { formatCurrency } from "@/common/helpers";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
+type OrderDetailNavProp = NativeStackNavigationProp<RootStackParamList, "OrderDetail">;
 
 const STEPS = [
-  { label: "Đặt hàng", desc: "Chờ thanh toán / xác nhận" },
-  { label: "Xác nhận", desc: "Quán đã tiếp nhận" },
-  { label: "Chuẩn bị", desc: "Đang chế biến món" },
-  { label: "Sẵn sàng", desc: "Món đã nấu xong" },
-  { label: "Đang giao", desc: "Tài xế đang vận chuyển" },
-  { label: "Hoàn thành", desc: "Giao món thành công" },
+  { label: "Đặt món", desc: "Chờ thanh toán / xác nhận" },
+  { label: "Tiếp nhận", desc: "Nhà hàng đã xác nhận" },
+  { label: "Chế biến", desc: "Đầu bếp đang thực hiện" },
+  { label: "Hoàn tất", desc: "Món ăn đã sẵn sàng" },
+  { label: "Đang giao", desc: "Giao vận đang vận chuyển" },
+  { label: "Thành công", desc: "Đã giao đến thực khách" },
 ];
 
 const REPORT_TOPICS = [
   "Giao thiếu món",
   "Món ăn bị nguội",
-  "Giao trễ giờ",
+  "Giao trễ giờ hẹn",
   "Món bị đổ / hỏng bao bì",
   "Sai món đã đặt",
   "Vấn đề khác",
@@ -73,6 +79,8 @@ function getStepIndex(status: OrderStatus): number {
 
 export default function OrderDetailScreen() {
   const route = useRoute<OrderDetailRouteProp>();
+  const navigation = useNavigation<OrderDetailNavProp>();
+  const insets = useSafeAreaInsets();
   const { orderId } = route.params;
 
   const {
@@ -114,7 +122,7 @@ export default function OrderDetailScreen() {
   const handleCancelPress = () => {
     Alert.alert(
       "Hủy đơn hàng",
-      "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+      "Quý khách có chắc chắn muốn hủy đơn hàng này không?",
       [
         { text: "Không", style: "cancel" },
         {
@@ -133,19 +141,19 @@ export default function OrderDetailScreen() {
 
   const handleConfirmDeliveredPress = () => {
     Alert.alert(
-      "Xác nhận nhận hàng",
-      "Bạn đã nhận được đầy đủ các món ăn và hài lòng với đơn giao hàng này?",
+      "Xác nhận nhận món",
+      "Quý khách đã nhận đầy đủ các món ăn và hài lòng với chất lượng phục vụ?",
       [
         { text: "Chưa nhận", style: "cancel" },
         {
-          text: "Đã nhận thành công",
+          text: "Đã nhận đủ",
           style: "default",
           onPress: async () => {
             const success = await confirmDelivery();
             if (success) {
               Alert.alert(
                 "Hoàn tất đơn hàng",
-                "Cảm ơn bạn đã xác nhận! Chúc bạn có một bữa ăn ngon miệng.",
+                "Cảm ơn quý khách! Chúc quý khách có một bữa tiệc ẩm thực trọn vẹn và ngon miệng.",
               );
             }
           },
@@ -155,481 +163,482 @@ export default function OrderDetailScreen() {
   };
 
   const handleOpenReportModal = () => {
+    setReportNote("");
+    setContactPhone((order as any)?.deliveryPhone || (order as any)?.phoneNumber || "");
+    setSelectedTopic(REPORT_TOPICS[0]);
     setIsReportModalVisible(true);
   };
 
   const handleCloseReportModal = () => {
-    setIsReportModalVisible(false);
-    setReportNote("");
+    if (!isReporting) {
+      setIsReportModalVisible(false);
+    }
   };
 
   const handleSubmitReport = async () => {
     if (!reportNote.trim()) {
-      Alert.alert("Thông báo", "Vui lòng nhập chi tiết phản hồi / khiếu nại.");
+      Alert.alert("Thông báo", "Vui lòng nhập mô tả chi tiết vấn đề bạn gặp phải.");
       return;
     }
 
-    const payload = {
+    const success = await report({
       subject: selectedTopic,
       message: reportNote.trim(),
       phoneNumber: contactPhone.trim() || undefined,
-      fullName: order?.customerName || undefined,
-    };
+    });
 
-    const success = await report(payload);
     if (success) {
-      handleCloseReportModal();
+      setIsReportModalVisible(false);
       Alert.alert(
-        "Gửi phản ánh thành công",
-        "Chúng tôi đã ghi nhận khiếu nại của bạn về đơn hàng. Quán sẽ kiểm tra và liên hệ hỗ trợ bạn sớm nhất có thể.",
+        "Đã gửi khiếu nại",
+        "Chúng tôi đã tiếp nhận thông tin phản hồi của quý khách và sẽ liên hệ xử lý ngay.",
       );
     }
   };
 
-  if (isLoading && !isRefreshing) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Đang tải chi tiết đơn hàng...</Text>
-      </View>
-    );
-  }
-
-  if (error && !order) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>⚠️</Text>
-        <Text style={styles.errorTitle}>Không thể tải đơn hàng</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={refresh}>
-          <Text style={styles.retryButtonText}>Thử lại</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (!order) return null;
-
-  const formattedDate = order.createdAt
-    ? new Date(order.createdAt).toLocaleString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "";
-
-  const items = order.orderDetails || order.orderItems || [];
+  const orderCode = order?.orderCode || orderId.slice(0, 8).toUpperCase();
 
   return (
-    <>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={refresh}
-            colors={["#007AFF"]}
-          />
-        }
-      >
-        {/* Order Header Card */}
-        <View style={styles.card}>
-          <View style={styles.headerRow}>
-            <View>
-              <Text style={styles.orderCode}>
-                #{order.orderCode || order.id.slice(0, 8).toUpperCase()}
-              </Text>
-              {Boolean(formattedDate) && (
-                <Text style={styles.orderDate}>{formattedDate}</Text>
-              )}
-            </View>
-            <OrderStatusBadge status={order.status} size="medium" />
-          </View>
+    <View style={styles.screenWrapper}>
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle={`ĐƠN HÀNG #${orderCode}`}
+        showBack={navigation.canGoBack()}
+      />
 
-          {Boolean(order.branchCode) && (
-            <View style={styles.branchRow}>
-              <Text style={styles.branchIcon}>🏪</Text>
-              <Text style={styles.branchText}>
-                Chi nhánh: {order.branchCode}
-              </Text>
-            </View>
-          )}
+      {isLoading && !order ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primaryContainer} />
+          <Text style={styles.loadingText}>Đang tải chi tiết đơn hàng...</Text>
         </View>
-
-        {/* Delivery Customer Action Card: Confirm delivery */}
-        {canConfirmDelivered && (
-          <View style={styles.deliveryActionCard}>
-            <View style={styles.deliveryActionHeader}>
-              <View style={styles.deliveryActionIconBox}>
-                <Text style={styles.deliveryActionIcon}>🛵</Text>
-              </View>
-              <View style={styles.deliveryActionTextCol}>
-                <Text style={styles.deliveryActionTitle}>
-                  Đơn hàng đang trên đường giao
-                </Text>
-                <Text style={styles.deliveryActionSubtitle}>
-                  Khi đã nhận đủ các món ăn từ shipper, bạn hãy xác nhận để hoàn
-                  thành đơn hàng nhé!
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.confirmDeliveryBtn,
-                isConfirmingDelivery && styles.buttonDisabled,
-              ]}
-              onPress={handleConfirmDeliveredPress}
-              disabled={isConfirmingDelivery}
-              activeOpacity={0.8}
-            >
-              {isConfirmingDelivery ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Text style={styles.confirmDeliveryBtnIcon}>✓</Text>
-                  <Text style={styles.confirmDeliveryBtnText}>
-                    Đã nhận được hàng
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+      ) : error && !order ? (
+        <View style={styles.centerContainer}>
+          <View style={styles.errorIconCircle}>
+            <Ionicons name="alert-circle-outline" size={36} color={Colors.error} />
           </View>
-        )}
-
-        {/* Progress Timeline Stepper */}
-        {!isCancelled && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Tiến trình đơn hàng</Text>
-            <View style={styles.stepperContainer}>
-              {STEPS.map((step, idx) => {
-                const isPassed = idx <= currentStep;
-                const isCurrent = idx === currentStep;
-
-                return (
-                  <View key={step.label} style={styles.stepItem}>
-                    <View style={styles.stepIndicatorCol}>
-                      <View
-                        style={[
-                          styles.stepDot,
-                          isPassed && styles.stepDotPassed,
-                          isCurrent && styles.stepDotCurrent,
-                        ]}
-                      >
-                        {isPassed && <Text style={styles.stepDotCheck}>✓</Text>}
-                      </View>
-                      {idx < STEPS.length - 1 && (
-                        <View
-                          style={[
-                            styles.stepLine,
-                            idx < currentStep && styles.stepLinePassed,
-                          ]}
-                        />
-                      )}
-                    </View>
-                    <View style={styles.stepContent}>
-                      <Text
-                        style={[
-                          styles.stepTitle,
-                          isCurrent && styles.stepTitleCurrent,
-                        ]}
-                      >
-                        {step.label}
-                      </Text>
-                      <Text style={styles.stepDesc}>{step.desc}</Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* Delivery Information Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Thông tin nhận hàng</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Địa chỉ:</Text>
-            <Text style={styles.detailValue}>
-              {order.deliveryAddress || "Tại nhà hàng"}
-            </Text>
-          </View>
-
-          {Boolean(order.customerName) && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Khách hàng:</Text>
-              <Text style={styles.detailValue}>{order.customerName}</Text>
-            </View>
-          )}
-
-          {Boolean(order.note) && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Ghi chú:</Text>
-              <Text style={styles.detailValue}>{order.note}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Ordered Items Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Danh sách món ({items.length})</Text>
-          {items.map((item) => (
-            <OrderItemCard key={item.id || item.productId} item={item} />
-          ))}
-        </View>
-
-        {/* Financial Summary Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tổng kết thanh toán</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Tạm tính:</Text>
-            <Text style={styles.priceValue}>{formatCurrency(order.subtotal)}</Text>
-          </View>
-
-          {order.discountAmount > 0 && (
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Giảm giá:</Text>
-              <Text style={[styles.priceValue, styles.discountText]}>
-                -{formatCurrency(order.discountAmount)}
-              </Text>
-            </View>
-          )}
-
-          {order.deliveryFee > 0 && (
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Phí giao hàng:</Text>
-              <Text style={styles.priceValue}>
-                {formatCurrency(order.deliveryFee)}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.divider} />
-
-          <View style={styles.priceRow}>
-            <Text style={styles.grandTotalLabel}>Tổng thanh toán:</Text>
-            <Text style={styles.grandTotalValue}>
-              {formatCurrency(order.totalAmount)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Report / Complaint Order Button */}
-        {canReport && (
-          <TouchableOpacity
-            style={styles.reportOrderBtn}
-            onPress={handleOpenReportModal}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.reportOrderIcon}>💬</Text>
-            <Text style={styles.reportOrderText}>
-              Báo cáo / Khiếu nại đơn hàng này
-            </Text>
+          <Text style={styles.errorTitle}>Không thể tải đơn hàng</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={refresh} activeOpacity={0.85}>
+            <Ionicons name="refresh-outline" size={16} color={Colors.onPrimary} style={{ marginRight: 6 }} />
+            <Text style={styles.retryButtonText}>Thử lại</Text>
           </TouchableOpacity>
-        )}
-
-        {/* Cancel Order Button */}
-        {canCancel && (
-          <TouchableOpacity
-            style={[styles.cancelButton, isCancelling && styles.buttonDisabled]}
-            onPress={handleCancelPress}
-            disabled={isCancelling}
-            activeOpacity={0.8}
-          >
-            {isCancelling ? (
-              <ActivityIndicator size="small" color="#DC2626" />
-            ) : (
-              <Text style={styles.cancelButtonText}>Hủy đơn hàng này</Text>
-            )}
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-
-      {/* Report / Complaint Modal */}
-      <Modal
-        visible={isReportModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCloseReportModal}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
+        </View>
+      ) : !order ? null : (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + 40 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refresh}
+              tintColor={Colors.primaryContainer}
+              colors={[Colors.primaryContainer]}
+            />
+          }
         >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modalBackdrop}>
-              <View style={styles.modalCard}>
-                {/* Header */}
-                <View style={styles.modalHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.modalTitle}>Báo cáo / Khiếu nại</Text>
-                    <Text style={styles.modalSubtitle}>
-                      Đơn hàng #{order.orderCode || order.id.slice(0, 8).toUpperCase()}
+          {/* Order Header Card */}
+          <View style={styles.card}>
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.orderCode}>#{orderCode}</Text>
+                {Boolean(order.createdAt) && (
+                  <View style={styles.dateRow}>
+                    <Ionicons name="time-outline" size={13} color={Colors.outline} />
+                    <Text style={styles.orderDate}>
+                      {new Date(order.createdAt).toLocaleString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    onPress={handleCloseReportModal}
-                    style={styles.modalCloseBtn}
-                  >
-                    <Text style={styles.modalCloseText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
+                )}
+              </View>
+              <OrderStatusBadge status={order.status} size="medium" />
+            </View>
 
-                {/* Topics Selection */}
-                <Text style={styles.fieldLabel}>Lý do khiếu nại:</Text>
-                <View style={styles.topicsContainer}>
-                  {REPORT_TOPICS.map((topic) => {
-                    const isSelected = selectedTopic === topic;
-                    return (
-                      <TouchableOpacity
-                        key={topic}
-                        style={[
-                          styles.topicChip,
-                          isSelected && styles.topicChipActive,
-                        ]}
-                        onPress={() => setSelectedTopic(topic)}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.topicChipText,
-                            isSelected && styles.topicChipTextActive,
-                          ]}
-                        >
-                          {topic}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* Message input */}
-                <Text style={styles.fieldLabel}>
-                  Chi tiết vấn đề: <Text style={styles.requiredStar}>*</Text>
+            {Boolean(order.branchCode) && (
+              <View style={styles.branchRow}>
+                <Ionicons name="business-outline" size={16} color={Colors.secondaryGold} />
+                <Text style={styles.branchText}>
+                  Chi nhánh phục vụ: <Text style={styles.branchTextBold}>{order.branchCode}</Text>
                 </Text>
-                <TextInput
-                  style={styles.messageInput}
-                  placeholder="Mô tả cụ thể sự cố (món thiếu, tình trạng bao bì, giờ giao...) để nhà hàng hỗ trợ xử lý."
-                  placeholderTextColor="#94A3B8"
-                  multiline
-                  numberOfLines={4}
-                  value={reportNote}
-                  onChangeText={setReportNote}
-                  textAlignVertical="top"
-                />
+              </View>
+            )}
+          </View>
 
-                {/* Contact phone input */}
-                <Text style={styles.fieldLabel}>
-                  Số điện thoại nhận phản hồi (tùy chọn):
-                </Text>
-                <TextInput
-                  style={styles.phoneInput}
-                  placeholder="Nhập SĐT để nhân viên gọi hỗ trợ"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="phone-pad"
-                  value={contactPhone}
-                  onChangeText={setContactPhone}
-                />
-
-                {/* Action Buttons */}
-                <View style={styles.modalActions}>
-                  <TouchableOpacity
-                    style={styles.modalCancelBtn}
-                    onPress={handleCloseReportModal}
-                    disabled={isReporting}
-                  >
-                    <Text style={styles.modalCancelBtnText}>Hủy</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.modalSubmitBtn,
-                      isReporting && styles.buttonDisabled,
-                    ]}
-                    onPress={handleSubmitReport}
-                    disabled={isReporting}
-                    activeOpacity={0.8}
-                  >
-                    {isReporting ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.modalSubmitBtnText}>Gửi khiếu nại</Text>
-                    )}
-                  </TouchableOpacity>
+          {/* Delivery Customer Action Card: Confirm delivery */}
+          {canConfirmDelivered && (
+            <View style={styles.deliveryActionCard}>
+              <View style={styles.deliveryActionHeader}>
+                <View style={styles.deliveryActionIconBox}>
+                  <Ionicons name="bicycle-outline" size={22} color={Colors.secondaryGold} />
+                </View>
+                <View style={styles.deliveryActionTextCol}>
+                  <Text style={styles.deliveryActionTitle}>
+                    Đơn món đang trên đường vận chuyển
+                  </Text>
+                  <Text style={styles.deliveryActionSubtitle}>
+                    Khi đã nhận đủ món ăn tươi nóng từ nhân viên giao hàng, quý khách vui lòng xác nhận hoàn tất.
+                  </Text>
                 </View>
               </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.confirmDeliveryBtn,
+                  isConfirmingDelivery && styles.buttonDisabled,
+                ]}
+                onPress={handleConfirmDeliveredPress}
+                disabled={isConfirmingDelivery}
+                activeOpacity={0.85}
+              >
+                {isConfirmingDelivery ? (
+                  <ActivityIndicator size="small" color={Colors.onPrimary} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={18}
+                      color={Colors.onPrimary}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={styles.confirmDeliveryBtnText}>
+                      Đã nhận đủ món ăn
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Modal>
-    </>
+          )}
+
+          {/* Progress Timeline Stepper */}
+          {!isCancelled && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Tiến trình phục vụ</Text>
+              <View style={styles.stepperContainer}>
+                {STEPS.map((step, idx) => {
+                  const isPassed = idx <= currentStep;
+                  const isCurrent = idx === currentStep;
+
+                  return (
+                    <View key={step.label} style={styles.stepItem}>
+                      <View style={styles.stepIndicatorCol}>
+                        <View
+                          style={[
+                            styles.stepDot,
+                            isPassed && styles.stepDotPassed,
+                            isCurrent && styles.stepDotCurrent,
+                          ]}
+                        >
+                          {isPassed ? (
+                            <Ionicons name="checkmark" size={12} color={Colors.onPrimary} />
+                          ) : (
+                            <View style={styles.stepDotInner} />
+                          )}
+                        </View>
+                        {idx < STEPS.length - 1 && (
+                          <View
+                            style={[
+                              styles.stepLine,
+                              idx < currentStep && styles.stepLinePassed,
+                            ]}
+                          />
+                        )}
+                      </View>
+                      <View style={styles.stepContent}>
+                        <Text
+                          style={[
+                            styles.stepTitle,
+                            isCurrent && styles.stepTitleCurrent,
+                            isPassed && styles.stepTitlePassed,
+                          ]}
+                        >
+                          {step.label}
+                        </Text>
+                        <Text style={styles.stepDesc}>{step.desc}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Delivery Information Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Thông tin giao nhận</Text>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="location-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoRowLabel}>Địa chỉ giao nhận</Text>
+                <Text style={styles.infoRowValue}>
+                  {order.deliveryAddress || "Thưởng thức tại không gian nhà hàng"}
+                </Text>
+              </View>
+            </View>
+
+            {Boolean(order.customerName) && (
+              <View style={styles.infoRow}>
+                <Ionicons name="person-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoRowLabel}>Người nhận món</Text>
+                  <Text style={styles.infoRowValue}>{order.customerName}</Text>
+                </View>
+              </View>
+            )}
+
+            {Boolean((order as any)?.deliveryPhone) && (
+              <View style={styles.infoRow}>
+                <Ionicons name="call-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoRowLabel}>Số điện thoại</Text>
+                  <Text style={styles.infoRowValue}>{(order as any).deliveryPhone}</Text>
+                </View>
+              </View>
+            )}
+
+            {Boolean(order.note) && (
+              <View style={styles.infoRow}>
+                <Ionicons name="chatbox-ellipses-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.infoRowLabel}>Ghi chú cho bếp</Text>
+                  <Text style={styles.infoRowValue}>{order.note}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Ordered Items Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              Danh sách món đã chọn ({(order.orderDetails || order.orderItems || []).length})
+            </Text>
+            {(order.orderDetails || order.orderItems || []).map((item) => (
+              <OrderItemCard key={item.id || item.productId} item={item} />
+            ))}
+          </View>
+
+          {/* Financial Summary Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Chi tiết thanh toán</Text>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Tạm tính món ăn:</Text>
+              <Text style={styles.priceValue}>{formatCurrency(order.subtotal)}</Text>
+            </View>
+
+            {order.discountAmount > 0 && (
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Ưu đãi đặc quyền:</Text>
+                <Text style={[styles.priceValue, styles.discountText]}>
+                  -{formatCurrency(order.discountAmount)}
+                </Text>
+              </View>
+            )}
+
+            {order.deliveryFee > 0 && (
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Phí giao vận:</Text>
+                <Text style={styles.priceValue}>
+                  {formatCurrency(order.deliveryFee)}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.divider} />
+
+            <View style={styles.priceRow}>
+              <View>
+                <Text style={styles.grandTotalLabel}>Tổng thanh toán:</Text>
+                <Text style={styles.vatNote}>(Đã bao gồm thuế GTGT & phí dịch vụ)</Text>
+              </View>
+              <Text style={styles.grandTotalValue}>
+                {formatCurrency(order.totalAmount)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Report / Complaint Order Button */}
+          {canReport && (
+            <TouchableOpacity
+              style={styles.reportOrderBtn}
+              onPress={handleOpenReportModal}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+              <Text style={styles.reportOrderText}>
+                Phản hồi / Khiếu nại về đơn món này
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Cancel Order Button */}
+          {canCancel && (
+            <TouchableOpacity
+              style={[styles.cancelButton, isCancelling && styles.buttonDisabled]}
+              onPress={handleCancelPress}
+              disabled={isCancelling}
+              activeOpacity={0.8}
+            >
+              {isCancelling ? (
+                <ActivityIndicator size="small" color={Colors.error} />
+              ) : (
+                <Text style={styles.cancelButtonText}>Hủy đơn món này</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      )}
+
+      {/* Report / Complaint Modal */}
+      {order && (
+        <Modal
+          visible={isReportModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCloseReportModal}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.modalOverlay}
+          >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modalBackdrop}>
+                <View style={styles.modalCard}>
+                  {/* Header */}
+                  <View style={styles.modalHeader}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.modalTitle}>Phản hồi chất lượng</Text>
+                      <Text style={styles.modalSubtitle}>
+                        Đơn hàng #{orderCode}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={handleCloseReportModal}
+                      style={styles.modalCloseBtn}
+                    >
+                      <Ionicons name="close" size={20} color={Colors.outline} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Topics Selection */}
+                  <Text style={styles.fieldLabel}>Vấn đề quý khách gặp phải:</Text>
+                  <View style={styles.topicsContainer}>
+                    {REPORT_TOPICS.map((topic) => {
+                      const isSelected = selectedTopic === topic;
+                      return (
+                        <TouchableOpacity
+                          key={topic}
+                          style={[
+                            styles.topicChip,
+                            isSelected && styles.topicChipActive,
+                          ]}
+                          onPress={() => setSelectedTopic(topic)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.topicChipText,
+                              isSelected && styles.topicChipTextActive,
+                            ]}
+                          >
+                            {topic}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {/* Message input */}
+                  <Text style={styles.fieldLabel}>
+                    Chi tiết góp ý: <Text style={styles.requiredStar}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder="Mô tả cụ thể sự cố (món thiếu, tình trạng bao bì, giờ giao...) để nhà hàng hỗ trợ xử lý ngay."
+                    placeholderTextColor={Colors.outline}
+                    multiline
+                    numberOfLines={4}
+                    value={reportNote}
+                    onChangeText={setReportNote}
+                    textAlignVertical="top"
+                  />
+
+                  {/* Contact phone input */}
+                  <Text style={styles.fieldLabel}>
+                    Số điện thoại liên hệ hỗ trợ:
+                  </Text>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder="Số điện thoại nhận cuộc gọi hỗ trợ"
+                    placeholderTextColor={Colors.outline}
+                    keyboardType="phone-pad"
+                    value={contactPhone}
+                    onChangeText={setContactPhone}
+                  />
+
+                  {/* Action Buttons */}
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      style={styles.modalCancelBtn}
+                      onPress={handleCloseReportModal}
+                      disabled={isReporting}
+                    >
+                      <Text style={styles.modalCancelBtnText}>Hủy bỏ</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.modalSubmitBtn,
+                        isReporting && styles.buttonDisabled,
+                      ]}
+                      onPress={handleSubmitReport}
+                      disabled={isReporting}
+                      activeOpacity={0.85}
+                    >
+                      {isReporting ? (
+                        <ActivityIndicator size="small" color={Colors.onPrimary} />
+                      ) : (
+                        <Text style={styles.modalSubmitBtnText}>Gửi phản hồi</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 36,
-    gap: 14,
-  },
-  centerContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#FFFFFF",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#64748B",
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
-  },
-  errorText: {
-    color: "#DC2626",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   headerRow: {
     flexDirection: "row",
@@ -637,40 +646,100 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   orderCode: {
-    fontSize: 17,
+    ...Typography.headlineSm,
+    color: Colors.primary,
     fontWeight: "800",
-    color: "#0F172A",
+    letterSpacing: 0.5,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
   },
   orderDate: {
+    ...Typography.bodySm,
+    color: Colors.outline,
     fontSize: 12,
-    color: "#94A3B8",
-    marginTop: 2,
   },
   branchRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderColor: "#F1F5F9",
-  },
-  branchIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    gap: 6,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderSoft,
   },
   branchText: {
-    fontSize: 13,
-    color: "#475569",
-    fontWeight: "500",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+  },
+  branchTextBold: {
+    fontWeight: "700",
+    color: Colors.onSurface,
+  },
+  deliveryActionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.secondaryGold,
+    ...Shadows.card,
+  },
+  deliveryActionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  deliveryActionIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  deliveryActionTextCol: {
+    flex: 1,
+  },
+  deliveryActionTitle: {
+    ...Typography.titleSm,
+    color: Colors.onSurface,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  deliveryActionSubtitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    lineHeight: 18,
+    fontSize: 12,
+  },
+  confirmDeliveryBtn: {
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.subtle,
+  },
+  confirmDeliveryBtnText: {
+    ...Typography.labelMedium,
+    color: Colors.onPrimary,
+    fontWeight: "700",
   },
   cardTitle: {
-    fontSize: 15,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   stepperContainer: {
-    paddingLeft: 4,
+    paddingLeft: Spacing.xs,
   },
   stepItem: {
     flexDirection: "row",
@@ -684,346 +753,328 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: Colors.surfaceContainer,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1,
+    borderWidth: 1.5,
+    borderColor: Colors.borderSoft,
+    zIndex: 2,
+  },
+  stepDotInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.outline,
   },
   stepDotPassed: {
-    backgroundColor: "#10B981",
+    backgroundColor: Colors.primaryContainer,
+    borderColor: Colors.primary,
   },
   stepDotCurrent: {
-    backgroundColor: "#007AFF",
-    borderWidth: 3,
-    borderColor: "#BFDBFE",
-  },
-  stepDotCheck: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "800",
+    backgroundColor: Colors.secondaryGold,
+    borderColor: Colors.primary,
+    borderWidth: 2,
   },
   stepLine: {
-    width: 2,
     flex: 1,
-    backgroundColor: "#E2E8F0",
+    width: 2,
+    backgroundColor: Colors.borderSoft,
     marginVertical: 2,
   },
   stepLinePassed: {
-    backgroundColor: "#10B981",
+    backgroundColor: Colors.secondaryGold,
   },
   stepContent: {
     flex: 1,
-    marginLeft: 12,
-    paddingBottom: 14,
+    marginLeft: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   stepTitle: {
-    fontSize: 14,
+    ...Typography.labelMedium,
+    color: Colors.outline,
     fontWeight: "600",
-    color: "#64748B",
+  },
+  stepTitlePassed: {
+    color: Colors.onSurface,
   },
   stepTitleCurrent: {
-    color: "#0F172A",
-    fontWeight: "700",
+    color: Colors.primary,
+    fontWeight: "800",
   },
   stepDesc: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     fontSize: 12,
-    color: "#94A3B8",
+    marginTop: 1,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: Spacing.md,
+  },
+  infoRowIcon: {
+    marginRight: Spacing.sm,
     marginTop: 2,
   },
-  detailRow: {
-    flexDirection: "row",
-    marginBottom: 8,
+  infoRowLabel: {
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
+    fontSize: 11,
   },
-  detailLabel: {
-    width: 90,
-    fontSize: 13,
-    color: "#64748B",
-  },
-  detailValue: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#0F172A",
+  infoRowValue: {
+    ...Typography.bodyMedium,
+    color: Colors.onSurface,
+    fontWeight: "600",
+    marginTop: 1,
   },
   priceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 4,
+    marginBottom: Spacing.sm,
   },
   priceLabel: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodyMedium,
+    color: Colors.onSurfaceVariant,
   },
   priceValue: {
-    fontSize: 14,
+    ...Typography.bodyMedium,
+    color: Colors.onSurface,
     fontWeight: "600",
-    color: "#0F172A",
   },
   discountText: {
-    color: "#16A34A",
+    color: Colors.error,
+    fontWeight: "700",
   },
   divider: {
-    height: 1,
-    backgroundColor: "#E2E8F0",
-    marginVertical: 8,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.borderSoft,
+    marginVertical: Spacing.sm,
   },
   grandTotalLabel: {
-    fontSize: 15,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
+  },
+  vatNote: {
+    ...Typography.bodySm,
+    color: Colors.outline,
+    fontSize: 10,
   },
   grandTotalValue: {
-    fontSize: 18,
+    ...Typography.titleLarge,
+    color: Colors.primary,
     fontWeight: "800",
-    color: "#007AFF",
   },
-
-  // Delivery action card
-  deliveryActionCard: {
-    backgroundColor: "#ECFDF5",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: "#A7F3D0",
-  },
-  deliveryActionHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 14,
-  },
-  deliveryActionIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#D1FAE5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  deliveryActionIcon: {
-    fontSize: 20,
-  },
-  deliveryActionTextCol: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  deliveryActionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#065F46",
-    marginBottom: 3,
-  },
-  deliveryActionSubtitle: {
-    fontSize: 13,
-    color: "#047857",
-    lineHeight: 18,
-  },
-  confirmDeliveryBtn: {
-    backgroundColor: "#059669",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 13,
-    borderRadius: 10,
-    shadowColor: "#059669",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  confirmDeliveryBtnIcon: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "900",
-    marginRight: 6,
-  },
-  confirmDeliveryBtnText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  // Report button
   reportOrderBtn: {
-    backgroundColor: "#FFFBEB",
-    borderWidth: 1,
-    borderColor: "#FDE68A",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-  },
-  reportOrderIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+    ...Shadows.subtle,
   },
   reportOrderText: {
-    fontSize: 14,
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
     fontWeight: "600",
-    color: "#B45309",
   },
-
-  // Cancel button
   cancelButton: {
-    backgroundColor: "#FEF2F2",
-    borderWidth: 1,
-    borderColor: "#FECACA",
-    paddingVertical: 13,
-    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    backgroundColor: "#FEF2F2",
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+  },
+  cancelButtonText: {
+    ...Typography.labelSm,
+    color: Colors.error,
+    fontWeight: "700",
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  cancelButtonText: {
-    color: "#DC2626",
-    fontSize: 14,
+  centerContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.xl,
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    ...Typography.bodySm,
+    marginTop: Spacing.md,
+    color: Colors.onSurfaceVariant,
+  },
+  errorIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+  },
+  errorTitle: {
+    ...Typography.titleMedium,
+    color: Colors.onSurface,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  errorText: {
+    ...Typography.bodySm,
+    color: Colors.error,
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+    maxWidth: 280,
+  },
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primaryContainer,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.md,
+  },
+  retryButtonText: {
+    ...Typography.labelSm,
+    color: Colors.onPrimary,
     fontWeight: "700",
   },
-
-  // Modal styles
   modalOverlay: {
     flex: 1,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    padding: Spacing.lg,
   },
   modalCard: {
     width: "100%",
-    maxWidth: 420,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    maxWidth: 480,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.floating,
   },
   modalHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    paddingBottom: 12,
+    alignItems: "flex-start",
+    marginBottom: Spacing.lg,
   },
   modalTitle: {
-    fontSize: 17,
+    ...Typography.headlineSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
   },
   modalSubtitle: {
-    fontSize: 12,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.secondaryGold,
+    fontWeight: "600",
     marginTop: 2,
   },
   modalCloseBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#F1F5F9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalCloseText: {
-    fontSize: 14,
-    color: "#64748B",
-    fontWeight: "700",
+    padding: Spacing.xs,
   },
   fieldLabel: {
-    fontSize: 13,
+    ...Typography.labelMedium,
+    color: Colors.onSurface,
     fontWeight: "600",
-    color: "#334155",
     marginBottom: 6,
-    marginTop: 10,
   },
   requiredStar: {
-    color: "#DC2626",
+    color: Colors.error,
   },
   topicsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
   },
   topicChip: {
-    paddingVertical: 6,
+    backgroundColor: Colors.surfaceContainerLow,
     paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
+    paddingVertical: 7,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
   },
   topicChipActive: {
-    backgroundColor: "#EFF6FF",
-    borderColor: "#3B82F6",
+    backgroundColor: Colors.secondaryFixed,
+    borderColor: Colors.secondaryGold,
   },
   topicChipText: {
+    ...Typography.labelSm,
     fontSize: 12,
-    color: "#475569",
-    fontWeight: "500",
+    color: Colors.onSurfaceVariant,
   },
   topicChipTextActive: {
-    color: "#1D4ED8",
+    color: Colors.onSecondaryFixed,
     fontWeight: "700",
   },
   messageInput: {
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 13,
-    color: "#0F172A",
-    minHeight: 88,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    minHeight: 90,
+    fontSize: 14,
+    color: Colors.onSurface,
+    marginBottom: Spacing.md,
   },
   phoneInput: {
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: "#0F172A",
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: Colors.onSurface,
+    marginBottom: Spacing.lg,
   },
   modalActions: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 18,
+    gap: Spacing.md,
   },
   modalCancelBtn: {
     flex: 1,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: Radius.md,
     paddingVertical: 12,
-    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   modalCancelBtnText: {
-    color: "#475569",
-    fontSize: 14,
+    ...Typography.labelMedium,
+    color: Colors.onSurfaceVariant,
     fontWeight: "600",
   },
   modalSubmitBtn: {
-    flex: 1.6,
-    backgroundColor: "#007AFF",
+    flex: 1.5,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.md,
     paddingVertical: 12,
-    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadows.subtle,
   },
   modalSubmitBtnText: {
-    color: "#FFFFFF",
-    fontSize: 14,
+    ...Typography.labelMedium,
+    color: Colors.onPrimary,
     fontWeight: "700",
   },
 });

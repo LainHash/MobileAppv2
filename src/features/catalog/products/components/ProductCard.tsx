@@ -17,6 +17,8 @@ export interface ProductCardProps {
   product: Product;
   onPress?: (product: Product) => void;
   onAddToCart?: (product: Product) => void;
+  onToggleWishlist?: (product: Product) => void;
+  isWishlisted?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -24,6 +26,8 @@ export function ProductCard({
   product,
   onPress,
   onAddToCart,
+  onToggleWishlist,
+  isWishlisted = false,
   style,
 }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -60,6 +64,26 @@ export function ProductCard({
             <Ionicons name="restaurant-outline" size={28} color={Colors.outline} />
             <Text style={styles.placeholderText}>Món ngon</Text>
           </View>
+        )}
+
+        {/* Quick Wishlist Toggle Button */}
+        {onToggleWishlist && (
+          <TouchableOpacity
+            style={styles.wishlistBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              onToggleWishlist(product);
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.8}
+            accessibilityLabel={isWishlisted ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+          >
+            <Ionicons
+              name={isWishlisted ? "heart" : "heart-outline"}
+              size={16}
+              color={isWishlisted ? Colors.primary : Colors.onSurfaceVariant}
+            />
+          </TouchableOpacity>
         )}
 
         {/* Badge */}
@@ -183,6 +207,21 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
     fontSize: 9,
     fontWeight: "600",
+  },
+  wishlistBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(252, 249, 243, 0.94)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+    zIndex: 10,
   },
   infoWrapper: {
     flex: 1,

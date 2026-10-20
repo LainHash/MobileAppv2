@@ -8,8 +8,12 @@ import {
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { useAuthContext } from "@/features/auth";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type ReservationSuccessNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -23,6 +27,7 @@ type ReservationSuccessRouteProp = RouteProp<
 export default function ReservationSuccessScreen() {
   const navigation = useNavigation<ReservationSuccessNavigationProp>();
   const route = useRoute<ReservationSuccessRouteProp>();
+  const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuthContext();
 
   const {
@@ -47,200 +52,281 @@ export default function ReservationSuccessScreen() {
   });
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.iconCircle}>
-          <Text style={styles.checkIcon}>✓</Text>
-        </View>
+    <View style={styles.screenWrapper}>
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="ĐẶT BÀN THÀNH CÔNG"
+        showBack={false}
+      />
 
-        <Text style={styles.title}>Đặt bàn thành công!</Text>
-        <Text style={styles.subTitle}>
-          Yêu cầu đặt bàn của bạn đã được ghi nhận. Nhà hàng sẽ liên hệ xác nhận nếu cần thêm thông tin.
-        </Text>
-
-        <View style={styles.codeContainer}>
-          <Text style={styles.codeLabel}>MÃ ĐẶT BÀN CỦA BẠN</Text>
-          <Text style={styles.codeValue}>#{reservationCode}</Text>
-        </View>
-
-        <View style={styles.detailsBox}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Chi nhánh:</Text>
-            <Text style={styles.detailValue}>{branchName}</Text>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { paddingBottom: insets.bottom + 32 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+          <View style={styles.iconCircle}>
+            <View style={styles.checkInnerRing} />
+            <Ionicons name="checkmark" size={34} color={Colors.onPrimary} />
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Thời gian:</Text>
-            <Text style={styles.detailValue}>
-              {formattedTime} • {formattedDate}
+
+          <View style={styles.clubBadge}>
+            <Ionicons name="sparkles" size={12} color={Colors.secondaryGold} />
+            <Text style={styles.clubBadgeText}>Đã tiếp nhận yêu cầu</Text>
+          </View>
+
+          <Text style={styles.title}>Đặt bàn thành công!</Text>
+          <Text style={styles.subTitle}>
+            Yêu cầu đặt bàn của quý khách đã được ghi nhận trong hệ thống. Đội ngũ tiếp đón Haute De Hallen sẽ chuẩn bị chu đáo để đón tiếp quý khách.
+          </Text>
+
+          <View style={styles.codeContainer}>
+            <Text style={styles.codeLabel}>MÃ ĐẶT BÀN CỦA QUÝ KHÁCH</Text>
+            <Text style={styles.codeValue}>#{reservationCode}</Text>
+          </View>
+
+          <View style={styles.detailsBox}>
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelRow}>
+                <Ionicons name="business-outline" size={15} color={Colors.secondaryGold} />
+                <Text style={styles.detailLabel}>Chi nhánh phục vụ:</Text>
+              </View>
+              <Text style={styles.detailValue}>{branchName}</Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelRow}>
+                <Ionicons name="calendar-outline" size={15} color={Colors.secondaryGold} />
+                <Text style={styles.detailLabel}>Thời gian đến:</Text>
+              </View>
+              <Text style={styles.detailValue}>
+                {formattedTime} • {formattedDate}
+              </Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelRow}>
+                <Ionicons name="people-outline" size={15} color={Colors.secondaryGold} />
+                <Text style={styles.detailLabel}>Số lượng khách:</Text>
+              </View>
+              <Text style={styles.detailValue}>{partySize} người</Text>
+            </View>
+          </View>
+
+          <View style={styles.noticeBox}>
+            <Ionicons name="information-circle-outline" size={18} color={Colors.secondaryGold} style={{ marginTop: 1 }} />
+            <Text style={styles.noticeText}>
+              <Text style={styles.noticeBold}>Lưu ý:</Text> Quý khách vui lòng đến trước giờ hẹn 10 - 15 phút để nhà hàng sắp xếp vị trí bàn tiệc đẹp nhất.
             </Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Số lượng khách:</Text>
-            <Text style={styles.detailValue}>{partySize} người</Text>
+
+          <View style={styles.buttonCol}>
+            {isAuthenticated && (
+              <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => navigation.replace("MyReservations")}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="calendar-outline" size={18} color={Colors.onPrimary} style={{ marginRight: 6 }} />
+                <Text style={styles.historyButtonText}>Xem lịch sử đặt bàn</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.homeButton}
+              onPress={() => navigation.navigate("Home")}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="home-outline" size={18} color={Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+              <Text style={styles.homeButtonText}>Về trang chủ</Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.noticeBox}>
-          <Text style={styles.noticeText}>
-            💡 <Text style={styles.noticeBold}>Lưu ý:</Text> Vui lòng đến trước giờ hẹn khoảng 10-15 phút để nhà hàng sắp xếp vị trí tốt nhất. Nếu có thay đổi lịch, vui lòng liên hệ hotline chi nhánh.
-          </Text>
-        </View>
-
-        <View style={styles.buttonCol}>
-          {isAuthenticated && (
-            <TouchableOpacity
-              style={styles.historyButton}
-              onPress={() => navigation.replace("MyReservations")}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.historyButtonText}>📋 Xem lịch sử đặt bàn</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={styles.homeButton}
-            onPress={() => navigation.navigate("Home")}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.homeButtonText}>🏠 Về trang chủ</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flexGrow: 1,
-    backgroundColor: "#F8FAFC",
-    padding: 16,
+    padding: Spacing.lg,
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    borderColor: Colors.borderSoft,
+    ...Shadows.card,
   },
   iconCircle: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#10B981",
+    backgroundColor: Colors.primaryContainer,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.md,
+    position: "relative",
+    ...Shadows.subtle,
   },
-  checkIcon: {
-    fontSize: 36,
-    color: "#FFFFFF",
-    fontWeight: "bold",
+  checkInnerRing: {
+    position: "absolute",
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 1.5,
+    borderColor: Colors.secondaryGold,
+  },
+  clubBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceContainerLow,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    marginBottom: Spacing.sm,
+  },
+  clubBadgeText: {
+    ...Typography.labelSm,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
+    fontSize: 11,
   },
   title: {
-    fontSize: 22,
+    ...Typography.headlineSm,
+    color: Colors.onSurface,
     fontWeight: "800",
-    color: "#0F172A",
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: Spacing.xs,
   },
   subTitle: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
     lineHeight: 20,
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
+    maxWidth: 320,
   },
   codeContainer: {
     width: "100%",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1.5,
-    borderColor: "#86EFAC",
+    borderColor: Colors.secondaryGold,
     borderStyle: "dashed",
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
   },
   codeLabel: {
-    fontSize: 11,
+    ...Typography.labelSm,
+    fontSize: 10,
     fontWeight: "700",
-    color: "#166534",
+    color: Colors.outline,
     letterSpacing: 1,
     marginBottom: 4,
   },
   codeValue: {
-    fontSize: 26,
+    ...Typography.headlineMedium,
+    color: Colors.primary,
     fontWeight: "800",
-    color: "#15803D",
   },
   detailsBox: {
     width: "100%",
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    gap: 8,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    gap: Spacing.sm,
   },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+  detailLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   detailLabel: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   detailValue: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#1E293B",
+    ...Typography.bodyMedium,
+    fontWeight: "700",
+    color: Colors.onSurface,
   },
   noticeBox: {
-    backgroundColor: "#FEF3C7",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 24,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLow,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    marginBottom: Spacing.xl,
     width: "100%",
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   noticeText: {
-    fontSize: 12,
-    color: "#92400E",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     lineHeight: 18,
+    flex: 1,
+    fontSize: 12,
   },
   noticeBold: {
     fontWeight: "700",
+    color: Colors.onSurface,
   },
   buttonCol: {
     width: "100%",
-    gap: 10,
+    gap: Spacing.sm,
   },
   historyButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primaryContainer,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: Radius.md,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.subtle,
   },
   historyButtonText: {
-    fontSize: 15,
+    ...Typography.labelMedium,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: Colors.onPrimary,
   },
   homeButton: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.surfaceContainerLow,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: Radius.md,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   homeButtonText: {
-    fontSize: 15,
+    ...Typography.labelMedium,
     fontWeight: "600",
-    color: "#475569",
+    color: Colors.onSurfaceVariant,
   },
 });

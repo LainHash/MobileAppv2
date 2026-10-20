@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import {
   useOrders,
@@ -19,7 +20,9 @@ import {
   OrderResponse,
 } from "@/features/commerce/orders";
 import { useAuth } from "@/features/auth";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { formatCurrency } from "@/common/helpers";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type OrdersNavProp = NativeStackNavigationProp<RootStackParamList, "Orders">;
 
@@ -60,14 +63,19 @@ export default function OrdersScreen() {
       <TouchableOpacity
         style={styles.orderCard}
         onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
         {/* Header: Code & Status */}
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.orderCode}>#{item.orderCode || item.id.slice(0, 8).toUpperCase()}</Text>
+            <Text style={styles.orderCode}>
+              #{item.orderCode || item.id.slice(0, 8).toUpperCase()}
+            </Text>
             {Boolean(formattedDate) && (
-              <Text style={styles.orderDate}>{formattedDate}</Text>
+              <View style={styles.dateRow}>
+                <Ionicons name="calendar-outline" size={12} color={Colors.outline} />
+                <Text style={styles.orderDate}>{formattedDate}</Text>
+              </View>
             )}
           </View>
           <OrderStatusBadge status={item.status} size="small" />
@@ -80,7 +88,7 @@ export default function OrdersScreen() {
         <View style={styles.cardBody}>
           {Boolean(item.deliveryAddress) && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>📍</Text>
+              <Ionicons name="location-outline" size={15} color={Colors.primary} />
               <Text style={styles.infoText} numberOfLines={1}>
                 {item.deliveryAddress}
               </Text>
@@ -89,7 +97,7 @@ export default function OrdersScreen() {
 
           {Boolean(item.branchCode) && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>🏪</Text>
+              <Ionicons name="storefront-outline" size={15} color={Colors.secondary} />
               <Text style={styles.infoText}>Chi nhánh: {item.branchCode}</Text>
             </View>
           )}
@@ -97,14 +105,21 @@ export default function OrdersScreen() {
 
         {/* Footer: Items count and Total Amount */}
         <View style={styles.cardFooter}>
-          <Text style={styles.itemCountText}>
-            {item.totalItems || 1} món ăn
-          </Text>
-          <View style={styles.totalWrap}>
-            <Text style={styles.totalLabel}>Tổng tiền:</Text>
-            <Text style={styles.totalAmount}>
-              {formatCurrency(item.totalAmount)}
+          <View style={styles.itemCountWrap}>
+            <Ionicons name="restaurant-outline" size={14} color={Colors.outline} />
+            <Text style={styles.itemCountText}>
+              {item.totalItems || 1} món ẩm thực
             </Text>
+          </View>
+
+          <View style={styles.footerRight}>
+            <View style={styles.totalWrap}>
+              <Text style={styles.totalLabel}>Tổng cộng:</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(item.totalAmount)}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={Colors.outline} />
           </View>
         </View>
       </TouchableOpacity>
@@ -112,7 +127,14 @@ export default function OrdersScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.screenWrapper}>
+      {/* Luxury Haute Top Bar */}
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="LỊCH SỬ ĐƠN HÀNG"
+        showBack={true}
+      />
+
       {/* Horizontal Filter Tabs */}
       <View style={styles.tabsContainer}>
         <ScrollView
@@ -143,51 +165,57 @@ export default function OrdersScreen() {
       {/* Main Content */}
       {isAuthLoading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Đang kiểm tra tài khoản...</Text>
         </View>
       ) : !isAuthenticated ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>👤</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="person-outline" size={44} color={Colors.secondary} />
+          </View>
           <Text style={styles.emptyTitle}>Chưa đăng nhập</Text>
           <Text style={styles.emptySub}>
-            Vui lòng đăng nhập để theo dõi và xem lịch sử đơn hàng của bạn.
+            Vui lòng đăng nhập để theo dõi và xem lịch sử đơn hàng của quý khách.
           </Text>
           <TouchableOpacity
-            style={styles.browseButton}
+            style={styles.actionButton}
             onPress={() => navigation.navigate("Login")}
             activeOpacity={0.85}
           >
-            <Text style={styles.browseButtonText}>Đăng nhập ngay</Text>
+            <Text style={styles.actionButtonText}>Đăng nhập ngay</Text>
           </TouchableOpacity>
         </View>
       ) : isLoading && !isRefreshing ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Đang tải danh sách đơn hàng...</Text>
         </View>
       ) : error && orders.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>⚠️</Text>
+          <View style={[styles.iconCircle, { backgroundColor: "rgba(186, 26, 26, 0.08)" }]}>
+            <Ionicons name="alert-circle-outline" size={44} color={Colors.error} />
+          </View>
           <Text style={styles.emptyTitle}>Không thể tải đơn hàng</Text>
           <Text style={styles.errorSub}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refresh}>
-            <Text style={styles.retryButtonText}>Thử lại</Text>
+          <TouchableOpacity style={styles.actionButton} onPress={refresh} activeOpacity={0.85}>
+            <Text style={styles.actionButtonText}>Thử lại</Text>
           </TouchableOpacity>
         </View>
       ) : orders.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>📦</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="receipt-outline" size={44} color={Colors.secondary} />
+          </View>
           <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
           <Text style={styles.emptySub}>
-            Bạn chưa có đơn hàng nào ở trạng thái này. Hãy khám phá ngay thực đơn và chọn những món ăn hấp dẫn nhé!
+            Quý khách chưa có đơn hàng nào ở trạng thái này. Khám phá ngay thực đơn thượng hạng của Haute De Hallen!
           </Text>
           <TouchableOpacity
-            style={styles.browseButton}
+            style={styles.actionButton}
             onPress={() => navigation.navigate("Menu")}
             activeOpacity={0.85}
           >
-            <Text style={styles.browseButtonText}>Xem thực đơn</Text>
+            <Text style={styles.actionButtonText}>Khám phá thực đơn</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -201,7 +229,8 @@ export default function OrdersScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={refresh}
-              colors={["#007AFF"]}
+              colors={[Colors.primary]}
+              tintColor={Colors.primary}
             />
           }
         />
@@ -211,52 +240,52 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screenWrapper: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.background,
   },
   tabsContainer: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.surfaceContainerLowest,
     borderBottomWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   tabsScroll: {
-    paddingHorizontal: 12,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     gap: 8,
   },
   tabButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   tabButtonActive: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   tabText: {
-    fontSize: 13,
+    ...Typography.labelSm,
     fontWeight: "600",
-    color: "#64748B",
+    color: Colors.onSurfaceVariant,
   },
   tabTextActive: {
-    color: "#FFFFFF",
+    color: Colors.onPrimary,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   orderCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   cardHeader: {
     flexDirection: "row",
@@ -264,49 +293,62 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   orderCode: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#0F172A",
+    ...Typography.labelLg,
+    fontWeight: "700",
+    color: Colors.onSurface,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
   },
   orderDate: {
+    ...Typography.bodySm,
     fontSize: 12,
-    color: "#94A3B8",
-    marginTop: 2,
+    color: Colors.outline,
   },
   divider: {
     height: 1,
-    backgroundColor: "#F1F5F9",
-    marginVertical: 10,
+    backgroundColor: Colors.borderSoft,
+    marginVertical: 12,
   },
   cardBody: {
-    gap: 6,
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 12,
   },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  infoIcon: {
-    fontSize: 13,
-    marginRight: 6,
+    gap: 8,
   },
   infoText: {
-    fontSize: 13,
-    color: "#475569",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     flex: 1,
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderColor: "#F8FAFC",
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSoft,
+  },
+  itemCountWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   itemCountText: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     fontWeight: "500",
+  },
+  footerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   totalWrap: {
     flexDirection: "row",
@@ -314,69 +356,66 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   totalLabel: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   totalAmount: {
+    ...Typography.labelLg,
     fontSize: 16,
-    fontWeight: "800",
-    color: "#007AFF",
+    fontWeight: "700",
+    color: Colors.primaryContainer,
   },
   centerContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: Spacing.xl,
+  },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#64748B",
-  },
-  emptyIcon: {
-    fontSize: 52,
-    marginBottom: 12,
+    marginTop: Spacing.md,
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0F172A",
+    ...Typography.headlineSm,
+    color: Colors.onSurface,
     marginBottom: 8,
   },
   emptySub: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
-    lineHeight: 18,
-    marginBottom: 20,
-    maxWidth: 280,
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
+    maxWidth: 290,
   },
   errorSub: {
-    fontSize: 13,
-    color: "#DC2626",
+    ...Typography.bodySm,
+    color: Colors.error,
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.lg,
   },
-  retryButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  browseButton: {
-    backgroundColor: "#007AFF",
+  actionButton: {
+    backgroundColor: Colors.primary,
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingHorizontal: 26,
+    borderRadius: Radius.full,
+    ...Shadows.subtle,
   },
-  browseButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
+  actionButtonText: {
+    color: Colors.onPrimary,
+    ...Typography.labelMd,
     fontWeight: "700",
   },
 });

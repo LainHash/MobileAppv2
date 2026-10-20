@@ -8,9 +8,11 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuthContext } from "@/features/auth";
 import { CreateContactMessageRequest, ContactMessageResponse } from "../types";
 import { sendContactMessage } from "../api/contactApi";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface ContactFormProps {
   onSuccess?: (response: ContactMessageResponse) => void;
@@ -181,19 +183,20 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
     return (
       <View style={styles.successCard}>
         <View style={styles.successIconContainer}>
-          <Text style={styles.successIcon}>✓</Text>
+          <Ionicons name="checkmark-circle" size={44} color={Colors.primary} />
         </View>
-        <Text style={styles.successTitle}>Gửi liên hệ thành công!</Text>
+        <Text style={styles.successTitle}>Gửi lời nhắn thành công</Text>
         <Text style={styles.successMessage}>
-          Cảm ơn bạn đã phản hồi. Chúng tôi đã tiếp nhận thông tin và sẽ phản hồi qua email{" "}
+          Cảm ơn quý khách đã đóng góp ý kiến. Bộ phận Chăm sóc Khách hàng Haute De Hallen sẽ phản hồi qua email{" "}
           <Text style={styles.highlightText}>{email}</Text> trong thời gian sớm nhất.
         </Text>
         <TouchableOpacity
           style={styles.newSubmissionButton}
           onPress={handleResetForm}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <Text style={styles.newSubmissionButtonText}>Gửi tin nhắn khác</Text>
+          <Ionicons name="mail-outline" size={16} color={Colors.primary} style={{ marginRight: 6 }} />
+          <Text style={styles.newSubmissionButtonText}>Gửi lời nhắn khác</Text>
         </TouchableOpacity>
       </View>
     );
@@ -201,33 +204,44 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Gửi lời nhắn cho chúng tôi</Text>
-      <Text style={styles.cardSubtitle}>
-        Vui lòng điền thông tin bên dưới, nhân viên hỗ trợ sẽ liên hệ với bạn trong vòng 24h.
-      </Text>
+      <View style={styles.cardHeaderRow}>
+        <View style={styles.cardHeaderIcon}>
+          <Ionicons name="mail-unread-outline" size={20} color={Colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>Gửi lời nhắn cho chúng tôi</Text>
+          <Text style={styles.cardSubtitle}>
+            Đội ngũ Haute De Hallen luôn sẵn sàng phục vụ và giải đáp trong vòng 24h.
+          </Text>
+        </View>
+      </View>
 
       {Boolean(serverError) && (
         <View style={styles.serverErrorBox}>
-          <Text style={styles.serverErrorText}>⚠️ {serverError}</Text>
+          <Ionicons name="alert-circle" size={16} color={Colors.error} style={{ marginRight: 6 }} />
+          <Text style={styles.serverErrorText}>{serverError}</Text>
         </View>
       )}
 
       {/* Full Name */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>
-          Họ và tên <Text style={styles.required}>*</Text>
+          Họ và tên quý khách <Text style={styles.required}>*</Text>
         </Text>
-        <TextInput
-          style={[styles.input, Boolean(fullNameError) && styles.inputError]}
-          placeholder="Ví dụ: Nguyễn Văn A"
-          placeholderTextColor="#94A3B8"
-          value={fullName}
-          onChangeText={(text) => {
-            setFullName(text);
-            if (fullNameError) setFullNameError(null);
-          }}
-          editable={!isSubmitting}
-        />
+        <View style={[styles.inputWrapper, Boolean(fullNameError) && styles.inputWrapperError]}>
+          <Ionicons name="person-outline" size={18} color={Colors.outline} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Ví dụ: Nguyễn Văn A"
+            placeholderTextColor={Colors.outline}
+            value={fullName}
+            onChangeText={(text) => {
+              setFullName(text);
+              if (fullNameError) setFullNameError(null);
+            }}
+            editable={!isSubmitting}
+          />
+        </View>
         {Boolean(fullNameError) && (
           <Text style={styles.fieldErrorText}>{fullNameError}</Text>
         )}
@@ -236,21 +250,24 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
       {/* Email */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>
-          Email <Text style={styles.required}>*</Text>
+          Địa chỉ email <Text style={styles.required}>*</Text>
         </Text>
-        <TextInput
-          style={[styles.input, Boolean(emailError) && styles.inputError]}
-          placeholder="example@domain.com"
-          placeholderTextColor="#94A3B8"
-          value={email}
-          onChangeText={(text) => {
-            setEmail(text);
-            if (emailError) setEmailError(null);
-          }}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={!isSubmitting}
-        />
+        <View style={[styles.inputWrapper, Boolean(emailError) && styles.inputWrapperError]}>
+          <Ionicons name="mail-outline" size={18} color={Colors.outline} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="example@domain.com"
+            placeholderTextColor={Colors.outline}
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError(null);
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!isSubmitting}
+          />
+        </View>
         {Boolean(emailError) && (
           <Text style={styles.fieldErrorText}>{emailError}</Text>
         )}
@@ -258,19 +275,22 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
 
       {/* Phone Number */}
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Số điện thoại (tùy chọn)</Text>
-        <TextInput
-          style={[styles.input, Boolean(phoneNumberError) && styles.inputError]}
-          placeholder="0912 345 678"
-          placeholderTextColor="#94A3B8"
-          value={phoneNumber}
-          onChangeText={(text) => {
-            setPhoneNumber(text);
-            if (phoneNumberError) setPhoneNumberError(null);
-          }}
-          keyboardType="phone-pad"
-          editable={!isSubmitting}
-        />
+        <Text style={styles.label}>Số điện thoại liên hệ (tùy chọn)</Text>
+        <View style={[styles.inputWrapper, Boolean(phoneNumberError) && styles.inputWrapperError]}>
+          <Ionicons name="call-outline" size={18} color={Colors.outline} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="0912 345 678"
+            placeholderTextColor={Colors.outline}
+            value={phoneNumber}
+            onChangeText={(text) => {
+              setPhoneNumber(text);
+              if (phoneNumberError) setPhoneNumberError(null);
+            }}
+            keyboardType="phone-pad"
+            editable={!isSubmitting}
+          />
+        </View>
         {Boolean(phoneNumberError) && (
           <Text style={styles.fieldErrorText}>{phoneNumberError}</Text>
         )}
@@ -313,19 +333,22 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
       {/* Subject */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>
-          Tiêu đề <Text style={styles.required}>*</Text>
+          Tiêu đề lời nhắn <Text style={styles.required}>*</Text>
         </Text>
-        <TextInput
-          style={[styles.input, Boolean(subjectError) && styles.inputError]}
-          placeholder="Tóm tắt nội dung liên hệ..."
-          placeholderTextColor="#94A3B8"
-          value={subject}
-          onChangeText={(text) => {
-            setSubject(text);
-            if (subjectError) setSubjectError(null);
-          }}
-          editable={!isSubmitting}
-        />
+        <View style={[styles.inputWrapper, Boolean(subjectError) && styles.inputWrapperError]}>
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color={Colors.outline} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Tóm tắt yêu cầu hoặc đóng góp..."
+            placeholderTextColor={Colors.outline}
+            value={subject}
+            onChangeText={(text) => {
+              setSubject(text);
+              if (subjectError) setSubjectError(null);
+            }}
+            editable={!isSubmitting}
+          />
+        </View>
         {Boolean(subjectError) && (
           <Text style={styles.fieldErrorText}>{subjectError}</Text>
         )}
@@ -335,7 +358,7 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
       <View style={styles.formGroup}>
         <View style={styles.labelRow}>
           <Text style={styles.label}>
-            Nội dung tin nhắn <Text style={styles.required}>*</Text>
+            Nội dung chi tiết <Text style={styles.required}>*</Text>
           </Text>
           <Text style={styles.counterText}>{message.length} ký tự</Text>
         </View>
@@ -345,8 +368,8 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
             styles.textArea,
             Boolean(messageError) && styles.inputError,
           ]}
-          placeholder="Nhập chi tiết yêu cầu, câu hỏi hoặc phản hồi của bạn..."
-          placeholderTextColor="#94A3B8"
+          placeholder="Nhập chi tiết yêu cầu, đánh giá hoặc mong muốn của quý khách..."
+          placeholderTextColor={Colors.outline}
           value={message}
           onChangeText={(text) => {
             setMessage(text);
@@ -367,15 +390,18 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
         style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
         onPress={handleSubmit}
         disabled={isSubmitting}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
         {isSubmitting ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator color="#FFFFFF" size="small" />
-            <Text style={styles.submitButtonText}>Đang gửi tin nhắn...</Text>
+            <ActivityIndicator color={Colors.onPrimary} size="small" />
+            <Text style={styles.submitButtonText}>Đang gửi lời nhắn...</Text>
           </View>
         ) : (
-          <Text style={styles.submitButtonText}>✉️ Gửi liên hệ</Text>
+          <View style={styles.loadingRow}>
+            <Ionicons name="paper-plane-outline" size={18} color={Colors.onPrimary} />
+            <Text style={styles.submitButtonText}>Gửi lời nhắn</Text>
+          </View>
         )}
       </TouchableOpacity>
     </View>
@@ -384,42 +410,58 @@ export function ContactForm({ onSuccess, onError }: ContactFormProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-    marginBottom: 20,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.card,
+    marginBottom: Spacing.xl,
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  cardHeaderIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardTitle: {
-    fontSize: 18,
+    ...Typography.titleMedium,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
   },
   cardSubtitle: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     lineHeight: 18,
-    marginBottom: 18,
+    marginTop: 2,
   },
   serverErrorBox: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#FEF2F2",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
     borderWidth: 1,
     borderColor: "#FCA5A5",
   },
   serverErrorText: {
-    color: "#DC2626",
-    fontSize: 13,
+    ...Typography.bodySm,
+    color: Colors.error,
+    flex: 1,
   },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   labelRow: {
     flexDirection: "row",
@@ -427,39 +469,58 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   label: {
-    fontSize: 14,
+    ...Typography.labelMedium,
+    color: Colors.onSurface,
     fontWeight: "600",
-    color: "#1E293B",
     marginBottom: 6,
   },
   required: {
-    color: "#EF4444",
+    color: Colors.error,
   },
   counterText: {
-    fontSize: 12,
-    color: "#94A3B8",
+    ...Typography.bodySm,
+    color: Colors.outline,
+    fontSize: 11,
     marginBottom: 6,
   },
-  input: {
-    backgroundColor: "#F8FAFC",
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+  },
+  inputWrapperError: {
+    borderColor: Colors.error,
+    backgroundColor: "#FEF2F2",
+  },
+  inputIcon: {
+    marginRight: Spacing.sm,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
     fontSize: 14,
-    color: "#0F172A",
+    color: Colors.onSurface,
   },
   inputError: {
-    borderColor: "#EF4444",
+    borderColor: Colors.error,
     backgroundColor: "#FEF2F2",
   },
   textArea: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
     minHeight: 110,
     paddingTop: 12,
   },
   fieldErrorText: {
-    color: "#EF4444",
+    ...Typography.bodySm,
+    color: Colors.error,
     fontSize: 12,
     marginTop: 4,
     marginLeft: 2,
@@ -467,113 +528,106 @@ const styles = StyleSheet.create({
   topicsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: Spacing.xs,
     marginTop: 2,
   },
   topicChip: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.surfaceContainerLow,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
   },
   topicChipSelected: {
-    backgroundColor: "#EEF2FF",
-    borderColor: "#6366F1",
+    backgroundColor: Colors.secondaryFixed,
+    borderColor: Colors.secondaryGold,
   },
   topicChipText: {
+    ...Typography.labelSm,
     fontSize: 12,
-    color: "#475569",
+    color: Colors.onSurfaceVariant,
     fontWeight: "500",
   },
   topicChipTextSelected: {
-    color: "#4F46E5",
-    fontWeight: "600",
+    color: Colors.onSecondaryFixed,
+    fontWeight: "700",
   },
   submitButton: {
-    backgroundColor: "#4F46E5",
-    borderRadius: 12,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.md,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
-    shadowColor: "#4F46E5",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
+    marginTop: Spacing.sm,
+    ...Shadows.subtle,
   },
   submitButtonDisabled: {
-    backgroundColor: "#A5B4FC",
-    shadowOpacity: 0,
-    elevation: 0,
+    backgroundColor: Colors.surfaceContainer,
   },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: Spacing.sm,
   },
   submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
+    ...Typography.labelMedium,
+    color: Colors.onPrimary,
     fontWeight: "700",
   },
   successCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 28,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
     alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.card,
+    marginBottom: Spacing.xl,
   },
   successIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#DCFCE7",
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 2,
+    borderColor: Colors.secondaryGold,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
-  },
-  successIcon: {
-    fontSize: 32,
-    color: "#16A34A",
-    fontWeight: "700",
+    marginBottom: Spacing.lg,
   },
   successTitle: {
-    fontSize: 20,
+    ...Typography.headlineSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 10,
+    marginBottom: Spacing.xs,
     textAlign: "center",
   },
   successMessage: {
-    fontSize: 14,
-    color: "#475569",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
+    maxWidth: 320,
   },
   highlightText: {
-    color: "#4F46E5",
-    fontWeight: "600",
+    color: Colors.primary,
+    fontWeight: "700",
   },
   newSubmissionButton: {
-    backgroundColor: "#F1F5F9",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    paddingHorizontal: 20,
+    borderColor: Colors.borderSoft,
+    paddingHorizontal: Spacing.xl,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: Radius.md,
   },
   newSubmissionButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#334155",
+    ...Typography.labelMedium,
+    fontWeight: "700",
+    color: Colors.primary,
   },
 });

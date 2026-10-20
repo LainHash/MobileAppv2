@@ -68,7 +68,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="ProductDetail"
           component={ProductDetailScreen}
-          options={{ title: "Chi tiết sản phẩm" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Cart"
@@ -78,7 +78,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Wishlist"
           component={WishlistScreen}
-          options={{ title: "Yêu thích" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Login"
@@ -109,7 +109,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Contact"
           component={ContactScreen}
-          options={{ title: "Liên hệ & Góp ý" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Checkout"
@@ -119,20 +119,17 @@ export function RootNavigator() {
         <Stack.Screen
           name="OrderSuccess"
           component={OrderSuccessScreen}
-          options={{
-            title: "Đặt hàng thành công",
-            headerBackVisible: false,
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Orders"
           component={OrdersScreen}
-          options={{ title: "Lịch sử đơn hàng" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="OrderDetail"
           component={OrderDetailScreen}
-          options={{ title: "Chi tiết đơn hàng" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Reservation"
@@ -142,20 +139,17 @@ export function RootNavigator() {
         <Stack.Screen
           name="ReservationSuccess"
           component={ReservationSuccessScreen}
-          options={{
-            title: "Đặt bàn thành công",
-            headerBackVisible: false,
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="MyReservations"
           component={MyReservationsScreen}
-          options={{ title: "Lịch sử đặt bàn" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ReservationDetail"
           component={ReservationDetailScreen}
-          options={{ title: "Chi tiết đặt bàn" }}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </View>

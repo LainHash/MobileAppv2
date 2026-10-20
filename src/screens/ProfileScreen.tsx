@@ -70,6 +70,23 @@ export default function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color={Colors.outline} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.hubCard}
+            onPress={() => navigation.navigate("Wishlist")}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.hubIconWrap, styles.hubIconWishlist]}>
+              <Ionicons name="heart-outline" size={20} color={Colors.primary} />
+            </View>
+            <View style={styles.hubInfo}>
+              <Text style={styles.hubTitle}>Món ăn yêu thích</Text>
+              <Text style={styles.hubSubtitle}>
+                Bộ sưu tập các món ẩm thực quý khách đã lưu lại
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.outline} />
+          </TouchableOpacity>
         </View>
 
         {/* Personal Details Card */}
@@ -124,6 +141,9 @@ const styles = StyleSheet.create({
   },
   hubIconReservations: {
     backgroundColor: "rgba(196, 154, 69, 0.15)",
+  },
+  hubIconWishlist: {
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
   },
   hubInfo: {
     flex: 1,

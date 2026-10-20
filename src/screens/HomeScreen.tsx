@@ -20,6 +20,7 @@ import {
   BranchDropdown,
 } from "@/features/territory/branches";
 import { useCart } from "@/features/commerce/carts";
+import { useWishlist } from "@/features/commerce/wishlists";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { HauteBottomBar } from "@/common/components/HauteBottomBar";
 import { ProductCard } from "@/features/catalog/products/components/ProductCard";
@@ -65,6 +66,11 @@ export default function HomeScreen() {
   const cartCount = useMemo(() => {
     return cart?.cartItems?.reduce((acc, it) => acc + it.quantity, 0) ?? 0;
   }, [cart?.cartItems]);
+
+  // Wishlist quick action
+  const { isInWishlist, toggleItem: toggleWishlist } = useWishlist(selectedBranchId, {
+    enabled: isStorageLoaded,
+  });
 
   const currentBranch = useMemo(() => {
     if (!branches || branches.length === 0) return null;
@@ -362,6 +368,32 @@ export default function HomeScreen() {
                           </Text>
                         </View>
                       )}
+
+                      {/* Floating Quick Wishlist Button */}
+                      <TouchableOpacity
+                        style={styles.signatureWishlistBtn}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          toggleWishlist(product);
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.8}
+                        accessibilityLabel={
+                          isInWishlist(product.id)
+                            ? "Bỏ yêu thích"
+                            : "Thêm vào yêu thích"
+                        }
+                      >
+                        <Ionicons
+                          name={isInWishlist(product.id) ? "heart" : "heart-outline"}
+                          size={16}
+                          color={
+                            isInWishlist(product.id)
+                              ? Colors.primary
+                              : Colors.onSurfaceVariant
+                          }
+                        />
+                      </TouchableOpacity>
                     </View>
 
                     <View style={styles.signatureInfo}>
@@ -442,6 +474,8 @@ export default function HomeScreen() {
                 key={prod.id}
                 product={prod}
                 onAddToCart={handleAddToCart}
+                isWishlisted={isInWishlist(prod.id)}
+                onToggleWishlist={toggleWishlist}
                 onPress={(p) =>
                   navigation.navigate("ProductDetail", {
                     productId: p.id,
@@ -726,6 +760,18 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
     fontSize: 9,
     fontWeight: "600",
+  },
+  signatureWishlistBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.subtle,
   },
   signatureInfo: {
     padding: Spacing.md,

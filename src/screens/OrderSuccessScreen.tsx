@@ -5,13 +5,16 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { RootStackParamList } from "@/navigation/types";
 import { PaymentQrCard } from "@/features/commerce/orders";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type OrderSuccessRouteProp = RouteProp<RootStackParamList, "OrderSuccess">;
 type OrderSuccessNavProp = NativeStackNavigationProp<
@@ -22,6 +25,7 @@ type OrderSuccessNavProp = NativeStackNavigationProp<
 export default function OrderSuccessScreen() {
   const route = useRoute<OrderSuccessRouteProp>();
   const navigation = useNavigation<OrderSuccessNavProp>();
+  const insets = useSafeAreaInsets();
 
   const { orderId, orderCode, payment } = route.params;
   const [copied, setCopied] = useState(false);
@@ -39,20 +43,36 @@ export default function OrderSuccessScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.screenWrapper}>
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="ĐẶT MÓN THÀNH CÔNG"
+        showBack={false}
+      />
+
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 32 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Celebration Header Card */}
         <View style={styles.celebrationCard}>
           <View style={styles.checkCircle}>
-            <Text style={styles.checkIcon}>✓</Text>
+            <View style={styles.checkInnerRing} />
+            <Ionicons name="checkmark" size={32} color={Colors.onPrimary} />
           </View>
-          <Text style={styles.title}>Đặt hàng thành công!</Text>
+
+          <View style={styles.clubBadge}>
+            <Ionicons name="sparkles" size={12} color={Colors.secondaryGold} />
+            <Text style={styles.clubBadgeText}>Đã tiếp nhận yêu cầu</Text>
+          </View>
+
+          <Text style={styles.title}>Đặt món thành công</Text>
           <Text style={styles.subtitle}>
-            Cảm ơn bạn đã lựa chọn chúng tôi. Đơn hàng của bạn đã được chuyển tới bếp để chuẩn bị.
+            Trân trọng cảm ơn quý khách. Yêu cầu của bạn đã được chuyển tới bếp trưởng để chuẩn bị nguyên liệu tươi ngon nhất.
           </Text>
 
           {/* Order Code Pill */}
@@ -66,8 +86,14 @@ export default function OrderSuccessScreen() {
               <Text style={styles.orderCodeValue}>#{displayCode}</Text>
             </View>
             <View style={styles.copyPill}>
-              <Text style={styles.copyPillText}>
-                {copied ? "✓ Đã sao chép" : "Sao chép"}
+              <Ionicons
+                name={copied ? "checkmark" : "copy-outline"}
+                size={14}
+                color={copied ? Colors.secondaryGold : Colors.onSurfaceVariant}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={[styles.copyPillText, copied && styles.copyPillTextActive]}>
+                {copied ? "Đã chép" : "Sao chép"}
               </Text>
             </View>
           </TouchableOpacity>
@@ -83,9 +109,12 @@ export default function OrderSuccessScreen() {
 
         {/* Order Tips / Instructions */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>⏱️ Thời gian xử lý dự kiến</Text>
+          <View style={styles.infoCardHeader}>
+            <Ionicons name="time-outline" size={18} color={Colors.secondaryGold} />
+            <Text style={styles.infoCardTitle}>Thời gian phục vụ dự kiến</Text>
+          </View>
           <Text style={styles.infoCardDesc}>
-            Món ăn sẽ sẵn sàng và được giao trong vòng 20 - 30 phút. Bạn có thể theo dõi tiến trình đơn hàng trong mục Lịch sử đơn hàng.
+            Món ăn sẽ được chế biến tươi nóng và hoàn tất trong vòng 20 - 35 phút. Quý khách có thể theo dõi trực tiếp trạng thái món ăn trong mục Chi tiết đơn hàng.
           </Text>
         </View>
 
@@ -97,6 +126,7 @@ export default function OrderSuccessScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.primaryButtonText}>Xem chi tiết đơn hàng</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} style={{ marginLeft: 6 }} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -104,6 +134,7 @@ export default function OrderSuccessScreen() {
             onPress={() => navigation.navigate("Orders")}
             activeOpacity={0.85}
           >
+            <Ionicons name="receipt-outline" size={16} color={Colors.primary} style={{ marginRight: 6 }} />
             <Text style={styles.secondaryButtonText}>Lịch sử đơn hàng của tôi</Text>
           </TouchableOpacity>
 
@@ -112,179 +143,210 @@ export default function OrderSuccessScreen() {
             onPress={() => navigation.navigate("Home")}
             activeOpacity={0.85}
           >
-            <Text style={styles.outlineButtonText}>Tiếp tục mua sắm</Text>
+            <Text style={styles.outlineButtonText}>Về trang chủ</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screenWrapper: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-    gap: 16,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   celebrationCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
+    borderColor: Colors.borderSoft,
+    ...Shadows.card,
   },
   checkCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: "#10B981",
+    backgroundColor: Colors.primaryContainer,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: Spacing.md,
+    position: "relative",
+    ...Shadows.subtle,
   },
-  checkIcon: {
-    color: "#FFFFFF",
-    fontSize: 34,
-    fontWeight: "900",
+  checkInnerRing: {
+    position: "absolute",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 1.5,
+    borderColor: Colors.secondaryGold,
+  },
+  clubBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceContainerLow,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    marginBottom: Spacing.sm,
+  },
+  clubBadgeText: {
+    ...Typography.labelSm,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
+    fontSize: 11,
   },
   title: {
-    fontSize: 22,
+    ...Typography.headlineSm,
+    color: Colors.onSurface,
     fontWeight: "800",
-    color: "#0F172A",
-    marginBottom: 8,
+    marginBottom: Spacing.xs,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
-    lineHeight: 18,
-    marginBottom: 18,
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
     maxWidth: 300,
   },
   orderCodePill: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#F1F5F9",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    backgroundColor: Colors.surfaceContainerLow,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.secondaryGold,
+    borderStyle: "dashed",
     width: "100%",
   },
   orderCodeInfo: {
     flex: 1,
   },
   orderCodeLabel: {
+    ...Typography.labelSm,
     fontSize: 10,
     fontWeight: "700",
-    color: "#64748B",
+    color: Colors.outline,
     letterSpacing: 0.5,
   },
   orderCodeValue: {
-    fontSize: 16,
+    ...Typography.titleLarge,
     fontWeight: "800",
-    color: "#007AFF",
+    color: Colors.primary,
     marginTop: 2,
   },
   copyPill: {
-    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: Colors.borderSoft,
   },
   copyPillText: {
+    ...Typography.labelSm,
     fontSize: 12,
     fontWeight: "600",
-    color: "#334155",
+    color: Colors.onSurfaceVariant,
+  },
+  copyPillTextActive: {
+    color: Colors.secondaryGold,
+    fontWeight: "700",
   },
   sectionWrap: {
-    gap: 8,
+    gap: Spacing.sm,
   },
   sectionTitle: {
-    fontSize: 15,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
     marginLeft: 4,
   },
   infoCard: {
-    backgroundColor: "#F0FDF4",
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#BBF7D0",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+  },
+  infoCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: Spacing.xs,
   },
   infoCardTitle: {
-    fontSize: 14,
+    ...Typography.titleSm,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#166534",
-    marginBottom: 4,
   },
   infoCardDesc: {
-    fontSize: 12,
-    color: "#15803D",
-    lineHeight: 18,
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    lineHeight: 19,
   },
   actionGroup: {
-    gap: 10,
-    marginTop: 8,
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   primaryButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primaryContainer,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: Radius.md,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    ...Shadows.subtle,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
+    ...Typography.labelMedium,
+    color: Colors.onPrimary,
     fontWeight: "700",
   },
   secondaryButton: {
-    backgroundColor: "#0F172A",
+    backgroundColor: Colors.surface,
     paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  outlineButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: Radius.md,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: Colors.borderSoft,
+  },
+  secondaryButtonText: {
+    ...Typography.labelMedium,
+    color: Colors.primary,
+    fontWeight: "700",
+  },
+  outlineButton: {
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   outlineButtonText: {
-    color: "#475569",
-    fontSize: 14,
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
     fontWeight: "600",
   },
 });

@@ -1,3 +1,4 @@
+import React from "react";
 import {
   FlatList,
   StyleSheet,
@@ -6,9 +7,11 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { Wishlist, WishlistItem } from "../types/Wishlist";
 import { Product } from "@/features/catalog/products";
 import { getProductImageUrl, formatCurrency } from "@/common/helpers";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 interface Props {
   wishlist?: Wishlist | null;
@@ -37,6 +40,7 @@ export function WishlistItemList({
         item.id || item.product?.id || item.productId || String(Math.random())
       }
       contentContainerStyle={styles.listContainer}
+      showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         const product = item.product;
         const imageUrl = product ? getProductImageUrl(product) : null;
@@ -51,7 +55,7 @@ export function WishlistItemList({
         return (
           <TouchableOpacity
             style={styles.card}
-            activeOpacity={onProductPress && product ? 0.8 : 1}
+            activeOpacity={onProductPress && product ? 0.85 : 1}
             onPress={() => {
               if (onProductPress && product) {
                 onProductPress(product);
@@ -67,14 +71,14 @@ export function WishlistItemList({
               />
             ) : (
               <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-                <Text style={styles.thumbnailPlaceholderText}>📦</Text>
+                <Ionicons name="restaurant-outline" size={28} color={Colors.outline} />
               </View>
             )}
 
             <View style={styles.info}>
               <View style={styles.headerRow}>
                 <Text style={styles.name} numberOfLines={2}>
-                  {product?.name || "Sản phẩm"}
+                  {product?.name || "Món ẩm thực"}
                 </Text>
                 {onRemoveItem && (
                   <TouchableOpacity
@@ -83,14 +87,14 @@ export function WishlistItemList({
                     style={styles.removeButton}
                     accessibilityLabel="Xóa khỏi yêu thích"
                   >
-                    <Text style={styles.removeButtonText}>✕</Text>
+                    <Ionicons name="trash-outline" size={17} color={Colors.outline} />
                   </TouchableOpacity>
                 )}
               </View>
 
               {Boolean(product?.unitSymbol) && (
                 <Text style={styles.unitText}>
-                  Đơn vị: {product.unitSymbol}
+                  Khẩu phần: {product.unitSymbol}
                 </Text>
               )}
 
@@ -133,8 +137,19 @@ export function WishlistItemList({
                     disabled={isOutOfStock}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.addToCartButtonText}>
-                      {isOutOfStock ? "Hết hàng" : "+ Thêm vào giỏ"}
+                    <Ionicons
+                      name="bag-handle-outline"
+                      size={14}
+                      color={isOutOfStock ? Colors.outline : Colors.onPrimary}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text
+                      style={[
+                        styles.addToCartButtonText,
+                        isOutOfStock && styles.addToCartButtonTextDisabled,
+                      ]}
+                    >
+                      {isOutOfStock ? "Hết món" : "Thêm vào giỏ"}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -151,39 +166,32 @@ export function WishlistItemList({
 
 const styles = StyleSheet.create({
   listContainer: {
-    padding: 16,
-    paddingBottom: 24,
-    gap: 12,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.md,
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   thumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
+    width: 82,
+    height: 82,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLow,
   },
   thumbnailPlaceholder: {
     alignItems: "center",
     justifyContent: "center",
   },
-  thumbnailPlaceholderText: {
-    fontSize: 28,
-  },
   info: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: Spacing.md,
     justifyContent: "space-between",
   },
   headerRow: {
@@ -192,71 +200,74 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   name: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#0F172A",
+    ...Typography.titleSm,
+    color: Colors.onSurface,
+    fontWeight: "700",
     flex: 1,
-    marginRight: 8,
+    marginRight: Spacing.xs,
   },
   removeButton: {
-    padding: 2,
-  },
-  removeButtonText: {
-    fontSize: 14,
-    color: "#94A3B8",
-    fontWeight: "bold",
+    padding: Spacing.xs,
   },
   unitText: {
-    fontSize: 12,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
     alignSelf: "flex-start",
     marginTop: 4,
   },
   badgeInStock: {
-    backgroundColor: "#DCFCE7",
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   badgeOutOfStock: {
     backgroundColor: "#FEE2E2",
   },
   badgeText: {
-    fontSize: 11,
+    ...Typography.labelSm,
+    fontSize: 10,
     fontWeight: "600",
   },
   badgeTextInStock: {
-    color: "#16A34A",
+    color: Colors.secondaryGold,
   },
   badgeTextOutOfStock: {
-    color: "#DC2626",
+    color: Colors.error,
   },
   bottomRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
   price: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#2563EB",
+    ...Typography.titleSm,
+    color: Colors.primary,
+    fontWeight: "800",
   },
   addToCartButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primaryContainer,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: Radius.md,
   },
   addToCartButtonDisabled: {
-    backgroundColor: "#94A3B8",
+    backgroundColor: Colors.surfaceContainer,
   },
   addToCartButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
+    ...Typography.labelSm,
+    color: Colors.onPrimary,
+    fontWeight: "700",
+  },
+  addToCartButtonTextDisabled: {
+    color: Colors.outline,
   },
 });

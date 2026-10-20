@@ -17,6 +17,7 @@ import { useProducts } from "@/features/catalog/products/hooks/useProducts";
 import { ProductCard } from "@/features/catalog/products/components/ProductCard";
 import { useCategories } from "@/features/catalog/categories";
 import { useCart } from "@/features/commerce/carts";
+import { useWishlist } from "@/features/commerce/wishlists";
 import { getSelectedBranchId } from "@/features/territory/branches";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { HauteBottomBar } from "@/common/components/HauteBottomBar";
@@ -92,6 +93,9 @@ export default function MenuScreen() {
 
   // Cart integration
   const { cart, addItem } = useCart(selectedBranchId);
+
+  // Wishlist integration
+  const { isInWishlist, toggleItem: toggleWishlist } = useWishlist(selectedBranchId);
 
   const cartTotalQty = useMemo(() => {
     return cart?.cartItems?.reduce((acc, it) => acc + it.quantity, 0) ?? 0;
@@ -319,6 +323,8 @@ export default function MenuScreen() {
                 key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
+                isWishlisted={isInWishlist(product.id)}
+                onToggleWishlist={toggleWishlist}
                 onPress={(p) =>
                   navigation.navigate("ProductDetail", {
                     productId: p.id,
