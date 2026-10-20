@@ -4,6 +4,7 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -27,6 +28,14 @@ export function HauteBottomBar({
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuthContext();
+
+  // On Android (Pixel 6 gesture navigation bar), ensure sufficient breathing room
+  // even if insets.bottom is unmeasured or small
+  const bottomInset = Platform.select({
+    android: Math.max(insets.bottom, 12),
+    ios: Math.max(insets.bottom, 8),
+    default: Math.max(insets.bottom, 8),
+  }) || 8;
 
   const handleTabPress = (tab: HauteTabKey) => {
     if (tab === activeTab) return;
@@ -123,7 +132,7 @@ export function HauteBottomBar({
       style={[
         styles.container,
         {
-          paddingBottom: Math.max(insets.bottom, 8),
+          paddingBottom: bottomInset,
         },
       ]}
     >
@@ -181,6 +190,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
     paddingTop: 8,
+    paddingBottom: 4,
     paddingHorizontal: 8,
   },
   tabItem: {
@@ -229,7 +239,7 @@ const styles = StyleSheet.create({
   },
   activeIndicator: {
     position: "absolute",
-    bottom: -4,
+    bottom: -2,
     width: 14,
     height: 2.5,
     borderRadius: 2,

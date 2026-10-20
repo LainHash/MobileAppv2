@@ -2,12 +2,12 @@ import { useState } from "react";
 import {
   TouchableOpacity,
   Text,
-  Image,
   StyleSheet,
   View,
   StyleProp,
   ViewStyle,
 } from "react-native";
+import { Image } from "expo-image";
 import { Product } from "../types/Product";
 import { getProductImageUrl, formatCurrency } from "@/common/helpers";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
@@ -48,7 +48,8 @@ export function ProductCard({
           <Image
             source={{ uri: imageUrl! }}
             style={styles.image}
-            resizeMode="cover"
+            contentFit="cover"
+            transition={200}
             onError={() => setImageError(true)}
             accessibilityLabel={
               product.primaryImage?.image?.altText || product.name

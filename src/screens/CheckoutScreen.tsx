@@ -10,8 +10,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
@@ -284,7 +284,12 @@ export default function CheckoutScreen() {
                 return (
                   <View key={pid} style={styles.itemRow}>
                     {img ? (
-                      <Image source={{ uri: img }} style={styles.itemImage} />
+                      <Image
+                        source={{ uri: img }}
+                        style={styles.itemImage}
+                        contentFit="cover"
+                        transition={200}
+                      />
                     ) : (
                       <View style={[styles.itemImage, styles.itemImagePlaceholder]}>
                         <Text>🍲</Text>

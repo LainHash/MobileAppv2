@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../hooks/useAuth";
 import { User, PersonalProfile } from "../types/auth";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type NameDisplayOrder = "given-family" | "family-given";
 
@@ -48,7 +49,7 @@ export function PersonalInfoCard({
   const handleLogout = () => {
     Alert.alert(
       "Đăng xuất",
-      "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
+      "Quý khách có chắc chắn muốn đăng xuất khỏi tài khoản không?",
       [
         { text: "Hủy", style: "cancel" },
         {
@@ -66,7 +67,7 @@ export function PersonalInfoCard({
   if (isLoading && !currentUser) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={Colors.primaryContainer} />
         <Text style={styles.loadingText}>Đang tải thông tin cá nhân...</Text>
       </View>
     );
@@ -75,18 +76,21 @@ export function PersonalInfoCard({
   if (!currentUser) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>👤</Text>
+        <View style={styles.emptyIconCircle}>
+          <Ionicons name="person-outline" size={38} color={Colors.primary} />
+        </View>
         <Text style={styles.emptyTitle}>Chưa đăng nhập</Text>
         <Text style={styles.emptySubtitle}>
-          Vui lòng đăng nhập để xem và quản lý thông tin cá nhân của bạn.
+          Kính mời quý khách đăng nhập để trải nghiệm trọn vẹn đặc quyền hội viên Haute De Hallen.
         </Text>
         {onLoginPress && (
           <TouchableOpacity
             style={styles.loginButton}
             onPress={onLoginPress}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
             <Text style={styles.loginButtonText}>Đăng nhập ngay</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -128,10 +132,7 @@ export function PersonalInfoCard({
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.container}>
       {/* Header Profile Badge */}
       <View style={styles.headerCard}>
         <View style={styles.avatar}>
@@ -140,8 +141,9 @@ export function PersonalInfoCard({
         <Text style={styles.userName}>{fullName}</Text>
         <Text style={styles.userHandle}>@{currentUser.userName}</Text>
         <View style={styles.roleBadge}>
+          <Ionicons name="sparkles" size={12} color={Colors.onSecondaryFixed} />
           <Text style={styles.roleText}>
-            {currentUser.roleName || "Thành viên"}
+            {currentUser.roleName || "Hội Viên Tinh Hoa"}
           </Text>
         </View>
       </View>
@@ -149,7 +151,10 @@ export function PersonalInfoCard({
       {/* Thông tin cá nhân section */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>👤 Thông tin cá nhân</Text>
+          <View style={styles.sectionTitleRow}>
+            <Ionicons name="person" size={16} color={Colors.primaryContainer} />
+            <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
+          </View>
           {onEditPress && (
             <TouchableOpacity onPress={onEditPress} activeOpacity={0.7}>
               <Text style={styles.editButtonText}>Chỉnh sửa</Text>
@@ -214,7 +219,7 @@ export function PersonalInfoCard({
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Thành phố / Quốc gia</Text>
+          <Text style={styles.rowLabel}>Tỉnh / Thành phố</Text>
           <Text style={styles.rowValue}>
             {profile?.city || profile?.country
               ? `${profile?.city ?? ""}${profile?.city && profile?.country ? ", " : ""}${profile?.country ?? ""}`
@@ -225,7 +230,10 @@ export function PersonalInfoCard({
 
       {/* Thông tin tài khoản section */}
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>🛡️ Thông tin tài khoản</Text>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="shield-checkmark" size={16} color={Colors.secondaryGold} />
+          <Text style={styles.sectionTitle}>Thông tin tài khoản</Text>
+        </View>
 
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Email</Text>
@@ -256,10 +264,15 @@ export function PersonalInfoCard({
           activeOpacity={0.8}
         >
           {isRefreshing ? (
-            <ActivityIndicator size="small" color="#007AFF" />
+            <ActivityIndicator size="small" color={Colors.primaryContainer} />
           ) : (
             <>
-              <Text style={styles.refreshButtonIcon}>🔄</Text>
+              <Ionicons
+                name="refresh-outline"
+                size={16}
+                color={Colors.primary}
+                style={styles.actionIcon}
+              />
               <Text style={styles.refreshButtonText}>Làm mới dữ liệu</Text>
             </>
           )}
@@ -271,144 +284,162 @@ export function PersonalInfoCard({
             onPress={handleLogout}
             activeOpacity={0.8}
           >
-            <Text style={styles.logoutButtonIcon}>🚪</Text>
+            <Ionicons
+              name="log-out-outline"
+              size={16}
+              color={Colors.error}
+              style={styles.actionIcon}
+            />
             <Text style={styles.logoutButtonText}>Đăng xuất</Text>
           </TouchableOpacity>
         )}
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
+  container: {
+    width: "100%",
   },
   centerContainer: {
-    padding: 32,
+    padding: Spacing.xl,
     alignItems: "center",
     justifyContent: "center",
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#64748B",
+    marginTop: Spacing.sm,
+    ...Typography.bodySm,
+    color: Colors.outline,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: "#64748B",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
-    maxWidth: 260,
-  },
-  loginButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  headerCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 16,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#007AFF",
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    marginBottom: Spacing.md,
+  },
+  emptyTitle: {
+    ...Typography.headlineSm,
+    fontSize: 18,
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
+    maxWidth: 280,
+  },
+  loginButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.primaryContainer,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.md,
+    ...Shadows.subtle,
+  },
+  loginButtonText: {
+    ...Typography.labelLg,
+    color: Colors.onPrimary,
+    fontWeight: "700",
+  },
+  headerCard: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
+  },
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: Colors.primaryContainer,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: Colors.secondaryGold,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 4,
   },
   avatarText: {
-    color: "#FFFFFF",
-    fontSize: 26,
+    color: Colors.onPrimary,
+    fontSize: 24,
     fontWeight: "800",
   },
   userName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
+    ...Typography.headlineSm,
+    fontSize: 18,
+    color: Colors.onSurface,
     marginBottom: 2,
   },
   userHandle: {
-    fontSize: 14,
-    color: "#64748B",
-    marginBottom: 10,
+    ...Typography.bodySm,
+    fontSize: 13,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 8,
   },
   roleBadge: {
-    backgroundColor: "#EFF6FF",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.secondaryFixed,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
+    borderColor: "rgba(196, 154, 69, 0.3)",
   },
   roleText: {
-    color: "#1D4ED8",
-    fontSize: 12,
-    fontWeight: "600",
+    color: Colors.onSecondaryFixed,
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   sectionCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: Spacing.xs,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: Spacing.xs,
   },
   sectionTitle: {
-    fontSize: 16,
+    ...Typography.labelLg,
+    color: Colors.primary,
     fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 12,
   },
   editButtonText: {
-    color: "#007AFF",
-    fontSize: 13,
+    ...Typography.labelMd,
+    color: Colors.secondaryGold,
     fontWeight: "600",
   },
   row: {
@@ -418,14 +449,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   rowLabel: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     flex: 1,
   },
   rowValue: {
-    fontSize: 14,
+    ...Typography.bodyMd,
     fontWeight: "600",
-    color: "#0F172A",
+    color: Colors.onSurface,
     flex: 1.5,
     textAlign: "right",
   },
@@ -435,53 +466,48 @@ const styles = StyleSheet.create({
   },
   idText: {
     fontSize: 11,
-    color: "#64748B",
+    color: Colors.outline,
     fontFamily: "monospace",
   },
   separator: {
     height: 1,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.borderSoft,
   },
   actionContainer: {
-    gap: 12,
-    marginTop: 4,
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   refreshButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: Colors.surfaceContainerLow,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.borderSoft,
   },
-  refreshButtonIcon: {
-    fontSize: 15,
+  actionIcon: {
     marginRight: 6,
   },
   refreshButtonText: {
-    color: "#0F172A",
-    fontSize: 14,
+    ...Typography.labelMd,
+    color: Colors.primary,
     fontWeight: "600",
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FEF2F2",
+    backgroundColor: "rgba(186, 26, 26, 0.05)",
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#FECACA",
-  },
-  logoutButtonIcon: {
-    fontSize: 15,
-    marginRight: 6,
+    borderColor: "rgba(186, 26, 26, 0.2)",
   },
   logoutButtonText: {
-    color: "#DC2626",
-    fontSize: 14,
+    ...Typography.labelMd,
+    color: Colors.error,
     fontWeight: "700",
   },
 });

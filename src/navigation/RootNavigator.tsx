@@ -88,23 +88,23 @@ export function RootNavigator() {
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
-          options={{ title: "Đăng ký tài khoản" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="VerifyEmail"
           component={VerifyEmailScreen}
-          options={{ title: "Xác thực email" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="CompleteProfile"
           component={CompleteProfileScreen}
-          options={{ title: "Hoàn tất thông tin" }}
+          options={{ headerShown: false }}
         />
 
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
-          options={{ title: "Thông tin cá nhân" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Contact"

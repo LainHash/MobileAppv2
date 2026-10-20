@@ -3,8 +3,8 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { Cart } from "../types/Cart";
 import { getProductImageUrl, formatCurrency } from "@/common/helpers";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
@@ -45,7 +45,8 @@ export function CartItemList({
                 <Image
                   source={{ uri: imageUrl }}
                   style={styles.thumbnail}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  transition={200}
                 />
               ) : (
                 <View style={styles.thumbnailPlaceholder}>

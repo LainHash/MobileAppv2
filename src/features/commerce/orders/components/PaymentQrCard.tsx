@@ -3,11 +3,11 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
   ViewStyle,
 } from "react-native";
+import { Image } from "expo-image";
 import * as Clipboard from "expo-clipboard";
 import { PaymentQrResponse, OrderPaymentStatusResponse } from "../types/order";
 import { usePaymentStatusPolling } from "../hooks/usePaymentStatusPolling";
@@ -83,7 +83,8 @@ export function PaymentQrCard({
           <Image
             source={{ uri: payment.qrCodeUrl }}
             style={styles.qrImage}
-            resizeMode="contain"
+            contentFit="contain"
+            transition={200}
           />
           <Text style={styles.qrTip}>
             Mở ứng dụng Ngân hàng hoặc Ví điện tử để quét mã QR

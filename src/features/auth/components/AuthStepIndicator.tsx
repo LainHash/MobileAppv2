@@ -1,5 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface AuthStepIndicatorProps {
   currentStep: 1 | 2 | 3;
@@ -30,7 +32,11 @@ export function AuthStepIndicator({ currentStep }: AuthStepIndicatorProps) {
                   ]}
                 >
                   {isCompleted ? (
-                    <Text style={styles.checkmarkText}>✓</Text>
+                    <Ionicons
+                      name="checkmark"
+                      size={16}
+                      color={Colors.onSecondaryFixed}
+                    />
                   ) : (
                     <Text
                       style={[
@@ -72,9 +78,9 @@ export function AuthStepIndicator({ currentStep }: AuthStepIndicatorProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    marginBottom: 8,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   stepsRow: {
     flexDirection: "row",
@@ -83,66 +89,64 @@ const styles = StyleSheet.create({
   },
   stepItem: {
     alignItems: "center",
-    minWidth: 80,
+    minWidth: 84,
   },
   circle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 2,
-    borderColor: "#CBD5E1",
+    width: 34,
+    height: 34,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderWidth: 1.5,
+    borderColor: Colors.borderSoft,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 6,
+    ...Shadows.subtle,
   },
   circleActive: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
-    shadowColor: "#2563EB",
+    backgroundColor: Colors.primaryContainer,
+    borderColor: Colors.secondaryGold,
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   circleCompleted: {
-    backgroundColor: "#10B981",
-    borderColor: "#10B981",
+    backgroundColor: Colors.secondaryFixed,
+    borderColor: Colors.secondaryGold,
   },
   stepNumber: {
+    ...Typography.labelMd,
     fontSize: 13,
     fontWeight: "700",
-    color: "#64748B",
+    color: Colors.outline,
   },
   stepNumberActive: {
-    color: "#FFFFFF",
-  },
-  checkmarkText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    color: Colors.onPrimary,
   },
   label: {
-    fontSize: 12,
-    color: "#94A3B8",
+    ...Typography.labelSm,
+    fontSize: 11,
+    color: Colors.onSurfaceVariant,
     fontWeight: "500",
   },
   labelActive: {
-    color: "#2563EB",
+    color: Colors.primary,
     fontWeight: "700",
   },
   labelCompleted: {
-    color: "#10B981",
+    color: Colors.secondaryGold,
     fontWeight: "600",
   },
   connector: {
     flex: 1,
     height: 2,
-    backgroundColor: "#E2E8F0",
-    marginHorizontal: 4,
-    marginBottom: 20,
+    backgroundColor: Colors.borderSoft,
+    marginHorizontal: Spacing.xs,
+    marginBottom: 22,
   },
   connectorActive: {
-    backgroundColor: "#10B981",
+    backgroundColor: Colors.secondaryGold,
   },
 });

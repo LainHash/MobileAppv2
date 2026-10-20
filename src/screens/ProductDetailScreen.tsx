@@ -3,11 +3,11 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
@@ -209,7 +209,8 @@ export default function ProductDetailScreen() {
             <Image
               source={{ uri: activeImageUrl }}
               style={styles.heroImage}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={300}
               onError={() => setImageError(true)}
               accessibilityLabel={
                 allImages[selectedImageIndex]?.altText || product.name
@@ -249,7 +250,8 @@ export default function ProductDetailScreen() {
                   <Image
                     source={{ uri: img.url }}
                     style={styles.thumbnailImage}
-                    resizeMode="cover"
+                    contentFit="cover"
+                    transition={200}
                   />
                 </TouchableOpacity>
               );

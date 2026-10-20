@@ -4,8 +4,8 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { Wishlist, WishlistItem } from "../types/Wishlist";
 import { Product } from "@/features/catalog/products";
 import { getProductImageUrl, formatCurrency } from "@/common/helpers";
@@ -62,7 +62,8 @@ export function WishlistItemList({
               <Image
                 source={{ uri: imageUrl }}
                 style={styles.thumbnail}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={200}
               />
             ) : (
               <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>

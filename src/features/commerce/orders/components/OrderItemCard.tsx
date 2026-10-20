@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, View, Image } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { OrderItemResponse, getPreparationStatusMeta } from "../types/order";
 import { getImageUrl, formatCurrency } from "@/common/helpers";
 
@@ -24,7 +25,8 @@ export function OrderItemCard({ item }: OrderItemCardProps) {
         <Image
           source={{ uri: imageUrl }}
           style={styles.thumbnail}
-          resizeMode="cover"
+          contentFit="cover"
+          transition={200}
         />
       ) : (
         <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>

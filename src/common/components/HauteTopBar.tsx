@@ -4,9 +4,12 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Colors, Typography, Spacing, Shadows } from "@/theme";
 import { RootStackParamList } from "@/navigation/types";
@@ -35,6 +38,17 @@ export function HauteTopBar({
   onCartPress,
 }: HauteTopBarProps) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
+
+  // On Android (Pixel 6, Galaxy, etc.), handle camera punch hole and status bar height
+  // On iOS, handle notches and Dynamic Island
+  const statusBarHeight = Platform.select({
+    android: Math.max(insets.top, StatusBar.currentHeight ?? 0),
+    ios: insets.top,
+    default: insets.top,
+  }) || 0;
+
+  const paddingTop = statusBarHeight > 0 ? statusBarHeight + Spacing.sm : Spacing.sm;
 
   const handleCartPress = () => {
     if (onCartPress) {
@@ -45,7 +59,7 @@ export function HauteTopBar({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop }]}>
       <View style={styles.leftGroup}>
         {showBack ? (
           <TouchableOpacity

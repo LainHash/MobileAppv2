@@ -9,8 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { register as registerApi } from "../api/authApi";
 import { savePendingRegisterEmail } from "../utils/authStorage";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface RegisterFormProps {
   onSuccess?: (email: string) => void;
@@ -101,7 +103,6 @@ export function RegisterForm({
     };
 
     try {
-      // Save email into local storage right before/during API call
       await savePendingRegisterEmail(trimmedEmail);
 
       const res = await registerApi(payload);
@@ -138,7 +139,7 @@ export function RegisterForm({
         {/* Server Error Banner */}
         {Boolean(serverError) && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerIcon}>⚠️</Text>
+            <Ionicons name="alert-circle" size={18} color={Colors.error} />
             <Text style={styles.errorBannerText}>{serverError}</Text>
           </View>
         )}
@@ -154,11 +155,16 @@ export function RegisterForm({
               Boolean(userNameError) && styles.inputError,
             ]}
           >
-            <Text style={styles.inputIcon}>👤</Text>
+            <Ionicons
+              name="person-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Ví dụ: nguyenvana"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
               value={userName}
               onChangeText={(text) => {
                 setUserName(text);
@@ -186,11 +192,16 @@ export function RegisterForm({
               Boolean(emailError) && styles.inputError,
             ]}
           >
-            <Text style={styles.inputIcon}>✉️</Text>
+            <Ionicons
+              name="mail-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Ví dụ: example@gmail.com"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -219,11 +230,16 @@ export function RegisterForm({
               Boolean(passwordError) && styles.inputError,
             ]}
           >
-            <Text style={styles.inputIcon}>🔒</Text>
+            <Ionicons
+              name="lock-closed-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Tối thiểu 6 ký tự..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -239,7 +255,11 @@ export function RegisterForm({
               onPress={() => setShowPassword((prev) => !prev)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.eyeIcon}>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={18}
+                color={Colors.outline}
+              />
             </TouchableOpacity>
           </View>
           {Boolean(passwordError) && (
@@ -258,11 +278,16 @@ export function RegisterForm({
               Boolean(confirmPasswordError) && styles.inputError,
             ]}
           >
-            <Text style={styles.inputIcon}>🔒</Text>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={18}
+              color={Colors.outline}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Nhập lại mật khẩu..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="rgba(138, 114, 109, 0.6)"
               value={confirmPassword}
               onChangeText={(text) => {
                 setConfirmPassword(text);
@@ -278,9 +303,11 @@ export function RegisterForm({
               onPress={() => setShowConfirmPassword((prev) => !prev)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.eyeIcon}>
-                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
-              </Text>
+              <Ionicons
+                name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                size={18}
+                color={Colors.outline}
+              />
             </TouchableOpacity>
           </View>
           {Boolean(confirmPasswordError) && (
@@ -293,12 +320,15 @@ export function RegisterForm({
           style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
           onPress={handleRegister}
           disabled={isSubmitting}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={Colors.onPrimary} size="small" />
           ) : (
-            <Text style={styles.submitButtonText}>Tiếp tục xác thực OTP</Text>
+            <View style={styles.btnRow}>
+              <Text style={styles.submitButtonText}>Tiếp tục xác thực OTP</Text>
+              <Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />
+            </View>
           )}
         </TouchableOpacity>
 
@@ -321,136 +351,130 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: Spacing.md,
     alignItems: "center",
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
+    ...Typography.headlineSm,
+    fontSize: 20,
+    color: Colors.primary,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
   },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    borderRadius: 8,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorBannerIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    borderColor: "rgba(186, 26, 26, 0.3)",
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: 8,
   },
   errorBannerText: {
     flex: 1,
-    fontSize: 13,
-    color: "#DC2626",
+    ...Typography.bodySm,
+    color: Colors.onErrorContainer,
     fontWeight: "500",
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   label: {
-    fontSize: 14,
+    ...Typography.labelMd,
+    color: Colors.onSurface,
     fontWeight: "600",
-    color: "#334155",
     marginBottom: 6,
   },
   requiredMark: {
-    color: "#EF4444",
+    color: Colors.primaryContainer,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: Spacing.md,
     height: 48,
   },
   inputError: {
-    borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
+    borderColor: Colors.error,
+    backgroundColor: "rgba(186, 26, 26, 0.04)",
   },
   inputIcon: {
-    fontSize: 16,
-    marginRight: 10,
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: "#0F172A",
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
     height: "100%",
   },
   eyeButton: {
-    padding: 4,
-  },
-  eyeIcon: {
-    fontSize: 16,
+    padding: 6,
   },
   errorText: {
-    fontSize: 12,
-    color: "#EF4444",
+    ...Typography.labelSm,
+    color: Colors.error,
     marginTop: 4,
     marginLeft: 2,
   },
   submitButton: {
-    backgroundColor: "#2563EB",
-    borderRadius: 10,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.md,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    shadowColor: "#2563EB",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    marginTop: Spacing.xs,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 3,
   },
   submitButtonDisabled: {
-    backgroundColor: "#93C5FD",
+    backgroundColor: Colors.outlineVariant,
     shadowOpacity: 0,
     elevation: 0,
   },
+  btnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.labelLg,
+    color: Colors.onPrimary,
+    fontWeight: "700",
   },
   footerRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: Spacing.md,
   },
   footerText: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   loginLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2563EB",
+    ...Typography.labelMd,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
   },
 });

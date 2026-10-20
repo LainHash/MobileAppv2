@@ -10,12 +10,14 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { completeProfile as completeProfileApi } from "../api/authApi";
 import {
   getPendingRegisterEmail,
   clearPendingRegisterEmail,
   savePendingRegisterEmail,
 } from "../utils/authStorage";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface CompleteProfileFormProps {
   initialEmail?: string;
@@ -132,7 +134,6 @@ export function CompleteProfileForm({
     setServerError(null);
 
     try {
-      // Ngầm gán email: retrieves active email from state or storage
       let targetEmail = email;
       if (!targetEmail) {
         targetEmail = (await getPendingRegisterEmail()) || "";
@@ -154,7 +155,6 @@ export function CompleteProfileForm({
       const res = await completeProfileApi(payload);
 
       if (res.isSucceed) {
-        // Clear pending register email upon successfully finishing flow
         await clearPendingRegisterEmail();
         onSuccess?.();
       } else {
@@ -205,11 +205,13 @@ export function CompleteProfileForm({
 
           {/* Email Badge (Readonly) */}
           <View style={styles.emailBadge}>
-            <Text style={styles.emailBadgeIcon}>📧</Text>
+            <View style={styles.emailBadgeIconWrap}>
+              <Ionicons name="mail" size={16} color={Colors.primaryContainer} />
+            </View>
             <View style={styles.emailBadgeContent}>
               <Text style={styles.emailBadgeLabel}>Tài khoản liên kết:</Text>
               {isEmailLoading ? (
-                <ActivityIndicator size="small" color="#2563EB" />
+                <ActivityIndicator size="small" color={Colors.primaryContainer} />
               ) : (
                 <Text style={styles.emailBadgeValue} numberOfLines={1}>
                   {email || "(Đã lưu trong thiết bị)"}
@@ -221,7 +223,7 @@ export function CompleteProfileForm({
           {/* Server Error Banner */}
           {Boolean(serverError) && (
             <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerIcon}>⚠️</Text>
+              <Ionicons name="alert-circle" size={18} color={Colors.error} />
               <Text style={styles.errorBannerText}>{serverError}</Text>
             </View>
           )}
@@ -241,7 +243,7 @@ export function CompleteProfileForm({
                 <TextInput
                   style={styles.input}
                   placeholder="Nguyễn Văn"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="rgba(138, 114, 109, 0.6)"
                   value={lastName}
                   onChangeText={(t) => {
                     setLastName(t);
@@ -268,7 +270,7 @@ export function CompleteProfileForm({
                 <TextInput
                   style={styles.input}
                   placeholder="An"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="rgba(138, 114, 109, 0.6)"
                   value={firstName}
                   onChangeText={(t) => {
                     setFirstName(t);
@@ -294,11 +296,16 @@ export function CompleteProfileForm({
                 Boolean(errors.dateOfBirth) && styles.inputError,
               ]}
             >
-              <Text style={styles.inputIcon}>📅</Text>
+              <Ionicons
+                name="calendar-outline"
+                size={18}
+                color={Colors.outline}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Ví dụ: 1998-05-20"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="rgba(138, 114, 109, 0.6)"
                 value={dateOfBirth}
                 onChangeText={(t) => {
                   setDateOfBirth(t);
@@ -328,13 +335,18 @@ export function CompleteProfileForm({
                 activeOpacity={0.8}
                 disabled={isSubmitting}
               >
+                <Ionicons
+                  name="male"
+                  size={16}
+                  color={gender === true ? Colors.primaryContainer : Colors.outline}
+                />
                 <Text
                   style={[
                     styles.genderOptionText,
                     gender === true && styles.genderOptionTextSelected,
                   ]}
                 >
-                  👨 Nam
+                  Nam
                 </Text>
               </TouchableOpacity>
 
@@ -347,13 +359,18 @@ export function CompleteProfileForm({
                 activeOpacity={0.8}
                 disabled={isSubmitting}
               >
+                <Ionicons
+                  name="female"
+                  size={16}
+                  color={gender === false ? Colors.primaryContainer : Colors.outline}
+                />
                 <Text
                   style={[
                     styles.genderOptionText,
                     gender === false && styles.genderOptionTextSelected,
                   ]}
                 >
-                  👩 Nữ
+                  Nữ
                 </Text>
               </TouchableOpacity>
             </View>
@@ -370,11 +387,16 @@ export function CompleteProfileForm({
                 Boolean(errors.citizenCardId) && styles.inputError,
               ]}
             >
-              <Text style={styles.inputIcon}>🪪</Text>
+              <Ionicons
+                name="card-outline"
+                size={18}
+                color={Colors.outline}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="12 chữ số trên thẻ căn cước"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="rgba(138, 114, 109, 0.6)"
                 value={citizenCardId}
                 onChangeText={(t) => {
                   setCitizenCardId(t);
@@ -400,11 +422,16 @@ export function CompleteProfileForm({
                 Boolean(errors.phone) && styles.inputError,
               ]}
             >
-              <Text style={styles.inputIcon}>📱</Text>
+              <Ionicons
+                name="call-outline"
+                size={18}
+                color={Colors.outline}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Ví dụ: 0912345678"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="rgba(138, 114, 109, 0.6)"
                 value={phone}
                 onChangeText={(t) => {
                   setPhone(t);
@@ -430,11 +457,16 @@ export function CompleteProfileForm({
                 Boolean(errors.address) && styles.inputError,
               ]}
             >
-              <Text style={styles.inputIcon}>🏠</Text>
+              <Ionicons
+                name="location-outline"
+                size={18}
+                color={Colors.outline}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Số nhà, tên đường, phường / xã"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="rgba(138, 114, 109, 0.6)"
                 value={address}
                 onChangeText={(t) => {
                   setAddress(t);
@@ -463,7 +495,7 @@ export function CompleteProfileForm({
                 <TextInput
                   style={styles.input}
                   placeholder="TP. Hà Nội"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="rgba(138, 114, 109, 0.6)"
                   value={city}
                   onChangeText={(t) => {
                     setCity(t);
@@ -490,7 +522,7 @@ export function CompleteProfileForm({
                 <TextInput
                   style={styles.input}
                   placeholder="Việt Nam"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor="rgba(138, 114, 109, 0.6)"
                   value={country}
                   onChangeText={(t) => {
                     setCountry(t);
@@ -513,12 +545,15 @@ export function CompleteProfileForm({
             ]}
             onPress={handleSubmit}
             disabled={isSubmitting}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
             {isSubmitting ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={Colors.onPrimary} size="small" />
             ) : (
-              <Text style={styles.submitButtonText}>Hoàn tất hồ sơ</Text>
+              <View style={styles.btnRow}>
+                <Text style={styles.submitButtonText}>Hoàn tất hồ sơ</Text>
+                <Ionicons name="checkmark-done" size={16} color={Colors.onPrimary} />
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -534,178 +569,185 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 24,
+    paddingBottom: Spacing.xl,
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
     alignItems: "center",
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
+    ...Typography.headlineSm,
+    fontSize: 20,
+    color: Colors.primary,
+    marginBottom: 4,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
   },
   emailBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 16,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  emailBadgeIcon: {
-    fontSize: 20,
-    marginRight: 8,
+  emailBadgeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(158, 60, 43, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   emailBadgeContent: {
     flex: 1,
   },
   emailBadgeLabel: {
+    ...Typography.labelSm,
     fontSize: 11,
-    color: "#64748B",
+    color: Colors.onSurfaceVariant,
   },
   emailBadgeValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#0F172A",
+    ...Typography.labelMd,
+    color: Colors.primary,
+    fontWeight: "700",
+    marginTop: 1,
   },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    borderRadius: 8,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorBannerIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    borderColor: "rgba(186, 26, 26, 0.3)",
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: 8,
   },
   errorBannerText: {
     flex: 1,
-    fontSize: 13,
-    color: "#DC2626",
+    ...Typography.bodySm,
+    color: Colors.onErrorContainer,
     fontWeight: "500",
   },
   row: {
     flexDirection: "row",
-    gap: 12,
+    gap: Spacing.md,
   },
   colHalf: {
     flex: 1,
   },
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: Spacing.md,
   },
   label: {
-    fontSize: 13,
+    ...Typography.labelMd,
+    color: Colors.onSurface,
     fontWeight: "600",
-    color: "#334155",
     marginBottom: 6,
   },
   requiredMark: {
-    color: "#EF4444",
+    color: Colors.primaryContainer,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: Spacing.md,
     height: 48,
   },
   inputError: {
-    borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
+    borderColor: Colors.error,
+    backgroundColor: "rgba(186, 26, 26, 0.04)",
   },
   inputIcon: {
-    fontSize: 16,
     marginRight: 8,
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: "#0F172A",
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
     height: "100%",
   },
   errorText: {
-    fontSize: 12,
-    color: "#EF4444",
+    ...Typography.labelSm,
+    color: Colors.error,
     marginTop: 4,
     marginLeft: 2,
   },
   genderRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: Spacing.md,
   },
   genderOption: {
     flex: 1,
-    height: 46,
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    backgroundColor: "#F8FAFC",
+    height: 48,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
   },
   genderOptionSelected: {
-    borderColor: "#2563EB",
-    backgroundColor: "#EFF6FF",
+    borderColor: Colors.primaryContainer,
+    backgroundColor: "rgba(158, 60, 43, 0.08)",
   },
   genderOptionText: {
-    fontSize: 14,
+    ...Typography.labelMd,
+    color: Colors.onSurfaceVariant,
     fontWeight: "600",
-    color: "#64748B",
   },
   genderOptionTextSelected: {
-    color: "#2563EB",
+    color: Colors.primaryContainer,
+    fontWeight: "700",
   },
   submitButton: {
-    backgroundColor: "#2563EB",
-    borderRadius: 10,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.md,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    shadowColor: "#2563EB",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    marginTop: Spacing.xs,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 3,
   },
   submitButtonDisabled: {
-    backgroundColor: "#93C5FD",
+    backgroundColor: Colors.outlineVariant,
     shadowOpacity: 0,
     elevation: 0,
   },
+  btnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.labelLg,
+    color: Colors.onPrimary,
+    fontWeight: "700",
   },
 });

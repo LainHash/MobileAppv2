@@ -9,9 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { verifyEmail as verifyEmailApi, resendVerificationCode } from "../api/authApi";
 import { getPendingRegisterEmail, savePendingRegisterEmail } from "../utils/authStorage";
 import { OtpPurpose } from "../types/auth";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface VerifyEmailFormProps {
   initialEmail?: string;
@@ -53,7 +55,6 @@ export function VerifyEmailForm({
             setEmail(storedEmail);
           }
         } else {
-          // Keep local storage in sync
           await savePendingRegisterEmail(initialEmail);
         }
       } catch (e) {
@@ -92,13 +93,11 @@ export function VerifyEmailForm({
 
     setIsVerifying(true);
     try {
-      // Ngầm gán email: retrieves active email from state or storage
       let targetEmail = email;
       if (!targetEmail) {
         targetEmail = (await getPendingRegisterEmail()) || "";
       }
 
-      // Calls API with email implicitly attached into body
       const res = await verifyEmailApi({
         email: targetEmail,
         code,
@@ -137,7 +136,6 @@ export function VerifyEmailForm({
         targetEmail = (await getPendingRegisterEmail()) || "";
       }
 
-      // Calls resend API with email attached implicitly
       const res = await resendVerificationCode({
         email: targetEmail,
         purpose: OtpPurpose.EmailVerification,
@@ -185,11 +183,13 @@ export function VerifyEmailForm({
 
         {/* Email Highlight Box */}
         <View style={styles.emailBadge}>
-          <Text style={styles.emailBadgeIcon}>✉️</Text>
+          <View style={styles.emailBadgeIconWrap}>
+            <Ionicons name="mail" size={18} color={Colors.primaryContainer} />
+          </View>
           <View style={styles.emailBadgeContent}>
             <Text style={styles.emailBadgeLabel}>Mã xác thực gửi tới:</Text>
             {isEmailLoading ? (
-              <ActivityIndicator size="small" color="#2563EB" />
+              <ActivityIndicator size="small" color={Colors.primaryContainer} />
             ) : (
               <Text style={styles.emailBadgeAddress} numberOfLines={1}>
                 {email || "(Chưa xác định email)"}
@@ -201,7 +201,7 @@ export function VerifyEmailForm({
         {/* Error Banner */}
         {Boolean(serverError) && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerIcon}>⚠️</Text>
+            <Ionicons name="alert-circle" size={18} color={Colors.error} />
             <Text style={styles.errorBannerText}>{serverError}</Text>
           </View>
         )}
@@ -209,7 +209,7 @@ export function VerifyEmailForm({
         {/* Success Notice Banner */}
         {Boolean(successNotice) && (
           <View style={styles.successBanner}>
-            <Text style={styles.successBannerIcon}>✅</Text>
+            <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
             <Text style={styles.successBannerText}>{successNotice}</Text>
           </View>
         )}
@@ -263,12 +263,15 @@ export function VerifyEmailForm({
           ]}
           onPress={() => handleVerify()}
           disabled={otpCode.length !== OTP_LENGTH || isVerifying}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           {isVerifying ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={Colors.onPrimary} size="small" />
           ) : (
-            <Text style={styles.submitButtonText}>Xác thực OTP</Text>
+            <View style={styles.btnRow}>
+              <Text style={styles.submitButtonText}>Xác thực OTP</Text>
+              <Ionicons name="shield-checkmark" size={16} color={Colors.onPrimary} />
+            </View>
           )}
         </TouchableOpacity>
 
@@ -286,7 +289,7 @@ export function VerifyEmailForm({
               activeOpacity={0.7}
             >
               {isResending ? (
-                <ActivityIndicator size="small" color="#2563EB" />
+                <ActivityIndicator size="small" color={Colors.secondaryGold} />
               ) : (
                 <Text style={styles.resendButtonText}>Gửi lại mã</Text>
               )}
@@ -312,133 +315,130 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
     alignItems: "center",
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
+    ...Typography.headlineSm,
+    fontSize: 20,
+    color: Colors.primary,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: "center",
   },
   emailBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EFF6FF",
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#BFDBFE",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 18,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  emailBadgeIcon: {
-    fontSize: 24,
-    marginRight: 10,
+  emailBadgeIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(158, 60, 43, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   emailBadgeContent: {
     flex: 1,
   },
   emailBadgeLabel: {
-    fontSize: 12,
-    color: "#3B82F6",
-    fontWeight: "500",
+    ...Typography.labelSm,
+    fontSize: 11,
+    color: Colors.onSurfaceVariant,
   },
   emailBadgeAddress: {
-    fontSize: 15,
+    ...Typography.labelLg,
+    color: Colors.primary,
     fontWeight: "700",
-    color: "#1E40AF",
     marginTop: 2,
   },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    borderRadius: 8,
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorBannerIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    borderColor: "rgba(186, 26, 26, 0.3)",
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: 8,
   },
   errorBannerText: {
     flex: 1,
-    fontSize: 13,
-    color: "#DC2626",
+    ...Typography.bodySm,
+    color: Colors.onErrorContainer,
     fontWeight: "500",
   },
   successBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0FDF4",
-    borderRadius: 8,
+    backgroundColor: "rgba(40, 167, 69, 0.1)",
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: "#86EFAC",
-    padding: 12,
-    marginBottom: 16,
-  },
-  successBannerIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    borderColor: "rgba(40, 167, 69, 0.3)",
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: 8,
   },
   successBannerText: {
     flex: 1,
-    fontSize: 13,
-    color: "#16A34A",
+    ...Typography.bodySm,
+    color: Colors.success,
     fontWeight: "600",
   },
   otpBoxesRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 18,
-    paddingHorizontal: 4,
+    marginVertical: Spacing.md,
+    paddingHorizontal: 2,
   },
   otpCell: {
     width: 44,
     height: 52,
-    borderRadius: 10,
+    borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
+    borderColor: Colors.borderSoft,
+    backgroundColor: Colors.surfaceContainerLowest,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadows.subtle,
   },
   otpCellActive: {
-    borderColor: "#2563EB",
-    backgroundColor: "#EFF6FF",
+    borderColor: Colors.primaryContainer,
+    backgroundColor: "rgba(158, 60, 43, 0.05)",
     transform: [{ scale: 1.05 }],
   },
   otpCellFilled: {
-    borderColor: "#2563EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: Colors.secondaryGold,
+    backgroundColor: Colors.surfaceContainerLowest,
   },
   otpCellError: {
-    borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
+    borderColor: Colors.error,
+    backgroundColor: "rgba(186, 26, 26, 0.04)",
   },
   otpCellText: {
+    ...Typography.headlineSm,
     fontSize: 22,
     fontWeight: "700",
-    color: "#0F172A",
+    color: Colors.primary,
   },
   hiddenInput: {
     position: "absolute",
@@ -447,61 +447,67 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   submitButton: {
-    backgroundColor: "#2563EB",
-    borderRadius: 10,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.md,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
-    shadowColor: "#2563EB",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    marginTop: Spacing.xs,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 3,
   },
   submitButtonDisabled: {
-    backgroundColor: "#93C5FD",
+    backgroundColor: Colors.outlineVariant,
     shadowOpacity: 0,
     elevation: 0,
   },
+  btnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.labelLg,
+    color: Colors.onPrimary,
+    fontWeight: "700",
   },
   resendSection: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: Spacing.md,
   },
   resendText: {
-    fontSize: 14,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   countdownText: {
-    fontSize: 14,
-    color: "#94A3B8",
+    ...Typography.bodySm,
+    color: Colors.outline,
   },
   countdownNumber: {
     fontWeight: "700",
-    color: "#2563EB",
+    color: Colors.secondaryGold,
   },
   resendButtonText: {
-    fontSize: 14,
+    ...Typography.labelMd,
     fontWeight: "700",
-    color: "#2563EB",
+    color: Colors.secondaryGold,
   },
   restartRow: {
     alignItems: "center",
-    marginTop: 18,
-    paddingTop: 12,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
+    borderTopColor: Colors.borderSoft,
   },
   restartLink: {
+    ...Typography.bodySm,
     fontSize: 13,
-    color: "#64748B",
-    fontWeight: "500",
+    color: Colors.secondaryGold,
+    fontWeight: "600",
   },
 });
