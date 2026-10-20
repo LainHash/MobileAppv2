@@ -14,6 +14,8 @@ export enum TableShape {
 
 export interface RestaurantTable {
   id: string;
+  areaId?: string;
+  areaName?: string;
   tableNumber: string;
   capacity: number;
   shape: TableShape;

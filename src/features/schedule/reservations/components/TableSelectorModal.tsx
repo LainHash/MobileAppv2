@@ -93,6 +93,16 @@ export function TableSelectorModal({
                     >
                       👥 Sức chứa: {item.capacity} người
                     </Text>
+                    {Boolean(item.areaName) && (
+                      <Text
+                        style={[
+                          styles.tableArea,
+                          isSelected && styles.tableAreaSelected,
+                        ]}
+                      >
+                        📍 {item.areaName}
+                      </Text>
+                    )}
                     <View
                       style={[
                         styles.checkCircle,
@@ -190,6 +200,15 @@ const styles = StyleSheet.create({
   },
   tableCapacitySelected: {
     color: "#1D4ED8",
+  },
+  tableArea: {
+    fontSize: 11,
+    color: "#0284C7",
+    marginTop: 2,
+    fontWeight: "500",
+  },
+  tableAreaSelected: {
+    color: "#0369A1",
   },
   checkCircle: {
     position: "absolute",

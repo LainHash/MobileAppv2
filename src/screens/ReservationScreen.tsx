@@ -20,7 +20,8 @@ import {
   getSelectedBranchId,
   saveSelectedBranchId,
 } from "@/features/territory/branches";
-import { useTables } from "@/features/territory/tables";
+import { AreaDropdown, useAreas } from "@/features/territory/areas";
+import { useTables, TableDropdown } from "@/features/territory/tables";
 import {
   PartySizeStepper,
   DateTimeSelector,
@@ -83,10 +84,36 @@ export default function ReservationScreen() {
 
   const activeBranchId = currentBranch?.id ?? null;
 
+  // 3-level selection state: Branch -> Area -> Table
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
+  const { areas, isLoading: isAreasLoading } = useAreas(activeBranchId);
+  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
+  const { tables, isLoading: isTablesLoading } = useTables(
+    activeBranchId,
+    selectedAreaId,
+  );
+
   const handleSelectBranch = (bId: string | null) => {
     setSelectedBranchId(bId);
     if (bId) saveSelectedBranchId(bId);
+    setSelectedAreaId(null); // reset area when branch changes
     setSelectedTableIds([]); // reset tables when branch changes
+  };
+
+  const handleSelectArea = (aId: string | null) => {
+    setSelectedAreaId(aId);
+    setSelectedTableIds([]); // reset tables when area changes
+  };
+
+  const singleSelectedTableId =
+    selectedTableIds.length === 1 ? selectedTableIds[0] : null;
+
+  const handleSelectTableDropdown = (tId: string | null) => {
+    if (!tId) {
+      setSelectedTableIds([]);
+    } else {
+      setSelectedTableIds([tId]);
+    }
   };
 
   // Date & Time state
@@ -100,10 +127,8 @@ export default function ReservationScreen() {
   // Party size state
   const [partySize, setPartySize] = useState<number>(2);
 
-  // Table selection state
+  // Table modal state
   const [isTableModalVisible, setIsTableModalVisible] = useState(false);
-  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
-  const { tables, isLoading: isTablesLoading } = useTables(activeBranchId);
 
   const handleToggleTable = (tableId: string) => {
     setSelectedTableIds((prev) =>
@@ -229,9 +254,12 @@ export default function ReservationScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. Chọn Chi nhánh */}
+        {/* 1. Vị trí đặt bàn (Dropdown 3 cấp: Chi nhánh -> Khu vực -> Bàn) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📍 1. Chi nhánh phục vụ</Text>
+          <Text style={styles.cardTitle}>📍 1. Vị trí đặt bàn</Text>
+
+          {/* Cấp 1: Chi nhánh */}
+          <Text style={styles.dropdownLabel}>1. Chi nhánh</Text>
           {isBranchesLoading ? (
             <ActivityIndicator size="small" style={{ marginVertical: 10 }} />
           ) : branchesError ? (
@@ -243,6 +271,7 @@ export default function ReservationScreen() {
               onSelect={handleSelectBranch}
               placeholder="Chọn chi nhánh"
               hideAllOption
+              style={styles.fieldDropdown}
             />
           )}
 
@@ -262,41 +291,48 @@ export default function ReservationScreen() {
               )}
             </View>
           )}
-        </View>
 
-        {/* 2. Thời gian & Số lượng khách */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>📅 2. Thời gian & Số lượng khách</Text>
-          <DateTimeSelector
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            selectedTime={selectedTime}
-            onSelectTime={setSelectedTime}
-            openTime={currentBranch?.openTime || "08:00"}
-            closeTime={currentBranch?.closeTime || "22:00"}
+          <View style={styles.divider} />
+
+          {/* Cấp 2: Khu vực */}
+          <View style={styles.dropdownHeaderRow}>
+            <Text style={styles.dropdownLabel}>2. Khu vực</Text>
+            {isAreasLoading && (
+              <ActivityIndicator size="small" color="#007AFF" />
+            )}
+          </View>
+          <AreaDropdown
+            areas={areas}
+            value={selectedAreaId}
+            onSelect={handleSelectArea}
+            placeholder="Chọn khu vực (hoặc Tất cả)"
+            allowAllOption
+            disabled={!activeBranchId}
+            style={styles.fieldDropdown}
           />
 
           <View style={styles.divider} />
 
-          <Text style={styles.subSectionTitle}>Số lượng khách</Text>
-          <PartySizeStepper value={partySize} onChange={setPartySize} />
-        </View>
-
-        {/* 3. Tùy chọn Bàn */}
-        <View style={styles.card}>
-          <View style={styles.tableHeaderRow}>
-            <Text style={styles.cardTitle}>🪑 3. Vị trí bàn</Text>
-            <TouchableOpacity
-              style={styles.chooseTableButton}
-              onPress={() => setIsTableModalVisible(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.chooseTableButtonText}>
-                {selectedTableIds.length > 0 ? "Đổi bàn" : "Tự chọn bàn cụ thể"}
-              </Text>
-            </TouchableOpacity>
+          {/* Cấp 3: Bàn phục vụ */}
+          <View style={styles.dropdownHeaderRow}>
+            <Text style={styles.dropdownLabel}>3. Bàn phục vụ</Text>
+            {isTablesLoading && (
+              <ActivityIndicator size="small" color="#007AFF" />
+            )}
           </View>
+          <TableDropdown
+            tables={tables}
+            value={singleSelectedTableId}
+            onSelect={handleSelectTableDropdown}
+            partySize={partySize}
+            placeholder="Chọn bàn (hoặc tự động sắp xếp)"
+            allowAutoOption
+            disabled={!activeBranchId}
+            isLoading={isTablesLoading}
+            style={styles.fieldDropdown}
+          />
 
+          {/* Trạng thái Bàn đã chọn / Tự động xếp bàn */}
           {selectedTableIds.length === 0 ? (
             <View style={styles.autoAssignBox}>
               <Text style={styles.autoAssignText}>
@@ -305,7 +341,18 @@ export default function ReservationScreen() {
             </View>
           ) : (
             <View style={styles.selectedTablesContainer}>
-              <Text style={styles.selectedTablesLabel}>Bàn đã chọn:</Text>
+              <View style={styles.selectedTablesHeader}>
+                <Text style={styles.selectedTablesLabel}>
+                  Bàn đã chọn ({selectedTableIds.length}):
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setIsTableModalVisible(true)}
+                  style={styles.openModalLink}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.openModalLinkText}>+ Chọn thêm bàn</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.tableChipsWrap}>
                 {selectedTableIds.map((id) => {
                   const t = tables.find((item) => item.id === id);
@@ -328,9 +375,27 @@ export default function ReservationScreen() {
           )}
         </View>
 
-        {/* 4. Thông tin liên hệ */}
+        {/* 2. Thời gian & Số lượng khách */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>👤 4. Thông tin người đặt bàn</Text>
+          <Text style={styles.cardTitle}>📅 2. Thời gian & Số lượng khách</Text>
+          <DateTimeSelector
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            selectedTime={selectedTime}
+            onSelectTime={setSelectedTime}
+            openTime={currentBranch?.openTime || "08:00"}
+            closeTime={currentBranch?.closeTime || "22:00"}
+          />
+
+          <View style={styles.divider} />
+
+          <Text style={styles.subSectionTitle}>Số lượng khách</Text>
+          <PartySizeStepper value={partySize} onChange={setPartySize} />
+        </View>
+
+        {/* 3. Thông tin người đặt bàn */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>👤 3. Thông tin người đặt bàn</Text>
           {!isAuthenticated && (
             <Text style={styles.guestNotice}>
               💡 Bạn đang đặt bàn với tư cách khách vãng lai. Vui lòng điền đủ họ tên và số điện thoại.
@@ -481,6 +546,29 @@ const styles = StyleSheet.create({
     color: "#0284C7",
     fontWeight: "600",
   },
+  dropdownLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 6,
+  },
+  dropdownHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  fieldDropdown: {
+    margin: 0,
+    marginHorizontal: 0,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 48,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   tableHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -491,6 +579,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   chooseTableButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  selectedTablesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  openModalLink: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  openModalLinkText: {
     fontSize: 13,
     fontWeight: "600",
     color: "#007AFF",

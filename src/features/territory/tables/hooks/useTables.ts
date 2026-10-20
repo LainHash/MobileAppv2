@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { RestaurantTable } from "../types/Table";
 import { fetchTablesByBranch } from "../api/tableApi";
 
-export function useTables(branchId: string | null | undefined) {
+export function useTables(
+  branchId: string | null | undefined,
+  areaId?: string | null | undefined,
+) {
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +19,7 @@ export function useTables(branchId: string | null | undefined) {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetchTablesByBranch(branchId);
+      const res = await fetchTablesByBranch(branchId, areaId);
       if (res.isSucceed && res.data) {
         setTables(res.data);
       } else {
@@ -27,7 +30,7 @@ export function useTables(branchId: string | null | undefined) {
     } finally {
       setIsLoading(false);
     }
-  }, [branchId]);
+  }, [branchId, areaId]);
 
   useEffect(() => {
     loadTables();
