@@ -18,7 +18,7 @@ import {
   OrderStatusBadge,
   OrderStatus,
   OrderResponse,
-} from "@/features/commerce/orders";
+} from "@/features/sale/orders";
 import { useAuth } from "@/features/auth";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { formatCurrency } from "@/common/helpers";
@@ -73,7 +73,11 @@ export default function OrdersScreen() {
             </Text>
             {Boolean(formattedDate) && (
               <View style={styles.dateRow}>
-                <Ionicons name="calendar-outline" size={12} color={Colors.outline} />
+                <Ionicons
+                  name="calendar-outline"
+                  size={12}
+                  color={Colors.outline}
+                />
                 <Text style={styles.orderDate}>{formattedDate}</Text>
               </View>
             )}
@@ -88,7 +92,11 @@ export default function OrdersScreen() {
         <View style={styles.cardBody}>
           {Boolean(item.deliveryAddress) && (
             <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={15} color={Colors.primary} />
+              <Ionicons
+                name="location-outline"
+                size={15}
+                color={Colors.primary}
+              />
               <Text style={styles.infoText} numberOfLines={1}>
                 {item.deliveryAddress}
               </Text>
@@ -97,7 +105,11 @@ export default function OrdersScreen() {
 
           {Boolean(item.branchCode) && (
             <View style={styles.infoRow}>
-              <Ionicons name="storefront-outline" size={15} color={Colors.secondary} />
+              <Ionicons
+                name="storefront-outline"
+                size={15}
+                color={Colors.secondary}
+              />
               <Text style={styles.infoText}>Chi nhánh: {item.branchCode}</Text>
             </View>
           )}
@@ -106,7 +118,11 @@ export default function OrdersScreen() {
         {/* Footer: Items count and Total Amount */}
         <View style={styles.cardFooter}>
           <View style={styles.itemCountWrap}>
-            <Ionicons name="restaurant-outline" size={14} color={Colors.outline} />
+            <Ionicons
+              name="restaurant-outline"
+              size={14}
+              color={Colors.outline}
+            />
             <Text style={styles.itemCountText}>
               {item.totalItems || 1} món ẩm thực
             </Text>
@@ -171,11 +187,16 @@ export default function OrdersScreen() {
       ) : !isAuthenticated ? (
         <View style={styles.centerContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="person-outline" size={44} color={Colors.secondary} />
+            <Ionicons
+              name="person-outline"
+              size={44}
+              color={Colors.secondary}
+            />
           </View>
           <Text style={styles.emptyTitle}>Chưa đăng nhập</Text>
           <Text style={styles.emptySub}>
-            Vui lòng đăng nhập để theo dõi và xem lịch sử đơn hàng của quý khách.
+            Vui lòng đăng nhập để theo dõi và xem lịch sử đơn hàng của quý
+            khách.
           </Text>
           <TouchableOpacity
             style={styles.actionButton}
@@ -192,23 +213,41 @@ export default function OrdersScreen() {
         </View>
       ) : error && orders.length === 0 ? (
         <View style={styles.centerContainer}>
-          <View style={[styles.iconCircle, { backgroundColor: "rgba(186, 26, 26, 0.08)" }]}>
-            <Ionicons name="alert-circle-outline" size={44} color={Colors.error} />
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: "rgba(186, 26, 26, 0.08)" },
+            ]}
+          >
+            <Ionicons
+              name="alert-circle-outline"
+              size={44}
+              color={Colors.error}
+            />
           </View>
           <Text style={styles.emptyTitle}>Không thể tải đơn hàng</Text>
           <Text style={styles.errorSub}>{error}</Text>
-          <TouchableOpacity style={styles.actionButton} onPress={refresh} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={refresh}
+            activeOpacity={0.85}
+          >
             <Text style={styles.actionButtonText}>Thử lại</Text>
           </TouchableOpacity>
         </View>
       ) : orders.length === 0 ? (
         <View style={styles.centerContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="receipt-outline" size={44} color={Colors.secondary} />
+            <Ionicons
+              name="receipt-outline"
+              size={44}
+              color={Colors.secondary}
+            />
           </View>
           <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
           <Text style={styles.emptySub}>
-            Quý khách chưa có đơn hàng nào ở trạng thái này. Khám phá ngay thực đơn thượng hạng của Haute De Hallen!
+            Quý khách chưa có đơn hàng nào ở trạng thái này. Khám phá ngay thực
+            đơn thượng hạng của Haute De Hallen!
           </Text>
           <TouchableOpacity
             style={styles.actionButton}

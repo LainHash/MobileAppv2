@@ -28,13 +28,16 @@ import {
   normalizeOrderStatus,
   isDeliveryOrder,
   canCancelOrder,
-} from "@/features/commerce/orders";
+} from "@/features/sale/orders";
 import { formatCurrency } from "@/common/helpers";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
-type OrderDetailNavProp = NativeStackNavigationProp<RootStackParamList, "OrderDetail">;
+type OrderDetailNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "OrderDetail"
+>;
 
 const STEPS = [
   { label: "Đặt món", desc: "Chờ thanh toán / xác nhận" },
@@ -164,7 +167,9 @@ export default function OrderDetailScreen() {
 
   const handleOpenReportModal = () => {
     setReportNote("");
-    setContactPhone((order as any)?.deliveryPhone || (order as any)?.phoneNumber || "");
+    setContactPhone(
+      (order as any)?.deliveryPhone || (order as any)?.phoneNumber || "",
+    );
     setSelectedTopic(REPORT_TOPICS[0]);
     setIsReportModalVisible(true);
   };
@@ -177,7 +182,10 @@ export default function OrderDetailScreen() {
 
   const handleSubmitReport = async () => {
     if (!reportNote.trim()) {
-      Alert.alert("Thông báo", "Vui lòng nhập mô tả chi tiết vấn đề bạn gặp phải.");
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng nhập mô tả chi tiết vấn đề bạn gặp phải.",
+      );
       return;
     }
 
@@ -214,12 +222,25 @@ export default function OrderDetailScreen() {
       ) : error && !order ? (
         <View style={styles.centerContainer}>
           <View style={styles.errorIconCircle}>
-            <Ionicons name="alert-circle-outline" size={36} color={Colors.error} />
+            <Ionicons
+              name="alert-circle-outline"
+              size={36}
+              color={Colors.error}
+            />
           </View>
           <Text style={styles.errorTitle}>Không thể tải đơn hàng</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refresh} activeOpacity={0.85}>
-            <Ionicons name="refresh-outline" size={16} color={Colors.onPrimary} style={{ marginRight: 6 }} />
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={refresh}
+            activeOpacity={0.85}
+          >
+            <Ionicons
+              name="refresh-outline"
+              size={16}
+              color={Colors.onPrimary}
+              style={{ marginRight: 6 }}
+            />
             <Text style={styles.retryButtonText}>Thử lại</Text>
           </TouchableOpacity>
         </View>
@@ -247,7 +268,11 @@ export default function OrderDetailScreen() {
                 <Text style={styles.orderCode}>#{orderCode}</Text>
                 {Boolean(order.createdAt) && (
                   <View style={styles.dateRow}>
-                    <Ionicons name="time-outline" size={13} color={Colors.outline} />
+                    <Ionicons
+                      name="time-outline"
+                      size={13}
+                      color={Colors.outline}
+                    />
                     <Text style={styles.orderDate}>
                       {new Date(order.createdAt).toLocaleString("vi-VN", {
                         hour: "2-digit",
@@ -265,9 +290,14 @@ export default function OrderDetailScreen() {
 
             {Boolean(order.branchCode) && (
               <View style={styles.branchRow}>
-                <Ionicons name="business-outline" size={16} color={Colors.secondaryGold} />
+                <Ionicons
+                  name="business-outline"
+                  size={16}
+                  color={Colors.secondaryGold}
+                />
                 <Text style={styles.branchText}>
-                  Chi nhánh phục vụ: <Text style={styles.branchTextBold}>{order.branchCode}</Text>
+                  Chi nhánh phục vụ:{" "}
+                  <Text style={styles.branchTextBold}>{order.branchCode}</Text>
                 </Text>
               </View>
             )}
@@ -278,14 +308,19 @@ export default function OrderDetailScreen() {
             <View style={styles.deliveryActionCard}>
               <View style={styles.deliveryActionHeader}>
                 <View style={styles.deliveryActionIconBox}>
-                  <Ionicons name="bicycle-outline" size={22} color={Colors.secondaryGold} />
+                  <Ionicons
+                    name="bicycle-outline"
+                    size={22}
+                    color={Colors.secondaryGold}
+                  />
                 </View>
                 <View style={styles.deliveryActionTextCol}>
                   <Text style={styles.deliveryActionTitle}>
                     Đơn món đang trên đường vận chuyển
                   </Text>
                   <Text style={styles.deliveryActionSubtitle}>
-                    Khi đã nhận đủ món ăn tươi nóng từ nhân viên giao hàng, quý khách vui lòng xác nhận hoàn tất.
+                    Khi đã nhận đủ món ăn tươi nóng từ nhân viên giao hàng, quý
+                    khách vui lòng xác nhận hoàn tất.
                   </Text>
                 </View>
               </View>
@@ -338,7 +373,11 @@ export default function OrderDetailScreen() {
                           ]}
                         >
                           {isPassed ? (
-                            <Ionicons name="checkmark" size={12} color={Colors.onPrimary} />
+                            <Ionicons
+                              name="checkmark"
+                              size={12}
+                              color={Colors.onPrimary}
+                            />
                           ) : (
                             <View style={styles.stepDotInner} />
                           )}
@@ -376,18 +415,29 @@ export default function OrderDetailScreen() {
             <Text style={styles.cardTitle}>Thông tin giao nhận</Text>
 
             <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+              <Ionicons
+                name="location-outline"
+                size={18}
+                color={Colors.secondaryGold}
+                style={styles.infoRowIcon}
+              />
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoRowLabel}>Địa chỉ giao nhận</Text>
                 <Text style={styles.infoRowValue}>
-                  {order.deliveryAddress || "Thưởng thức tại không gian nhà hàng"}
+                  {order.deliveryAddress ||
+                    "Thưởng thức tại không gian nhà hàng"}
                 </Text>
               </View>
             </View>
 
             {Boolean(order.customerName) && (
               <View style={styles.infoRow}>
-                <Ionicons name="person-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={Colors.secondaryGold}
+                  style={styles.infoRowIcon}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.infoRowLabel}>Người nhận món</Text>
                   <Text style={styles.infoRowValue}>{order.customerName}</Text>
@@ -397,17 +447,29 @@ export default function OrderDetailScreen() {
 
             {Boolean((order as any)?.deliveryPhone) && (
               <View style={styles.infoRow}>
-                <Ionicons name="call-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+                <Ionicons
+                  name="call-outline"
+                  size={18}
+                  color={Colors.secondaryGold}
+                  style={styles.infoRowIcon}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.infoRowLabel}>Số điện thoại</Text>
-                  <Text style={styles.infoRowValue}>{(order as any).deliveryPhone}</Text>
+                  <Text style={styles.infoRowValue}>
+                    {(order as any).deliveryPhone}
+                  </Text>
                 </View>
               </View>
             )}
 
             {Boolean(order.note) && (
               <View style={styles.infoRow}>
-                <Ionicons name="chatbox-ellipses-outline" size={18} color={Colors.secondaryGold} style={styles.infoRowIcon} />
+                <Ionicons
+                  name="chatbox-ellipses-outline"
+                  size={18}
+                  color={Colors.secondaryGold}
+                  style={styles.infoRowIcon}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.infoRowLabel}>Ghi chú cho bếp</Text>
                   <Text style={styles.infoRowValue}>{order.note}</Text>
@@ -419,7 +481,8 @@ export default function OrderDetailScreen() {
           {/* Ordered Items Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>
-              Danh sách món đã chọn ({(order.orderDetails || order.orderItems || []).length})
+              Danh sách món đã chọn (
+              {(order.orderDetails || order.orderItems || []).length})
             </Text>
             {(order.orderDetails || order.orderItems || []).map((item) => (
               <OrderItemCard key={item.id || item.productId} item={item} />
@@ -431,7 +494,9 @@ export default function OrderDetailScreen() {
             <Text style={styles.cardTitle}>Chi tiết thanh toán</Text>
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>Tạm tính món ăn:</Text>
-              <Text style={styles.priceValue}>{formatCurrency(order.subtotal)}</Text>
+              <Text style={styles.priceValue}>
+                {formatCurrency(order.subtotal)}
+              </Text>
             </View>
 
             {order.discountAmount > 0 && (
@@ -457,7 +522,9 @@ export default function OrderDetailScreen() {
             <View style={styles.priceRow}>
               <View>
                 <Text style={styles.grandTotalLabel}>Tổng thanh toán:</Text>
-                <Text style={styles.vatNote}>(Đã bao gồm thuế GTGT & phí dịch vụ)</Text>
+                <Text style={styles.vatNote}>
+                  (Đã bao gồm thuế GTGT & phí dịch vụ)
+                </Text>
               </View>
               <Text style={styles.grandTotalValue}>
                 {formatCurrency(order.totalAmount)}
@@ -472,7 +539,12 @@ export default function OrderDetailScreen() {
               onPress={handleOpenReportModal}
               activeOpacity={0.8}
             >
-              <Ionicons name="chatbubble-ellipses-outline" size={18} color={Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={18}
+                color={Colors.onSurfaceVariant}
+                style={{ marginRight: 6 }}
+              />
               <Text style={styles.reportOrderText}>
                 Phản hồi / Khiếu nại về đơn món này
               </Text>
@@ -482,7 +554,10 @@ export default function OrderDetailScreen() {
           {/* Cancel Order Button */}
           {canCancel && (
             <TouchableOpacity
-              style={[styles.cancelButton, isCancelling && styles.buttonDisabled]}
+              style={[
+                styles.cancelButton,
+                isCancelling && styles.buttonDisabled,
+              ]}
               onPress={handleCancelPress}
               disabled={isCancelling}
               activeOpacity={0.8}
@@ -529,7 +604,9 @@ export default function OrderDetailScreen() {
                   </View>
 
                   {/* Topics Selection */}
-                  <Text style={styles.fieldLabel}>Vấn đề quý khách gặp phải:</Text>
+                  <Text style={styles.fieldLabel}>
+                    Vấn đề quý khách gặp phải:
+                  </Text>
                   <View style={styles.topicsContainer}>
                     {REPORT_TOPICS.map((topic) => {
                       const isSelected = selectedTopic === topic;
@@ -604,9 +681,14 @@ export default function OrderDetailScreen() {
                       activeOpacity={0.85}
                     >
                       {isReporting ? (
-                        <ActivityIndicator size="small" color={Colors.onPrimary} />
+                        <ActivityIndicator
+                          size="small"
+                          color={Colors.onPrimary}
+                        />
                       ) : (
-                        <Text style={styles.modalSubmitBtnText}>Gửi phản hồi</Text>
+                        <Text style={styles.modalSubmitBtnText}>
+                          Gửi phản hồi
+                        </Text>
                       )}
                     </TouchableOpacity>
                   </View>

@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { RootStackParamList } from "@/navigation/types";
-import { PaymentQrCard } from "@/features/commerce/orders";
+import { PaymentQrCard } from "@/features/sale/orders";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
@@ -30,7 +30,8 @@ export default function OrderSuccessScreen() {
   const { orderId, orderCode, payment } = route.params;
   const [copied, setCopied] = useState(false);
 
-  const displayCode = orderCode || (orderId ? orderId.slice(0, 8).toUpperCase() : "DON-HANG");
+  const displayCode =
+    orderCode || (orderId ? orderId.slice(0, 8).toUpperCase() : "DON-HANG");
 
   const handleCopyCode = async () => {
     try {
@@ -72,7 +73,8 @@ export default function OrderSuccessScreen() {
 
           <Text style={styles.title}>Đặt món thành công</Text>
           <Text style={styles.subtitle}>
-            Trân trọng cảm ơn quý khách. Yêu cầu của bạn đã được chuyển tới bếp trưởng để chuẩn bị nguyên liệu tươi ngon nhất.
+            Trân trọng cảm ơn quý khách. Yêu cầu của bạn đã được chuyển tới bếp
+            trưởng để chuẩn bị nguyên liệu tươi ngon nhất.
           </Text>
 
           {/* Order Code Pill */}
@@ -92,7 +94,12 @@ export default function OrderSuccessScreen() {
                 color={copied ? Colors.secondaryGold : Colors.onSurfaceVariant}
                 style={{ marginRight: 4 }}
               />
-              <Text style={[styles.copyPillText, copied && styles.copyPillTextActive]}>
+              <Text
+                style={[
+                  styles.copyPillText,
+                  copied && styles.copyPillTextActive,
+                ]}
+              >
                 {copied ? "Đã chép" : "Sao chép"}
               </Text>
             </View>
@@ -110,11 +117,17 @@ export default function OrderSuccessScreen() {
         {/* Order Tips / Instructions */}
         <View style={styles.infoCard}>
           <View style={styles.infoCardHeader}>
-            <Ionicons name="time-outline" size={18} color={Colors.secondaryGold} />
+            <Ionicons
+              name="time-outline"
+              size={18}
+              color={Colors.secondaryGold}
+            />
             <Text style={styles.infoCardTitle}>Thời gian phục vụ dự kiến</Text>
           </View>
           <Text style={styles.infoCardDesc}>
-            Món ăn sẽ được chế biến tươi nóng và hoàn tất trong vòng 20 - 35 phút. Quý khách có thể theo dõi trực tiếp trạng thái món ăn trong mục Chi tiết đơn hàng.
+            Món ăn sẽ được chế biến tươi nóng và hoàn tất trong vòng 20 - 35
+            phút. Quý khách có thể theo dõi trực tiếp trạng thái món ăn trong
+            mục Chi tiết đơn hàng.
           </Text>
         </View>
 
@@ -126,7 +139,12 @@ export default function OrderSuccessScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.primaryButtonText}>Xem chi tiết đơn hàng</Text>
-            <Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} style={{ marginLeft: 6 }} />
+            <Ionicons
+              name="arrow-forward"
+              size={16}
+              color={Colors.onPrimary}
+              style={{ marginLeft: 6 }}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -134,8 +152,15 @@ export default function OrderSuccessScreen() {
             onPress={() => navigation.navigate("Orders")}
             activeOpacity={0.85}
           >
-            <Ionicons name="receipt-outline" size={16} color={Colors.primary} style={{ marginRight: 6 }} />
-            <Text style={styles.secondaryButtonText}>Lịch sử đơn hàng của tôi</Text>
+            <Ionicons
+              name="receipt-outline"
+              size={16}
+              color={Colors.primary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.secondaryButtonText}>
+              Lịch sử đơn hàng của tôi
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity

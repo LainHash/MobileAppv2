@@ -16,13 +16,19 @@ import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation/types";
 import { useCart } from "@/features/commerce/carts";
-import { useCheckout } from "@/features/commerce/orders";
+import { useCheckout } from "@/features/sale/orders";
 import { useAuth } from "@/features/auth";
-import { useBranches, getSelectedBranchId } from "@/features/territory/branches";
+import {
+  useBranches,
+  getSelectedBranchId,
+} from "@/features/territory/branches";
 import { formatCurrency, getProductImageUrl } from "@/common/helpers";
 
 type CheckoutRouteProp = RouteProp<RootStackParamList, "Checkout">;
-type CheckoutNavProp = NativeStackNavigationProp<RootStackParamList, "Checkout">;
+type CheckoutNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Checkout"
+>;
 
 const DELIVERY_FEE = 15000;
 
@@ -32,7 +38,9 @@ export default function CheckoutScreen() {
 
   const routeBranchId = route.params?.branchId ?? null;
   const [branchId, setBranchId] = useState<string | null>(routeBranchId);
-  const [isStorageLoaded, setIsStorageLoaded] = useState(Boolean(routeBranchId));
+  const [isStorageLoaded, setIsStorageLoaded] = useState(
+    Boolean(routeBranchId),
+  );
 
   // Load branch ID if missing
   useEffect(() => {
@@ -61,7 +69,9 @@ export default function CheckoutScreen() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"vietqr" | "cod">("vietqr");
+  const [paymentMethod, setPaymentMethod] = useState<"vietqr" | "cod">(
+    "vietqr",
+  );
   const [showItemDetails, setShowItemDetails] = useState(true);
 
   // Auto-populate from user profile if available
@@ -72,7 +82,8 @@ export default function CheckoutScreen() {
         const fullName = `${p.lastName || ""} ${p.firstName || ""}`.trim();
         if (fullName) setRecipientName((prev) => (prev ? prev : fullName));
         if (p.phone) setPhone((prev) => (prev ? prev : p.phone));
-        const fullAddr = `${p.address || ""}${p.city ? `, ${p.city}` : ""}`.trim();
+        const fullAddr =
+          `${p.address || ""}${p.city ? `, ${p.city}` : ""}`.trim();
         if (fullAddr) setAddress((prev) => (prev ? prev : fullAddr));
       } else if (user.userName) {
         setRecipientName((prev) => (prev ? prev : user.userName));
@@ -96,31 +107,49 @@ export default function CheckoutScreen() {
     return { subtotal: price, currency: cur };
   }, [items]);
 
-  const grandTotal = Math.max(0, subtotal + (items.length > 0 ? DELIVERY_FEE : 0));
+  const grandTotal = Math.max(
+    0,
+    subtotal + (items.length > 0 ? DELIVERY_FEE : 0),
+  );
 
   const handleConfirmOrder = async () => {
     if (items.length === 0) {
-      Alert.alert("Giỏ hàng trống", "Vui lòng chọn ít nhất một món ăn trước khi đặt hàng.");
+      Alert.alert(
+        "Giỏ hàng trống",
+        "Vui lòng chọn ít nhất một món ăn trước khi đặt hàng.",
+      );
       return;
     }
 
     if (!recipientName.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập họ và tên người nhận hàng.");
+      Alert.alert(
+        "Thiếu thông tin",
+        "Vui lòng nhập họ và tên người nhận hàng.",
+      );
       return;
     }
 
     if (!phone.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập số điện thoại liên hệ nhận hàng.");
+      Alert.alert(
+        "Thiếu thông tin",
+        "Vui lòng nhập số điện thoại liên hệ nhận hàng.",
+      );
       return;
     }
 
     if (!address.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập địa chỉ giao hàng chi tiết.");
+      Alert.alert(
+        "Thiếu thông tin",
+        "Vui lòng nhập địa chỉ giao hàng chi tiết.",
+      );
       return;
     }
 
     if (!branchId) {
-      Alert.alert("Chưa chọn chi nhánh", "Vui lòng chọn chi nhánh nhà hàng phục vụ.");
+      Alert.alert(
+        "Chưa chọn chi nhánh",
+        "Vui lòng chọn chi nhánh nhà hàng phục vụ.",
+      );
       return;
     }
 
@@ -135,7 +164,9 @@ export default function CheckoutScreen() {
     const fullNote = [
       `Người nhận: ${recipientName.trim()} - SĐT: ${phone.trim()}`,
       note.trim() ? `Ghi chú: ${note.trim()}` : "",
-      paymentMethod === "cod" ? "Phương thức: Thanh toán khi nhận hàng (COD)" : "",
+      paymentMethod === "cod"
+        ? "Phương thức: Thanh toán khi nhận hàng (COD)"
+        : "",
     ]
       .filter(Boolean)
       .join(" | ");
@@ -162,7 +193,9 @@ export default function CheckoutScreen() {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Đang chuẩn bị thông tin thanh toán...</Text>
+        <Text style={styles.loadingText}>
+          Đang chuẩn bị thông tin thanh toán...
+        </Text>
       </View>
     );
   }
@@ -184,7 +217,9 @@ export default function CheckoutScreen() {
             <View style={styles.cardHeaderTextWrap}>
               <Text style={styles.cardTitle}>Chi nhánh phục vụ</Text>
               <Text style={styles.branchName}>
-                {currentBranch ? `Chi nhánh ${currentBranch.branchCode} - ${currentBranch.city}` : "Chi nhánh nhà hàng"}
+                {currentBranch
+                  ? `Chi nhánh ${currentBranch.branchCode} - ${currentBranch.city}`
+                  : "Chi nhánh nhà hàng"}
               </Text>
               <Text style={styles.branchAddress}>
                 {currentBranch?.address || "Đang xác định địa chỉ chi nhánh..."}
@@ -243,7 +278,9 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Ghi chú cho nhà bếp (tuỳ chọn)</Text>
+            <Text style={styles.inputLabel}>
+              Ghi chú cho nhà bếp (tuỳ chọn)
+            </Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="VD: Giao trước 12h, ít cay, không hành tây..."
@@ -291,7 +328,9 @@ export default function CheckoutScreen() {
                         transition={200}
                       />
                     ) : (
-                      <View style={[styles.itemImage, styles.itemImagePlaceholder]}>
+                      <View
+                        style={[styles.itemImage, styles.itemImagePlaceholder]}
+                      >
                         <Text>🍲</Text>
                       </View>
                     )}
@@ -299,7 +338,9 @@ export default function CheckoutScreen() {
                       <Text style={styles.itemName} numberOfLines={1}>
                         {it.product?.name || "Món ăn"}
                       </Text>
-                      <Text style={styles.itemQuantity}>Số lượng: x{it.quantity}</Text>
+                      <Text style={styles.itemQuantity}>
+                        Số lượng: x{it.quantity}
+                      </Text>
                     </View>
                     <Text style={styles.itemPrice}>
                       {formatCurrency(itemTotal, it.product?.currency)}
@@ -332,13 +373,18 @@ export default function CheckoutScreen() {
             </View>
             <View style={styles.paymentInfo}>
               <View style={styles.badgeRow}>
-                <Text style={styles.paymentTitle}>Chuyển khoản QR (VietQR / SePay)</Text>
+                <Text style={styles.paymentTitle}>
+                  Chuyển khoản QR (VietQR / SePay)
+                </Text>
                 <View style={styles.recommendedBadge}>
-                  <Text style={styles.recommendedBadgeText}>Tự động xác nhận</Text>
+                  <Text style={styles.recommendedBadgeText}>
+                    Tự động xác nhận
+                  </Text>
                 </View>
               </View>
               <Text style={styles.paymentDesc}>
-                Quét mã QR bằng mọi app ngân hàng. Hệ thống xác nhận thanh toán tức thì.
+                Quét mã QR bằng mọi app ngân hàng. Hệ thống xác nhận thanh toán
+                tức thì.
               </Text>
             </View>
           </TouchableOpacity>
@@ -356,9 +402,12 @@ export default function CheckoutScreen() {
               {paymentMethod === "cod" && <View style={styles.radioDot} />}
             </View>
             <View style={styles.paymentInfo}>
-              <Text style={styles.paymentTitle}>Thanh toán khi nhận hàng (COD)</Text>
+              <Text style={styles.paymentTitle}>
+                Thanh toán khi nhận hàng (COD)
+              </Text>
               <Text style={styles.paymentDesc}>
-                Nhận món ăn và thanh toán tiền mặt trực tiếp cho tài xế giao hàng.
+                Nhận món ăn và thanh toán tiền mặt trực tiếp cho tài xế giao
+                hàng.
               </Text>
             </View>
           </TouchableOpacity>
@@ -368,7 +417,9 @@ export default function CheckoutScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Chi tiết thanh toán</Text>
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Tạm tính ({items.length} món):</Text>
+            <Text style={styles.breakdownLabel}>
+              Tạm tính ({items.length} món):
+            </Text>
             <Text style={styles.breakdownValue}>
               {formatCurrency(subtotal, currency)}
             </Text>
@@ -404,7 +455,10 @@ export default function CheckoutScreen() {
           </Text>
         </View>
         <TouchableOpacity
-          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          style={[
+            styles.submitButton,
+            isSubmitting && styles.submitButtonDisabled,
+          ]}
           onPress={handleConfirmOrder}
           disabled={isSubmitting}
           activeOpacity={0.85}
