@@ -47,6 +47,7 @@ export type RootStackParamList = {
     | undefined;
   Profile: undefined;
   EditProfile: undefined;
+  OptimalBranch: undefined;
   Contact:
     | {
         branchId?: string | null;

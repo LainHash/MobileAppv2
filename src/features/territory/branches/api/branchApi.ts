@@ -1,6 +1,6 @@
 import axios from "axios";
-import { PaginationResult } from "@/common/types/Result";
-import { Branch } from "../types/Branch";
+import { PaginationResult, Result } from "@/common/types/Result";
+import { Branch, OptimalBranchResponse } from "../types/Branch";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -10,3 +10,22 @@ export async function fetchBranches(): Promise<PaginationResult<Branch[]>> {
   );
   return res.data;
 }
+
+export async function fetchOptimalBranch(
+  latitude: number,
+  longitude: number,
+  maxDeliveryRadiusKm: number = 15.0,
+): Promise<Result<OptimalBranchResponse>> {
+  const res = await axios.get<Result<OptimalBranchResponse>>(
+    `${BASE_URL}/api/territory/branches/optimal`,
+    {
+      params: {
+        latitude,
+        longitude,
+        maxDeliveryRadiusKm,
+      },
+    },
+  );
+  return res.data;
+}
+

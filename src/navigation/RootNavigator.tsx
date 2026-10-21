@@ -14,6 +14,7 @@ import VerifyEmailScreen from "@/screens/VerifyEmailScreen";
 import CompleteProfileScreen from "@/screens/CompleteProfileScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import EditProfileScreen from "@/screens/EditProfileScreen";
+import OptimalBranchScreen from "@/screens/OptimalBranchScreen";
 import ContactScreen from "@/screens/ContactScreen";
 import CheckoutScreen from "@/screens/CheckoutScreen";
 import OrderSuccessScreen from "@/screens/OrderSuccessScreen";
@@ -116,6 +117,11 @@ export function RootNavigator() {
         <Stack.Screen
           name="EditProfile"
           component={EditProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="OptimalBranch"
+          component={OptimalBranchScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

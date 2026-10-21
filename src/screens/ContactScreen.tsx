@@ -273,6 +273,29 @@ export default function ContactScreen() {
               </Text>
             </View>
 
+            {/* Optimal Branch & Route Map Banner */}
+            <TouchableOpacity
+              style={styles.optimalBranchBanner}
+              onPress={() => navigation.navigate("OptimalBranch")}
+              activeOpacity={0.85}
+            >
+              <View style={styles.optimalBannerIcon}>
+                <Ionicons name="navigate-circle" size={26} color={Colors.primary} />
+              </View>
+              <View style={styles.optimalBannerContent}>
+                <View style={styles.optimalBadgeRow}>
+                  <Text style={styles.optimalBadge}>GOOGLE MAPS & GPS</Text>
+                </View>
+                <Text style={styles.optimalBannerTitle}>
+                  Tìm chi nhánh tối ưu & Lộ trình
+                </Text>
+                <Text style={styles.optimalBannerSubtitle}>
+                  Tự động tính chi nhánh gần nhất, khoảng cách & phí vận chuyển
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.secondaryGold} />
+            </TouchableOpacity>
+
             {/* Branch Selection Card */}
             <View style={styles.branchSelectCard}>
               <View style={styles.branchSelectHeader}>
@@ -475,6 +498,54 @@ const styles = StyleSheet.create({
     ...Typography.bodySm,
     color: "rgba(255, 255, 255, 0.85)",
     lineHeight: 20,
+  },
+  optimalBranchBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.secondaryGold,
+    ...Shadows.subtle,
+    gap: Spacing.md,
+  },
+  optimalBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  optimalBannerContent: {
+    flex: 1,
+  },
+  optimalBadgeRow: {
+    flexDirection: "row",
+    marginBottom: 2,
+  },
+  optimalBadge: {
+    ...Typography.labelSm,
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.primary,
+    letterSpacing: 0.8,
+  },
+  optimalBannerTitle: {
+    ...Typography.titleSm,
+    color: Colors.onSurface,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  optimalBannerSubtitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    fontSize: 12,
+    lineHeight: 16,
   },
   branchSelectCard: {
     backgroundColor: Colors.surface,
