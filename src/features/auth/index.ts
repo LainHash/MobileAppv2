@@ -9,5 +9,8 @@ export * from "./components/AuthStepIndicator";
 export * from "./components/RegisterForm";
 export * from "./components/VerifyEmailForm";
 export * from "./components/CompleteProfileForm";
+export * from "./components/SwitchAccountModal";
+export * from "./components/ChangePasswordModal";
+
 
 

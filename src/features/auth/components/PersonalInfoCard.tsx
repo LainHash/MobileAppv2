@@ -22,6 +22,7 @@ export interface PersonalInfoCardProps {
   onLogoutSuccess?: () => void;
   onLoginPress?: () => void;
   onEditPress?: () => void;
+  onSwitchAccountPress?: () => void;
   showLogoutButton?: boolean;
 }
 
@@ -30,6 +31,7 @@ export function PersonalInfoCard({
   onLogoutSuccess,
   onLoginPress,
   onEditPress,
+  onSwitchAccountPress,
   showLogoutButton = true,
 }: PersonalInfoCardProps) {
   const { user: authUser, logout, refreshMe, isLoading } = useAuth();
@@ -278,6 +280,22 @@ export function PersonalInfoCard({
           )}
         </TouchableOpacity>
 
+        {Boolean(onSwitchAccountPress) && (
+          <TouchableOpacity
+            style={styles.switchAccountButton}
+            onPress={onSwitchAccountPress}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="swap-horizontal-outline"
+              size={16}
+              color={Colors.secondary}
+              style={styles.actionIcon}
+            />
+            <Text style={styles.switchAccountButtonText}>Đổi tài khoản</Text>
+          </TouchableOpacity>
+        )}
+
         {showLogoutButton && (
           <TouchableOpacity
             style={styles.logoutButton}
@@ -494,6 +512,21 @@ const styles = StyleSheet.create({
     ...Typography.labelMd,
     color: Colors.primary,
     fontWeight: "600",
+  },
+  switchAccountButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(123, 89, 2, 0.08)",
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(196, 154, 69, 0.3)",
+  },
+  switchAccountButtonText: {
+    ...Typography.labelMd,
+    color: Colors.secondary,
+    fontWeight: "700",
   },
   logoutButton: {
     flexDirection: "row",

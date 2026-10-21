@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
-import { PersonalInfoCard } from "@/features/auth";
+import { PersonalInfoCard, SwitchAccountModal, useAuth } from "@/features/auth";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { HauteBottomBar } from "@/common/components/HauteBottomBar";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
@@ -18,6 +18,8 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
 
   return (
     <View style={styles.screenWrapper}>
@@ -87,14 +89,52 @@ export default function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color={Colors.outline} />
           </TouchableOpacity>
+
+          {/* Quick Hub: Đổi tài khoản */}
+          {Boolean(user) && (
+            <TouchableOpacity
+              style={styles.hubCard}
+              onPress={() => setShowSwitchModal(true)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.hubIconWrap, styles.hubIconSwitch]}>
+                <Ionicons
+                  name="swap-horizontal"
+                  size={20}
+                  color={Colors.secondary}
+                />
+              </View>
+              <View style={styles.hubInfo}>
+                <Text style={styles.hubTitle}>Đổi tài khoản</Text>
+                <Text style={styles.hubSubtitle}>
+                  Chuyển sang tài khoản khác hoặc đăng nhập tài khoản mới
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.outline} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Personal Details Card */}
         <PersonalInfoCard
           onLoginPress={() => navigation.navigate("Login")}
           onLogoutSuccess={() => navigation.navigate("Home")}
+          onEditPress={() => navigation.navigate("EditProfile")}
+          onSwitchAccountPress={() => setShowSwitchModal(true)}
         />
       </ScrollView>
+
+      {/* Switch Account Modal */}
+      <SwitchAccountModal
+        visible={showSwitchModal}
+        onClose={() => setShowSwitchModal(false)}
+        onSelectAccountToLogin={(identifier) => {
+          navigation.navigate("Login", { identifier });
+        }}
+        onAddNewAccountPress={() => {
+          navigation.navigate("Login");
+        }}
+      />
 
       {/* Floating Bottom Nav Bar */}
       <HauteBottomBar activeTab="Account" />
@@ -144,6 +184,9 @@ const styles = StyleSheet.create({
   },
   hubIconWishlist: {
     backgroundColor: "rgba(126, 37, 22, 0.08)",
+  },
+  hubIconSwitch: {
+    backgroundColor: "rgba(123, 89, 2, 0.12)",
   },
   hubInfo: {
     flex: 1,

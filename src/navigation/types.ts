@@ -24,8 +24,17 @@ export type RootStackParamList = {
         branchId?: string | null;
       }
     | undefined;
-  Login: undefined;
+  Login:
+    | {
+        identifier?: string;
+      }
+    | undefined;
   Register: undefined;
+  ForgotPassword:
+    | {
+        email?: string;
+      }
+    | undefined;
   VerifyEmail:
     | {
         email?: string;
@@ -37,6 +46,7 @@ export type RootStackParamList = {
       }
     | undefined;
   Profile: undefined;
+  EditProfile: undefined;
   Contact:
     | {
         branchId?: string | null;

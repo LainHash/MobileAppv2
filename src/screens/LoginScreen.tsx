@@ -5,7 +5,7 @@ import {
   ScrollView,
   Text,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,8 +20,11 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   "Login"
 >;
 
+type LoginScreenRouteProp = RouteProp<RootStackParamList, "Login">;
+
 export default function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const route = useRoute<LoginScreenRouteProp>();
   const insets = useSafeAreaInsets();
 
   const handleSuccess = () => {
@@ -125,7 +128,10 @@ export default function LoginScreen() {
 
           {/* Login Form */}
           <LoginForm
+            key={route.params?.identifier || "login-default"}
+            defaultIdentifier={route.params?.identifier || ""}
             onSuccess={handleSuccess}
+            onForgotPasswordPress={() => navigation.navigate("ForgotPassword")}
             onRegisterPress={() => navigation.navigate("Register")}
           />
         </View>

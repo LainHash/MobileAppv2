@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User } from "../types/auth";
+import { User, SavedAccount } from "../types/auth";
 
 export const AUTH_TOKEN_KEY = "@auth_token";
 export const AUTH_REFRESH_TOKEN_KEY = "@auth_refresh_token";
 export const AUTH_USER_KEY = "@auth_user";
+export const AUTH_SAVED_ACCOUNTS_KEY = "@auth_saved_accounts";
 
 /**
  * Gets the stored JWT access token.
@@ -138,3 +139,66 @@ export async function clearPendingRegisterEmail(): Promise<void> {
     console.error("Failed to clear pending register email from storage", error);
   }
 }
+
+/**
+ * Gets the list of saved accounts on this device.
+ */
+export async function getSavedAccounts(): Promise<SavedAccount[]> {
+  try {
+    const raw = await AsyncStorage.getItem(AUTH_SAVED_ACCOUNTS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as SavedAccount[];
+  } catch (error) {
+    console.error("Failed to get saved accounts from storage", error);
+    return [];
+  }
+}
+
+/**
+ * Adds or updates an account in the saved accounts list.
+ */
+export async function addOrUpdateSavedAccount(
+  account: SavedAccount,
+): Promise<void> {
+  try {
+    const existing = await getSavedAccounts();
+    const filtered = existing.filter(
+      (a) => a.id !== account.id && a.userName.toLowerCase() !== account.userName.toLowerCase(),
+    );
+    const updated = [
+      {
+        ...account,
+        lastActiveAt: new Date().toISOString(),
+      },
+      ...filtered,
+    ].slice(0, 5); // Keep up to 5 recently used accounts
+
+    await AsyncStorage.setItem(
+      AUTH_SAVED_ACCOUNTS_KEY,
+      JSON.stringify(updated),
+    );
+  } catch (error) {
+    console.error("Failed to add or update saved account", error);
+  }
+}
+
+/**
+ * Removes an account from the saved accounts list by ID or userName.
+ */
+export async function removeSavedAccount(idOrUserName: string): Promise<void> {
+  try {
+    const existing = await getSavedAccounts();
+    const updated = existing.filter(
+      (a) =>
+        a.id !== idOrUserName &&
+        a.userName.toLowerCase() !== idOrUserName.toLowerCase(),
+    );
+    await AsyncStorage.setItem(
+      AUTH_SAVED_ACCOUNTS_KEY,
+      JSON.stringify(updated),
+    );
+  } catch (error) {
+    console.error("Failed to remove saved account", error);
+  }
+}
+

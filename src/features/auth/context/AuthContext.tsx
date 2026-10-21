@@ -6,12 +6,20 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { User, LoginRequest } from "../types/auth";
+import {
+  User,
+  LoginRequest,
+  UpdatePersonalProfileRequest,
+  ChangePasswordRequest,
+  SavedAccount,
+} from "../types/auth";
 import {
   Login as loginApi,
   getMe as getMeApi,
   logout as logoutApi,
   refreshToken as refreshApi,
+  updatePersonalProfile as updateProfileApi,
+  changePassword as changePasswordApi,
 } from "../api/authApi";
 import {
   getAuthToken,
@@ -20,6 +28,9 @@ import {
   clearAuthStorage,
   getCachedUser,
   saveCachedUser,
+  getSavedAccounts,
+  addOrUpdateSavedAccount,
+  removeSavedAccount,
 } from "../utils/authStorage";
 
 export interface AuthContextType {
@@ -29,16 +40,26 @@ export interface AuthContextType {
   isLoading: boolean;
   isLoggingIn: boolean;
   error: string | null;
+  savedAccounts: SavedAccount[];
   login: (
     data: LoginRequest,
   ) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => Promise<void>;
   refreshTokens: () => Promise<string | null>;
   refreshMe: () => Promise<User | null>;
+  updateProfile: (
+    data: UpdatePersonalProfileRequest,
+  ) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (
+    data: ChangePasswordRequest,
+  ) => Promise<{ success: boolean; error?: string }>;
+  loadSavedAccounts: () => Promise<SavedAccount[]>;
+  removeAccount: (idOrUserName: string) => Promise<void>;
   clearError: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -46,6 +67,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
+
+  const loadSavedAccounts = useCallback(async (): Promise<SavedAccount[]> => {
+    try {
+      const accounts = await getSavedAccounts();
+      setSavedAccounts(accounts);
+      return accounts;
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const recordUserAccount = useCallback(async (u: User) => {
+    const fullName = u.personalProfile
+      ? `${u.personalProfile.lastName} ${u.personalProfile.firstName}`.trim()
+      : u.userName;
+    await addOrUpdateSavedAccount({
+      id: u.id,
+      userName: u.userName,
+      email: u.email,
+      fullName,
+      roleName: u.roleName,
+    });
+    const updated = await getSavedAccounts();
+    setSavedAccounts(updated);
+  }, []);
+
+  const removeAccount = useCallback(async (idOrUserName: string) => {
+    await removeSavedAccount(idOrUserName);
+    const updated = await getSavedAccounts();
+    setSavedAccounts(updated);
+  }, []);
 
   const refreshTokens = useCallback(async (): Promise<string | null> => {
     try {
@@ -72,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const initializeAuth = useCallback(async () => {
     try {
       setIsLoading(true);
+      await loadSavedAccounts();
       const storedToken = await getAuthToken();
       const cachedUser = await getCachedUser();
 
@@ -87,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (res?.data) {
             setUser(res.data);
             await saveCachedUser(res.data);
+            await recordUserAccount(res.data);
           }
         } catch (apiErr: any) {
           // If token has expired or is unauthorized, attempt refresh
@@ -98,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (retryRes?.data) {
                   setUser(retryRes.data);
                   await saveCachedUser(retryRes.data);
+                  await recordUserAccount(retryRes.data);
                   return;
                 }
               } catch {
@@ -115,55 +171,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshTokens]);
+  }, [refreshTokens, loadSavedAccounts, recordUserAccount]);
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  const login = useCallback(async (data: LoginRequest) => {
-    try {
-      setIsLoggingIn(true);
-      setError(null);
+  const login = useCallback(
+    async (data: LoginRequest) => {
+      try {
+        setIsLoggingIn(true);
+        setError(null);
 
-      const res = await loginApi(data);
-      const authToken = res?.data?.token;
-      const refreshToken = res?.data?.refreshToken;
+        const res = await loginApi(data);
+        const authToken = res?.data?.token;
+        const refreshToken = res?.data?.refreshToken;
 
-      if (!authToken) {
+        if (!authToken) {
+          const errMsg =
+            res?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+          setError(errMsg);
+          return { success: false, error: errMsg };
+        }
+
+        await saveAuthTokens(authToken, refreshToken);
+        setToken(authToken);
+
+        // Fetch user profile
+        try {
+          const profileRes = await getMeApi(authToken);
+          if (profileRes?.data) {
+            setUser(profileRes.data);
+            await saveCachedUser(profileRes.data);
+            await recordUserAccount(profileRes.data);
+            return { success: true, user: profileRes.data };
+          }
+        } catch (profileErr: any) {
+          console.warn("Could not fetch user profile after login", profileErr);
+        }
+
+        return { success: true };
+      } catch (err: any) {
         const errMsg =
-          res?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+          err?.response?.data?.message ||
+          err?.message ||
+          "Đăng nhập thất bại. Vui lòng thử lại.";
         setError(errMsg);
         return { success: false, error: errMsg };
+      } finally {
+        setIsLoggingIn(false);
       }
-
-      await saveAuthTokens(authToken, refreshToken);
-      setToken(authToken);
-
-      // Fetch user profile
-      try {
-        const profileRes = await getMeApi(authToken);
-        if (profileRes?.data) {
-          setUser(profileRes.data);
-          await saveCachedUser(profileRes.data);
-          return { success: true, user: profileRes.data };
-        }
-      } catch (profileErr: any) {
-        console.warn("Could not fetch user profile after login", profileErr);
-      }
-
-      return { success: true };
-    } catch (err: any) {
-      const errMsg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại.";
-      setError(errMsg);
-      return { success: false, error: errMsg };
-    } finally {
-      setIsLoggingIn(false);
-    }
-  }, []);
+    },
+    [recordUserAccount],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -183,8 +243,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null);
       setUser(null);
       setError(null);
+      await loadSavedAccounts();
     }
-  }, [token]);
+  }, [token, loadSavedAccounts]);
 
   const refreshMe = useCallback(async (): Promise<User | null> => {
     const currentToken = token || (await getAuthToken());
@@ -195,6 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res?.data) {
         setUser(res.data);
         await saveCachedUser(res.data);
+        await recordUserAccount(res.data);
         return res.data;
       }
       return null;
@@ -207,6 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (retryRes?.data) {
               setUser(retryRes.data);
               await saveCachedUser(retryRes.data);
+              await recordUserAccount(retryRes.data);
               return retryRes.data;
             }
           } catch {
@@ -218,7 +281,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return null;
     }
-  }, [token, logout, refreshTokens]);
+  }, [token, logout, refreshTokens, recordUserAccount]);
+
+  const updateProfile = useCallback(
+    async (
+      data: UpdatePersonalProfileRequest,
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const currentToken = token || (await getAuthToken());
+        const res = await updateProfileApi(data, currentToken);
+        if (res.isSucceed) {
+          await refreshMe();
+          return { success: true };
+        }
+        return {
+          success: false,
+          error: res.message || "Cập nhật thông tin thất bại.",
+        };
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Cập nhật thông tin thất bại. Vui lòng thử lại.";
+        return { success: false, error: msg };
+      }
+    },
+    [token, refreshMe],
+  );
+
+  const changePassword = useCallback(
+    async (
+      data: ChangePasswordRequest,
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const currentToken = token || (await getAuthToken());
+        const res = await changePasswordApi(data, currentToken);
+        if (res.isSucceed) {
+          return { success: true };
+        }
+        return {
+          success: false,
+          error: res.message || "Đổi mật khẩu thất bại.",
+        };
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Đổi mật khẩu thất bại. Vui lòng thử lại.";
+        return { success: false, error: msg };
+      }
+    },
+    [token],
+  );
 
   const clearError = useCallback(() => {
     setError(null);
@@ -231,10 +345,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isLoggingIn,
     error,
+    savedAccounts,
     login,
     logout,
     refreshTokens,
     refreshMe,
+    updateProfile,
+    changePassword,
+    loadSavedAccounts,
+    removeAccount,
     clearError,
   };
 

@@ -9,9 +9,11 @@ import CartScreen from "@/screens/CartScreen";
 import WishlistScreen from "@/screens/WishlistScreen";
 import LoginScreen from "@/screens/LoginScreen";
 import RegisterScreen from "@/screens/RegisterScreen";
+import ForgotPasswordScreen from "@/screens/ForgotPasswordScreen";
 import VerifyEmailScreen from "@/screens/VerifyEmailScreen";
 import CompleteProfileScreen from "@/screens/CompleteProfileScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
+import EditProfileScreen from "@/screens/EditProfileScreen";
 import ContactScreen from "@/screens/ContactScreen";
 import CheckoutScreen from "@/screens/CheckoutScreen";
 import OrderSuccessScreen from "@/screens/OrderSuccessScreen";
@@ -91,6 +93,11 @@ export function RootNavigator() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="ForgotPassword"
+          component={ForgotPasswordScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="VerifyEmail"
           component={VerifyEmailScreen}
           options={{ headerShown: false }}
@@ -104,6 +111,11 @@ export function RootNavigator() {
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

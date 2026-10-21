@@ -69,3 +69,50 @@ export enum OtpPurpose {
   PasswordReset = "PasswordReset",
   ChangeEmail = "ChangeEmail",
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface VerifyPasswordResetOtpRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyPasswordResetOtpResponse {
+  resetToken: string;
+}
+
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface UpdatePersonalProfileRequest {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string; // YYYY-MM-DD
+  gender: boolean;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  citizenCardId: string;
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface SavedAccount {
+  id: string;
+  userName: string;
+  email: string;
+  fullName?: string;
+  roleName?: string;
+  lastActiveAt?: string;
+}
+

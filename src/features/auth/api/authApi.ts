@@ -11,6 +11,12 @@ import {
   User,
   VerifyEmailRequest,
   OtpPurpose,
+  ForgotPasswordRequest,
+  VerifyPasswordResetOtpRequest,
+  VerifyPasswordResetOtpResponse,
+  ResetPasswordRequest,
+  UpdatePersonalProfileRequest,
+  ChangePasswordRequest,
 } from "../types/auth";
 import {
   getAuthToken,
@@ -181,4 +187,73 @@ export async function completeProfile(
   );
   return res.data;
 }
+
+export async function forgotPassword(
+  data: ForgotPasswordRequest,
+): Promise<Result> {
+  const res = await axios.post<Result>(
+    `${BASE_URL}/api/authentication/forgot-password`,
+    data,
+  );
+  return res.data;
+}
+
+export async function verifyPasswordResetOtp(
+  data: VerifyPasswordResetOtpRequest,
+): Promise<Result<VerifyPasswordResetOtpResponse>> {
+  const res = await axios.post<Result<VerifyPasswordResetOtpResponse>>(
+    `${BASE_URL}/api/authentication/verify-reset-otp`,
+    data,
+  );
+  return res.data;
+}
+
+export async function resetPassword(
+  data: ResetPasswordRequest,
+): Promise<Result> {
+  const res = await axios.post<Result>(
+    `${BASE_URL}/api/authentication/reset-password`,
+    data,
+  );
+  return res.data;
+}
+
+export async function updatePersonalProfile(
+  data: UpdatePersonalProfileRequest,
+  tokenOverride?: string | null,
+): Promise<Result> {
+  const token =
+    tokenOverride !== undefined ? tokenOverride : await getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await axios.put<Result>(
+    `${BASE_URL}/api/authentication/me/profile`,
+    data,
+    { headers },
+  );
+  return res.data;
+}
+
+export async function changePassword(
+  data: ChangePasswordRequest,
+  tokenOverride?: string | null,
+): Promise<Result> {
+  const token =
+    tokenOverride !== undefined ? tokenOverride : await getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await axios.post<Result>(
+    `${BASE_URL}/api/authentication/me/change-password`,
+    data,
+    { headers },
+  );
+  return res.data;
+}
+
 
