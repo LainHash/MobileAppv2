@@ -114,7 +114,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Checkout"
           component={CheckoutScreen}
-          options={{ title: "Thanh toán đơn hàng" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="OrderSuccess"

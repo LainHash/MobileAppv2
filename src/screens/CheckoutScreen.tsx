@@ -14,6 +14,8 @@ import {
 import { Image } from "expo-image";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { useCart } from "@/features/commerce/carts";
 import { useCheckout } from "@/features/sale/orders";
@@ -23,6 +25,8 @@ import {
   getSelectedBranchId,
 } from "@/features/territory/branches";
 import { formatCurrency, getProductImageUrl } from "@/common/helpers";
+import { HauteTopBar } from "@/common/components/HauteTopBar";
+import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 type CheckoutRouteProp = RouteProp<RootStackParamList, "Checkout">;
 type CheckoutNavProp = NativeStackNavigationProp<
@@ -35,6 +39,7 @@ const DELIVERY_FEE = 15000;
 export default function CheckoutScreen() {
   const route = useRoute<CheckoutRouteProp>();
   const navigation = useNavigation<CheckoutNavProp>();
+  const insets = useSafeAreaInsets();
 
   const routeBranchId = route.params?.branchId ?? null;
   const [branchId, setBranchId] = useState<string | null>(routeBranchId);
@@ -191,358 +196,474 @@ export default function CheckoutScreen() {
 
   if (isCartLoading && !cart) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>
-          Đang chuẩn bị thông tin thanh toán...
-        </Text>
+      <View style={styles.screenWrapper}>
+        <HauteTopBar
+          title="Thanh toán"
+          subtitle="Xác nhận đơn hàng"
+          showBack={true}
+        />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>
+            Đang chuẩn bị thông tin thanh toán...
+          </Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardContainer}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.screenWrapper}>
+      {/* Haute Top Navigation Bar */}
+      <HauteTopBar
+        title="Thanh toán"
+        subtitle="Xác nhận đơn hàng"
+        showBack={true}
+      />
+
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* Branch Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardHeaderIcon}>🏪</Text>
-            <View style={styles.cardHeaderTextWrap}>
-              <Text style={styles.cardTitle}>Chi nhánh phục vụ</Text>
-              <Text style={styles.branchName}>
-                {currentBranch
-                  ? `Chi nhánh ${currentBranch.branchCode} - ${currentBranch.city}`
-                  : "Chi nhánh nhà hàng"}
-              </Text>
-              <Text style={styles.branchAddress}>
-                {currentBranch?.address || "Đang xác định địa chỉ chi nhánh..."}
-              </Text>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 20) + 90 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Branch Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.iconCircle}>
+                <MaterialIcons
+                  name="storefront"
+                  size={20}
+                  color={Colors.primary}
+                />
+              </View>
+              <View style={styles.cardHeaderTextWrap}>
+                <Text style={styles.cardSubtitle}>Chi nhánh phục vụ</Text>
+                <Text style={styles.branchName}>
+                  {currentBranch
+                    ? `Chi nhánh ${currentBranch.branchCode} - ${currentBranch.city}`
+                    : "Chi nhánh Haute De Hallen"}
+                </Text>
+                <Text style={styles.branchAddress}>
+                  {currentBranch?.address ||
+                    "Đang cập nhật địa chỉ phục vụ..."}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Delivery Information Card */}
-        <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
-            <Text style={styles.cardHeaderIcon}>📍</Text>
-            <Text style={styles.cardTitle}>Thông tin giao hàng</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              Họ và tên người nhận <Text style={styles.requiredStar}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="VD: Nguyễn Văn A"
-              value={recipientName}
-              onChangeText={setRecipientName}
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              Số điện thoại <Text style={styles.requiredStar}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="VD: 0912345678"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              Địa chỉ nhận hàng <Text style={styles.requiredStar}>*</Text>
-            </Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
-              multiline
-              numberOfLines={2}
-              value={address}
-              onChangeText={setAddress}
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              Ghi chú cho nhà bếp (tuỳ chọn)
-            </Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="VD: Giao trước 12h, ít cay, không hành tây..."
-              multiline
-              numberOfLines={2}
-              value={note}
-              onChangeText={setNote}
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-        </View>
-
-        {/* Order Items Review */}
-        <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.cardTitleRowBetween}
-            onPress={() => setShowItemDetails(!showItemDetails)}
-            activeOpacity={0.7}
-          >
+          {/* Delivery Information Card */}
+          <View style={styles.card}>
             <View style={styles.cardTitleRow}>
-              <Text style={styles.cardHeaderIcon}>🍽️</Text>
-              <Text style={styles.cardTitle}>
-                Món ăn đã chọn ({items.length})
-              </Text>
+              <View style={styles.iconCircle}>
+                <Ionicons
+                  name="location-outline"
+                  size={20}
+                  color={Colors.primary}
+                />
+              </View>
+              <Text style={styles.cardTitle}>Thông tin giao hàng</Text>
             </View>
-            <Text style={styles.toggleText}>
-              {showItemDetails ? "Thu gọn ▲" : "Xem chi tiết ▼"}
-            </Text>
-          </TouchableOpacity>
 
-          {showItemDetails && (
-            <View style={styles.itemsList}>
-              {items.map((it) => {
-                const img = getProductImageUrl(it);
-                const itemTotal = (it.product?.unitPrice || 0) * it.quantity;
-                const pid = it.product?.id || it.productId || it.id;
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>
+                Họ và tên người nhận <Text style={styles.requiredStar}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="VD: Nguyễn Văn A"
+                value={recipientName}
+                onChangeText={setRecipientName}
+                placeholderTextColor={Colors.outline}
+              />
+            </View>
 
-                return (
-                  <View key={pid} style={styles.itemRow}>
-                    {img ? (
-                      <Image
-                        source={{ uri: img }}
-                        style={styles.itemImage}
-                        contentFit="cover"
-                        transition={200}
-                      />
-                    ) : (
-                      <View
-                        style={[styles.itemImage, styles.itemImagePlaceholder]}
-                      >
-                        <Text>🍲</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>
+                Số điện thoại <Text style={styles.requiredStar}>*</Text>
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="VD: 0912345678"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+                placeholderTextColor={Colors.outline}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>
+                Địa chỉ nhận hàng <Text style={styles.requiredStar}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
+                multiline
+                numberOfLines={2}
+                value={address}
+                onChangeText={setAddress}
+                placeholderTextColor={Colors.outline}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>
+                Ghi chú cho bếp & tài xế (tuỳ chọn)
+              </Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="VD: Giao trước 12h, ít đá, không cay..."
+                multiline
+                numberOfLines={2}
+                value={note}
+                onChangeText={setNote}
+                placeholderTextColor={Colors.outline}
+              />
+            </View>
+          </View>
+
+          {/* Order Items Review */}
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.cardTitleRowBetween}
+              onPress={() => setShowItemDetails(!showItemDetails)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cardTitleRowNoMargin}>
+                <View style={styles.iconCircle}>
+                  <MaterialIcons
+                    name="restaurant-menu"
+                    size={20}
+                    color={Colors.primary}
+                  />
+                </View>
+                <Text style={styles.cardTitle}>
+                  Món ăn đã chọn ({items.length})
+                </Text>
+              </View>
+              <Text style={styles.toggleText}>
+                {showItemDetails ? "Thu gọn ▲" : "Xem chi tiết ▼"}
+              </Text>
+            </TouchableOpacity>
+
+            {showItemDetails && (
+              <View style={styles.itemsList}>
+                {items.length === 0 ? (
+                  <Text style={styles.emptyItemsText}>
+                    Chưa có món ăn nào trong giỏ hàng.
+                  </Text>
+                ) : (
+                  items.map((it) => {
+                    const img = getProductImageUrl(it);
+                    const itemTotal =
+                      (it.product?.unitPrice || 0) * it.quantity;
+                    const pid = it.product?.id || it.productId || it.id;
+
+                    return (
+                      <View key={pid} style={styles.itemRow}>
+                        {img ? (
+                          <Image
+                            source={{ uri: img }}
+                            style={styles.itemImage}
+                            contentFit="cover"
+                            transition={200}
+                          />
+                        ) : (
+                          <View
+                            style={[
+                              styles.itemImage,
+                              styles.itemImagePlaceholder,
+                            ]}
+                          >
+                            <Ionicons
+                              name="fast-food-outline"
+                              size={20}
+                              color={Colors.outline}
+                            />
+                          </View>
+                        )}
+                        <View style={styles.itemInfo}>
+                          <Text style={styles.itemName} numberOfLines={1}>
+                            {it.product?.name || "Món ăn"}
+                          </Text>
+                          <Text style={styles.itemQuantity}>
+                            Số lượng: x{it.quantity}
+                          </Text>
+                        </View>
+                        <Text style={styles.itemPrice}>
+                          {formatCurrency(itemTotal, it.product?.currency)}
+                        </Text>
                       </View>
-                    )}
-                    <View style={styles.itemInfo}>
-                      <Text style={styles.itemName} numberOfLines={1}>
-                        {it.product?.name || "Món ăn"}
-                      </Text>
-                      <Text style={styles.itemQuantity}>
-                        Số lượng: x{it.quantity}
-                      </Text>
-                    </View>
-                    <Text style={styles.itemPrice}>
-                      {formatCurrency(itemTotal, it.product?.currency)}
+                    );
+                  })
+                )}
+              </View>
+            )}
+          </View>
+
+          {/* Payment Method Selection */}
+          <View style={styles.card}>
+            <View style={styles.cardTitleRow}>
+              <View style={styles.iconCircle}>
+                <Ionicons
+                  name="card-outline"
+                  size={20}
+                  color={Colors.primary}
+                />
+              </View>
+              <Text style={styles.cardTitle}>Phương thức thanh toán</Text>
+            </View>
+
+            {/* VietQR Option */}
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                paymentMethod === "vietqr" && styles.paymentOptionActive,
+              ]}
+              onPress={() => setPaymentMethod("vietqr")}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.radioCircle,
+                  paymentMethod === "vietqr" && styles.radioCircleActive,
+                ]}
+              >
+                {paymentMethod === "vietqr" && (
+                  <View style={styles.radioDot} />
+                )}
+              </View>
+              <View style={styles.paymentInfo}>
+                <View style={styles.badgeRow}>
+                  <Text style={styles.paymentTitle}>
+                    Chuyển khoản QR (VietQR / SePay)
+                  </Text>
+                  <View style={styles.recommendedBadge}>
+                    <Text style={styles.recommendedBadgeText}>
+                      Tự động xác nhận
                     </Text>
                   </View>
-                );
-              })}
+                </View>
+                <Text style={styles.paymentDesc}>
+                  Quét mã QR qua ứng dụng ngân hàng. Hệ thống xác nhận và đẩy
+                  đơn vào bếp tức thì.
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* COD Option */}
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                paymentMethod === "cod" && styles.paymentOptionActive,
+              ]}
+              onPress={() => setPaymentMethod("cod")}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.radioCircle,
+                  paymentMethod === "cod" && styles.radioCircleActive,
+                ]}
+              >
+                {paymentMethod === "cod" && <View style={styles.radioDot} />}
+              </View>
+              <View style={styles.paymentInfo}>
+                <Text style={styles.paymentTitle}>
+                  Thanh toán khi nhận hàng (COD)
+                </Text>
+                <Text style={styles.paymentDesc}>
+                  Nhận món ăn và thanh toán tiền mặt trực tiếp cho nhân viên giao
+                  hàng.
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Price Breakdown */}
+          <View style={styles.card}>
+            <View style={styles.cardTitleRow}>
+              <View style={styles.iconCircle}>
+                <Ionicons
+                  name="receipt-outline"
+                  size={20}
+                  color={Colors.primary}
+                />
+              </View>
+              <Text style={styles.cardTitle}>Chi tiết thanh toán</Text>
+            </View>
+
+            <View style={styles.breakdownRow}>
+              <Text style={styles.breakdownLabel}>
+                Tạm tính ({items.length} món):
+              </Text>
+              <Text style={styles.breakdownValue}>
+                {formatCurrency(subtotal, currency)}
+              </Text>
+            </View>
+            <View style={styles.breakdownRow}>
+              <Text style={styles.breakdownLabel}>Phí giao hàng tiêu chuẩn:</Text>
+              <Text style={styles.breakdownValue}>
+                {formatCurrency(DELIVERY_FEE, currency)}
+              </Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.breakdownRow}>
+              <Text style={styles.totalLabel}>Tổng thanh toán:</Text>
+              <Text style={styles.totalValue}>
+                {formatCurrency(grandTotal, currency)}
+              </Text>
+            </View>
+          </View>
+
+          {Boolean(checkoutError) && (
+            <View style={styles.errorBox}>
+              <Ionicons
+                name="alert-circle"
+                size={20}
+                color={Colors.error}
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{checkoutError}</Text>
             </View>
           )}
-        </View>
+        </ScrollView>
 
-        {/* Payment Method Selection */}
-        <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
-            <Text style={styles.cardHeaderIcon}>💳</Text>
-            <Text style={styles.cardTitle}>Phương thức thanh toán</Text>
-          </View>
-
-          {/* VietQR Option */}
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              paymentMethod === "vietqr" && styles.paymentOptionActive,
-            ]}
-            onPress={() => setPaymentMethod("vietqr")}
-            activeOpacity={0.8}
-          >
-            <View style={styles.radioCircle}>
-              {paymentMethod === "vietqr" && <View style={styles.radioDot} />}
-            </View>
-            <View style={styles.paymentInfo}>
-              <View style={styles.badgeRow}>
-                <Text style={styles.paymentTitle}>
-                  Chuyển khoản QR (VietQR / SePay)
-                </Text>
-                <View style={styles.recommendedBadge}>
-                  <Text style={styles.recommendedBadgeText}>
-                    Tự động xác nhận
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.paymentDesc}>
-                Quét mã QR bằng mọi app ngân hàng. Hệ thống xác nhận thanh toán
-                tức thì.
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* COD Option */}
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              paymentMethod === "cod" && styles.paymentOptionActive,
-            ]}
-            onPress={() => setPaymentMethod("cod")}
-            activeOpacity={0.8}
-          >
-            <View style={styles.radioCircle}>
-              {paymentMethod === "cod" && <View style={styles.radioDot} />}
-            </View>
-            <View style={styles.paymentInfo}>
-              <Text style={styles.paymentTitle}>
-                Thanh toán khi nhận hàng (COD)
-              </Text>
-              <Text style={styles.paymentDesc}>
-                Nhận món ăn và thanh toán tiền mặt trực tiếp cho tài xế giao
-                hàng.
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Price Breakdown */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Chi tiết thanh toán</Text>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>
-              Tạm tính ({items.length} món):
-            </Text>
-            <Text style={styles.breakdownValue}>
-              {formatCurrency(subtotal, currency)}
-            </Text>
-          </View>
-          <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Phí giao hàng:</Text>
-            <Text style={styles.breakdownValue}>
-              {formatCurrency(DELIVERY_FEE, currency)}
-            </Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.breakdownRow}>
-            <Text style={styles.totalLabel}>Tổng cộng:</Text>
-            <Text style={styles.totalValue}>
+        {/* Floating Checkout Footer */}
+        <View
+          style={[
+            styles.footerBar,
+            { paddingBottom: Math.max(insets.bottom, Spacing.md) },
+          ]}
+        >
+          <View style={styles.footerPriceInfo}>
+            <Text style={styles.footerTotalLabel}>Tổng thanh toán</Text>
+            <Text style={styles.footerTotalPrice}>
               {formatCurrency(grandTotal, currency)}
             </Text>
           </View>
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              (isSubmitting || items.length === 0) &&
+                styles.submitButtonDisabled,
+            ]}
+            onPress={handleConfirmOrder}
+            disabled={isSubmitting || items.length === 0}
+            activeOpacity={0.88}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={Colors.onPrimary} />
+            ) : (
+              <View style={styles.submitBtnContent}>
+                <Text style={styles.submitButtonText}>Xác nhận đặt hàng</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={18}
+                  color={Colors.onPrimary}
+                  style={styles.submitBtnIcon}
+                />
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-
-        {Boolean(checkoutError) && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>⚠️ {checkoutError}</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Floating Checkout Footer */}
-      <View style={styles.footerBar}>
-        <View style={styles.footerPriceInfo}>
-          <Text style={styles.footerTotalLabel}>Tổng thanh toán</Text>
-          <Text style={styles.footerTotalPrice}>
-            {formatCurrency(grandTotal, currency)}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            isSubmitting && styles.submitButtonDisabled,
-          ]}
-          onPress={handleConfirmOrder}
-          disabled={isSubmitting}
-          activeOpacity={0.85}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.submitButtonText}>Xác nhận đặt hàng</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   keyboardContainer: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 24,
-    gap: 14,
+    padding: Spacing.lg,
+    gap: Spacing.md,
   },
   centerContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#FFFFFF",
+    padding: Spacing.xl,
+    backgroundColor: Colors.background,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: "#64748B",
+    marginTop: Spacing.md,
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: Colors.borderSoft,
+    ...Shadows.subtle,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
   },
-  cardHeaderIcon: {
-    fontSize: 20,
-    marginRight: 10,
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
   },
   cardHeaderTextWrap: {
     flex: 1,
   },
+  cardSubtitle: {
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   cardTitle: {
-    fontSize: 15,
+    ...Typography.headlineSm,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#0F172A",
+    color: Colors.onSurface,
   },
   branchName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#007AFF",
+    ...Typography.labelLg,
+    color: Colors.primary,
     marginTop: 2,
+    fontWeight: "700",
   },
   branchAddress: {
-    fontSize: 12,
-    color: "#64748B",
-    marginTop: 2,
-    lineHeight: 16,
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    marginTop: 4,
+    lineHeight: 18,
   },
   cardTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: Spacing.md,
+  },
+  cardTitleRowNoMargin: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   cardTitleRowBetween: {
     flexDirection: "row",
@@ -550,52 +671,59 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   toggleText: {
-    fontSize: 13,
-    color: "#007AFF",
+    ...Typography.labelMd,
+    color: Colors.secondaryGold,
     fontWeight: "600",
   },
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#334155",
-    marginBottom: 6,
+    ...Typography.labelMd,
+    color: Colors.onSurfaceVariant,
+    marginBottom: Spacing.xs,
   },
   requiredStar: {
-    color: "#EF4444",
+    color: Colors.error,
   },
   input: {
-    backgroundColor: "#F8FAFC",
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: "#0F172A",
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Platform.OS === "ios" ? 12 : 10,
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
   },
   textArea: {
-    minHeight: 56,
+    minHeight: 64,
     textAlignVertical: "top",
   },
   itemsList: {
-    marginTop: 10,
+    marginTop: Spacing.md,
     borderTopWidth: 1,
-    borderColor: "#F1F5F9",
-    paddingTop: 8,
+    borderColor: Colors.borderSoft,
+    paddingTop: Spacing.sm,
+  },
+  emptyItemsText: {
+    ...Typography.bodySm,
+    color: Colors.outline,
+    textAlign: "center",
+    paddingVertical: Spacing.md,
   },
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
   },
   itemImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 6,
-    backgroundColor: "#F1F5F9",
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
   },
   itemImagePlaceholder: {
     alignItems: "center",
@@ -603,53 +731,56 @@ const styles = StyleSheet.create({
   },
   itemInfo: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: Spacing.md,
   },
   itemName: {
-    fontSize: 13,
+    ...Typography.bodyMd,
     fontWeight: "600",
-    color: "#0F172A",
+    color: Colors.onSurface,
   },
   itemQuantity: {
-    fontSize: 12,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.outline,
     marginTop: 2,
   },
   itemPrice: {
-    fontSize: 13,
+    ...Typography.labelLg,
     fontWeight: "700",
-    color: "#0F172A",
+    color: Colors.primaryContainer,
   },
   paymentOption: {
     flexDirection: "row",
     alignItems: "flex-start",
-    padding: 12,
-    borderRadius: 10,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FFFFFF",
-    marginBottom: 10,
+    borderColor: Colors.borderSoft,
+    backgroundColor: Colors.surfaceContainerLowest,
+    marginBottom: Spacing.sm,
   },
   paymentOptionActive: {
-    borderColor: "#007AFF",
-    backgroundColor: "#F0F7FF",
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surfaceContainerLow,
   },
   radioCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#94A3B8",
+    borderColor: Colors.outlineVariant,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: Spacing.md,
     marginTop: 2,
+  },
+  radioCircleActive: {
+    borderColor: Colors.primary,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
   },
   paymentInfo: {
     flex: 1,
@@ -658,114 +789,129 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 8,
   },
   paymentTitle: {
-    fontSize: 14,
+    ...Typography.labelLg,
+    color: Colors.onSurface,
     fontWeight: "700",
-    color: "#0F172A",
   },
   recommendedBadge: {
-    backgroundColor: "#DEF7EC",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    backgroundColor: Colors.secondaryFixed,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
   },
   recommendedBadgeText: {
+    ...Typography.labelSm,
     fontSize: 10,
     fontWeight: "700",
-    color: "#03543F",
+    color: Colors.onSecondaryFixed,
   },
   paymentDesc: {
-    fontSize: 12,
-    color: "#64748B",
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     marginTop: 4,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   breakdownRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingVertical: Spacing.xs,
   },
   breakdownLabel: {
-    fontSize: 13,
-    color: "#64748B",
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
   },
   breakdownValue: {
-    fontSize: 14,
+    ...Typography.bodyMd,
     fontWeight: "600",
-    color: "#0F172A",
+    color: Colors.onSurface,
   },
   divider: {
     height: 1,
-    backgroundColor: "#E2E8F0",
-    marginVertical: 8,
+    backgroundColor: Colors.borderSoft,
+    marginVertical: Spacing.sm,
   },
   totalLabel: {
-    fontSize: 15,
+    ...Typography.headlineSm,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#0F172A",
+    color: Colors.onSurface,
   },
   totalValue: {
-    fontSize: 18,
+    ...Typography.headlineMd,
+    fontSize: 20,
     fontWeight: "800",
-    color: "#007AFF",
+    color: Colors.primaryContainer,
   },
   errorBox: {
-    backgroundColor: "#FEE2E2",
-    borderRadius: 8,
-    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.errorContainer,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
+    borderColor: Colors.error,
+    gap: Spacing.sm,
+  },
+  errorIcon: {
+    marginRight: 2,
   },
   errorText: {
-    color: "#DC2626",
-    fontSize: 13,
+    ...Typography.bodySm,
+    color: Colors.onErrorContainer,
+    flex: 1,
     lineHeight: 18,
   },
   footerBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 8,
+    borderColor: Colors.borderSoft,
+    ...Shadows.floating,
   },
   footerPriceInfo: {
     flex: 1,
   },
   footerTotalLabel: {
-    fontSize: 12,
-    color: "#64748B",
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
   },
   footerTotalPrice: {
-    fontSize: 19,
+    ...Typography.headlineMd,
+    fontSize: 20,
     fontWeight: "800",
-    color: "#007AFF",
+    color: Colors.primaryContainer,
     marginTop: 2,
   },
   submitButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 13,
-    paddingHorizontal: 22,
-    borderRadius: 10,
+    backgroundColor: Colors.primaryContainer,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadows.subtle,
   },
   submitButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
+  },
+  submitBtnContent: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
+    ...Typography.labelLg,
+    color: Colors.onPrimary,
     fontWeight: "700",
+  },
+  submitBtnIcon: {
+    marginLeft: 6,
   },
 });
