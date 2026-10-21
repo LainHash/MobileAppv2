@@ -15,6 +15,7 @@ import {
 } from "../types/auth";
 import {
   Login as loginApi,
+  loginWithGoogle as googleLoginApi,
   getMe as getMeApi,
   logout as logoutApi,
   refreshToken as refreshApi,
@@ -43,6 +44,9 @@ export interface AuthContextType {
   savedAccounts: SavedAccount[];
   login: (
     data: LoginRequest,
+  ) => Promise<{ success: boolean; error?: string; user?: User }>;
+  loginWithGoogle: (
+    idToken: string,
   ) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => Promise<void>;
   refreshTokens: () => Promise<string | null>;
@@ -225,6 +229,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [recordUserAccount],
   );
 
+  const loginWithGoogle = useCallback(
+    async (idToken: string) => {
+      try {
+        setIsLoggingIn(true);
+        setError(null);
+
+        const res = await googleLoginApi(idToken);
+        const authToken = res?.data?.token;
+        const refreshToken = res?.data?.refreshToken;
+
+        if (!authToken) {
+          const errMsg =
+            res?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.";
+          setError(errMsg);
+          return { success: false, error: errMsg };
+        }
+
+        await saveAuthTokens(authToken, refreshToken);
+        setToken(authToken);
+
+        // Fetch user profile
+        try {
+          const profileRes = await getMeApi(authToken);
+          if (profileRes?.data) {
+            setUser(profileRes.data);
+            await saveCachedUser(profileRes.data);
+            await recordUserAccount(profileRes.data);
+            return { success: true, user: profileRes.data };
+          }
+        } catch (profileErr: any) {
+          console.warn(
+            "Could not fetch user profile after Google login",
+            profileErr,
+          );
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        const errMsg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Đăng nhập bằng Google thất bại. Vui lòng thử lại.";
+        setError(errMsg);
+        return { success: false, error: errMsg };
+      } finally {
+        setIsLoggingIn(false);
+      }
+    },
+    [recordUserAccount],
+  );
+
   const logout = useCallback(async () => {
     try {
       const storedRefreshToken = await getRefreshToken();
@@ -347,6 +402,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     savedAccounts,
     login,
+    loginWithGoogle,
     logout,
     refreshTokens,
     refreshMe,

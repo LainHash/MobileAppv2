@@ -11,6 +11,9 @@ export * from "./components/VerifyEmailForm";
 export * from "./components/CompleteProfileForm";
 export * from "./components/SwitchAccountModal";
 export * from "./components/ChangePasswordModal";
+export * from "./hooks/useGoogleAuth";
+export * from "./components/GoogleSignInButton";
+
 
 
 

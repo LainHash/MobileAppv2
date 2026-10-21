@@ -116,3 +116,8 @@ export interface SavedAccount {
   lastActiveAt?: string;
 }
 
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
+

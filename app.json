@@ -36,7 +36,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Cho phép Haute De Hallen sử dụng vị trí của bạn để tìm chi nhánh gần nhất và tính khoảng cách giao hàng chính xác."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "scheme": "mobileappv2"
   }

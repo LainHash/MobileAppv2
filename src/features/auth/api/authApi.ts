@@ -54,6 +54,18 @@ export async function Login(data: LoginRequest): Promise<Result<AuthResponse>> {
 
 export const login = Login;
 
+export async function loginWithGoogle(
+  idToken: string,
+): Promise<Result<AuthResponse>> {
+  const res = await axios.post<Result<AuthResponse>>(
+    `${BASE_URL}/api/authentication/google-login`,
+    { idToken },
+  );
+  return res.data;
+}
+
+export const googleLogin = loginWithGoogle;
+
 export async function refreshToken(
   data?: RefreshTokenRequest | string | null,
 ): Promise<Result<AuthResponse>> {

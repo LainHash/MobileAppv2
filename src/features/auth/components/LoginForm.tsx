@@ -10,6 +10,7 @@ import {
   Platform,
 } from "react-native";
 import { useAuth } from "../hooks/useAuth";
+import { useGoogleAuth } from "../hooks/useGoogleAuth";
 import { User } from "../types/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
@@ -32,6 +33,8 @@ export function LoginForm({
   defaultIdentifier = "",
 }: LoginFormProps) {
   const { login, isLoggingIn, error, clearError } = useAuth();
+  const { isAuthenticating: isGoogleAuthenticating, signInWithGoogle } =
+    useGoogleAuth(onSuccess, onError);
 
   const [identifier, setIdentifier] = useState(defaultIdentifier);
   const [password, setPassword] = useState("");
@@ -234,9 +237,23 @@ export function LoginForm({
             <Text style={styles.socialBtnText}>Apple</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
-            <Ionicons name="logo-google" size={16} color={Colors.secondary} />
-            <Text style={styles.socialBtnText}>Google</Text>
+          <TouchableOpacity
+            style={[
+              styles.socialBtn,
+              isGoogleAuthenticating && styles.socialBtnDisabled,
+            ]}
+            activeOpacity={0.75}
+            onPress={signInWithGoogle}
+            disabled={isLoggingIn || isGoogleAuthenticating}
+          >
+            {isGoogleAuthenticating ? (
+              <ActivityIndicator size="small" color="#EA4335" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={16} color="#EA4335" />
+                <Text style={styles.socialBtnText}>Google</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
@@ -416,6 +433,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDFBF7",
     borderWidth: 1,
     borderColor: Colors.borderSubtle,
+  },
+  socialBtnDisabled: {
+    opacity: 0.6,
   },
   socialBtnText: {
     ...Typography.labelSm,
