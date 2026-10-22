@@ -94,6 +94,14 @@ export function ProductCard({
             </Text>
           </View>
         )}
+
+        {/* Recommended Badge */}
+        {Boolean(product.isRecommended) && (
+          <View style={styles.recommendedBadge}>
+            <Ionicons name="star" size={10} color="#D97706" />
+            <Text style={styles.recommendedBadgeText}>Nổi bật</Text>
+          </View>
+        )}
       </View>
 
       {/* Info Column */}
@@ -207,6 +215,25 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
     fontSize: 9,
     fontWeight: "600",
+  },
+  recommendedBadge: {
+    position: "absolute",
+    bottom: 4,
+    left: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: "rgba(254, 243, 199, 0.95)",
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: Radius.full,
+    borderWidth: 0.5,
+    borderColor: "#FDE68A",
+  },
+  recommendedBadgeText: {
+    color: "#B45309",
+    fontSize: 9,
+    fontWeight: "700",
   },
   wishlistBtn: {
     position: "absolute",

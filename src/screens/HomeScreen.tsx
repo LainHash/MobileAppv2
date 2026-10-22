@@ -11,7 +11,11 @@ import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialIcons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { useHome } from "@/common/hooks/useHome";
 import {
@@ -56,21 +60,34 @@ export default function HomeScreen() {
     categories,
     branches,
     products,
+    recommendedProducts,
     isLoading: isHomeLoading,
     error: homeError,
     refresh: refreshHome,
   } = useHome(selectedBranchId, { enabled: isStorageLoaded });
 
+  const featuredList = useMemo(() => {
+    if (recommendedProducts && recommendedProducts.length > 0) {
+      return recommendedProducts;
+    }
+    return products ? products.slice(0, 6) : [];
+  }, [recommendedProducts, products]);
+
   // Fetch cart data from cartApi
-  const { cart, addItem } = useCart(selectedBranchId, { enabled: isStorageLoaded });
+  const { cart, addItem } = useCart(selectedBranchId, {
+    enabled: isStorageLoaded,
+  });
   const cartCount = useMemo(() => {
     return cart?.cartItems?.reduce((acc, it) => acc + it.quantity, 0) ?? 0;
   }, [cart?.cartItems]);
 
   // Wishlist quick action
-  const { isInWishlist, toggleItem: toggleWishlist } = useWishlist(selectedBranchId, {
-    enabled: isStorageLoaded,
-  });
+  const { isInWishlist, toggleItem: toggleWishlist } = useWishlist(
+    selectedBranchId,
+    {
+      enabled: isStorageLoaded,
+    },
+  );
 
   const currentBranch = useMemo(() => {
     if (!branches || branches.length === 0) return null;
@@ -138,14 +155,19 @@ export default function HomeScreen() {
 
           <View style={styles.heroContent}>
             <View style={styles.heroBadge}>
-              <Ionicons name="sparkles" size={12} color={Colors.onSecondaryFixed} />
+              <Ionicons
+                name="sparkles"
+                size={12}
+                color={Colors.onSecondaryFixed}
+              />
               <Text style={styles.heroBadgeText}>Trải Nghiệm Thượng Hạng</Text>
             </View>
 
             <Text style={styles.heroTitle}>Haute De Hallen</Text>
 
             <Text style={styles.heroDescription}>
-              Tinh hoa ẩm thực Á Đông đương đại – Nơi di sản giao hòa cùng kỹ nghệ ẩm thực tinh tuyển.
+              Tinh hoa ẩm thực Á Đông đương đại – Nơi di sản giao hòa cùng kỹ
+              nghệ ẩm thực tinh tuyển.
             </Text>
 
             <View style={styles.heroButtonGroup}>
@@ -198,7 +220,11 @@ export default function HomeScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.quickAccessCircle}>
-              <MaterialIcons name="takeout-dining" size={24} color={Colors.primary} />
+              <MaterialIcons
+                name="takeout-dining"
+                size={24}
+                color={Colors.primary}
+              />
             </View>
             <Text style={styles.quickAccessLabel}>Thực đơn</Text>
           </TouchableOpacity>
@@ -224,11 +250,17 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             style={styles.quickAccessItem}
-            onPress={() => navigation.navigate("Orders", { branchId: selectedBranchId })}
+            onPress={() =>
+              navigation.navigate("Orders", { branchId: selectedBranchId })
+            }
             activeOpacity={0.7}
           >
             <View style={styles.quickAccessCircle}>
-              <Ionicons name="receipt-outline" size={22} color={Colors.primary} />
+              <Ionicons
+                name="receipt-outline"
+                size={22}
+                color={Colors.primary}
+              />
             </View>
             <Text style={styles.quickAccessLabel}>Đơn hàng</Text>
           </TouchableOpacity>
@@ -239,7 +271,11 @@ export default function HomeScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.quickAccessCircle}>
-              <Ionicons name="call-outline" size={22} color={Colors.secondary} />
+              <Ionicons
+                name="call-outline"
+                size={22}
+                color={Colors.secondary}
+              />
             </View>
             <Text style={styles.quickAccessLabel}>Liên hệ</Text>
           </TouchableOpacity>
@@ -251,7 +287,9 @@ export default function HomeScreen() {
             <View style={styles.sectionHeaderRow}>
               <View>
                 <Text style={styles.sectionOverline}>DANH MỤC MÓN ĂN</Text>
-                <Text style={styles.sectionHeading}>Khám phá theo danh mục</Text>
+                <Text style={styles.sectionHeading}>
+                  Khám phá theo danh mục
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -261,7 +299,11 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.viewAllText}>Tất cả</Text>
-                <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+                <Ionicons
+                  name="arrow-forward"
+                  size={14}
+                  color={Colors.primary}
+                />
               </TouchableOpacity>
             </View>
 
@@ -298,13 +340,20 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* SECTION: FEATURED PRODUCTS FROM API (TINH TÚY BẾP TRƯỞNG) */}
-        {products && products.length > 0 && (
+        {/* SECTION: FEATURED PRODUCTS FROM API (TINH TÚY BẾP TRƯỞNG / GỢI Ý HÔM NAY) */}
+        {featuredList.length > 0 && (
           <View style={styles.signatureSection}>
             <View style={styles.sectionHeaderRow}>
               <View>
-                <Text style={styles.sectionOverline}>TINH TÚY BẾP TRƯỞNG</Text>
-                <Text style={styles.sectionHeading}>Món ăn khuyên dùng</Text>
+                <View style={styles.sectionOverlineRow}>
+                  <Ionicons name="sparkles" size={12} color={Colors.primary} />
+                  <Text style={styles.sectionOverline}>TINH TÚY BẾP TRƯỞNG</Text>
+                </View>
+                <Text style={styles.sectionHeading}>
+                  {recommendedProducts && recommendedProducts.length > 0
+                    ? "Món ngon gợi ý hôm nay"
+                    : "Món ăn khuyên dùng"}
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -314,7 +363,11 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.viewAllText}>Xem tất cả</Text>
-                <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+                <Ionicons
+                  name="arrow-forward"
+                  size={14}
+                  color={Colors.primary}
+                />
               </TouchableOpacity>
             </View>
 
@@ -323,12 +376,18 @@ export default function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.signatureScrollList}
             >
-              {products.slice(0, 6).map((product) => {
+              {featuredList.map((product) => {
                 const imgUrl = getProductImageUrl(product);
                 const formattedPrice = formatCurrency(
                   product.unitPrice,
                   product.currency,
                 );
+                const isRecommendedItem =
+                  product.isRecommended ||
+                  Boolean(
+                    recommendedProducts &&
+                      recommendedProducts.some((r) => r.id === product.id),
+                  );
 
                 return (
                   <TouchableOpacity
@@ -363,8 +422,20 @@ export default function HomeScreen() {
 
                       {Boolean(product.categoryName) && (
                         <View style={styles.signatureTagBadge}>
-                          <Text style={styles.signatureTagText} numberOfLines={1}>
+                          <Text
+                            style={styles.signatureTagText}
+                            numberOfLines={1}
+                          >
                             {product.categoryName}
+                          </Text>
+                        </View>
+                      )}
+
+                      {isRecommendedItem && (
+                        <View style={styles.signatureRecommendBadge}>
+                          <Ionicons name="star" size={10} color="#B45309" />
+                          <Text style={styles.signatureRecommendText}>
+                            Đặc sắc
                           </Text>
                         </View>
                       )}
@@ -385,7 +456,9 @@ export default function HomeScreen() {
                         }
                       >
                         <Ionicons
-                          name={isInWishlist(product.id) ? "heart" : "heart-outline"}
+                          name={
+                            isInWishlist(product.id) ? "heart" : "heart-outline"
+                          }
                           size={16}
                           color={
                             isInWishlist(product.id)
@@ -402,7 +475,10 @@ export default function HomeScreen() {
                       </Text>
 
                       {Boolean(product.description) && (
-                        <Text style={styles.signatureSubtitle} numberOfLines={2}>
+                        <Text
+                          style={styles.signatureSubtitle}
+                          numberOfLines={2}
+                        >
                           {product.description}
                         </Text>
                       )}
@@ -424,7 +500,11 @@ export default function HomeScreen() {
                           onPress={() => handleAddToCart(product)}
                           activeOpacity={0.8}
                         >
-                          <Ionicons name="add" size={18} color={Colors.onPrimary} />
+                          <Ionicons
+                            name="add"
+                            size={18}
+                            color={Colors.onPrimary}
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -458,12 +538,17 @@ export default function HomeScreen() {
         {isHomeLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={Colors.primaryContainer} />
-            <Text style={styles.loadingText}>Đang tải món ăn từ nhà hàng...</Text>
+            <Text style={styles.loadingText}>
+              Đang tải món ăn từ nhà hàng...
+            </Text>
           </View>
         ) : homeError ? (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{homeError}</Text>
-            <TouchableOpacity onPress={() => refreshHome()} style={styles.retryBtn}>
+            <TouchableOpacity
+              onPress={() => refreshHome()}
+              style={styles.retryBtn}
+            >
               <Text style={styles.retryBtnText}>Thử lại</Text>
             </TouchableOpacity>
           </View>
@@ -654,6 +739,11 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
   },
+  sectionOverlineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   sectionOverline: {
     ...Typography.labelSm,
     fontSize: 10,
@@ -760,6 +850,25 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
     fontSize: 9,
     fontWeight: "600",
+  },
+  signatureRecommendBadge: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(254, 243, 199, 0.95)",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    borderWidth: 0.5,
+    borderColor: "#FDE68A",
+  },
+  signatureRecommendText: {
+    color: "#B45309",
+    fontSize: 9,
+    fontWeight: "700",
   },
   signatureWishlistBtn: {
     position: "absolute",

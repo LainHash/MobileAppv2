@@ -11,6 +11,7 @@ export interface Product {
   unitPrice?: number;
   currency?: string;
   stockStatus: string;
+  isRecommended?: boolean;
   primaryImage?: ProductImage;
   images: ProductImage[];
 }

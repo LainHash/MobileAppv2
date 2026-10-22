@@ -14,6 +14,7 @@ export function useHome(branchId?: string | null, options?: UseHomeOptions) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +29,9 @@ export function useHome(branchId?: string | null, options?: UseHomeOptions) {
         setCategories(res.data.productCategories);
         setBranches(res.data.branches);
         setProducts(res.data.products);
+        setRecommendedProducts(
+          res.data.recommendedProducts ?? res.data.recommendedProduct ?? [],
+        );
       } catch (err: any) {
         setError(err?.message || "Không thể tải thông tin");
       } finally {
@@ -47,6 +51,7 @@ export function useHome(branchId?: string | null, options?: UseHomeOptions) {
     categories,
     branches,
     products,
+    recommendedProducts,
     isLoading: !enabled || isLoading,
     error,
     refresh: loadData,

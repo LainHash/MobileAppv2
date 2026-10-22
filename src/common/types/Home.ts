@@ -6,4 +6,6 @@ export interface Home {
   productCategories: Category[];
   branches: Branch[];
   products: Product[];
+  recommendedProducts: Product[];
+  recommendedProduct?: Product[];
 }
