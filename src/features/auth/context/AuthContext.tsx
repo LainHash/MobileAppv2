@@ -33,6 +33,7 @@ import {
   addOrUpdateSavedAccount,
   removeSavedAccount,
 } from "../utils/authStorage";
+import { clearSessionId, rotateSessionId } from "@/common/utils/sessionStorage";
 
 export interface AuthContextType {
   user: User | null;
@@ -295,6 +296,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Failed to logout", err);
     } finally {
       await clearAuthStorage();
+      await clearSessionId();
+      await rotateSessionId();
       setToken(null);
       setUser(null);
       setError(null);

@@ -208,7 +208,10 @@ export function LoginForm({
 
         {/* Submit Primary Button */}
         <TouchableOpacity
-          style={[styles.submitButton, isLoggingIn && styles.submitButtonDisabled]}
+          style={[
+            styles.submitButton,
+            isLoggingIn && styles.submitButtonDisabled,
+          ]}
           onPress={handleLogin}
           disabled={isLoggingIn}
           activeOpacity={0.85}
@@ -218,7 +221,11 @@ export function LoginForm({
           ) : (
             <View style={styles.btnContent}>
               <Text style={styles.submitButtonText}>Đăng nhập ngay</Text>
-              <Ionicons name="arrow-forward" size={16} color={Colors.onPrimary} />
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={Colors.onPrimary}
+              />
             </View>
           )}
         </TouchableOpacity>
@@ -232,10 +239,10 @@ export function LoginForm({
 
         {/* Social Fast Login */}
         <View style={styles.socialRow}>
-          <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
+          {/* <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
             <Ionicons name="logo-apple" size={18} color={Colors.onSurface} />
             <Text style={styles.socialBtnText}>Apple</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity
             style={[
@@ -256,10 +263,10 @@ export function LoginForm({
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
+          {/* <TouchableOpacity style={styles.socialBtn} activeOpacity={0.75}>
             <Ionicons name="chatbubble-ellipses" size={17} color="#0068FF" />
             <Text style={styles.socialBtnText}>Zalo</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 

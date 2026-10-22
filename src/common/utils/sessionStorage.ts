@@ -100,3 +100,9 @@ export const getCartSessionId = getSessionId;
 export const saveCartSessionId = saveSessionId;
 export const clearCartSessionId = clearSessionId;
 export const getOrCreateCartSessionId = getOrCreateSessionId;
+
+export async function rotateSessionId(): Promise<string> {
+  const newSessionId = generateUUID();
+  await saveSessionId(newSessionId);
+  return newSessionId;
+}

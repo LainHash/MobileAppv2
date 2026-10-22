@@ -8,6 +8,7 @@ import {
   moveAllToCart as moveAllToCartApi,
 } from "../api/wishlistApi";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { useAuth } from "@/features/auth";
 
 export interface UseWishlistOptions {
   branchId?: string | null;
@@ -89,6 +90,7 @@ export function useWishlist(
     enabled = branchIdOrOptions.enabled ?? true;
   }
 
+  const { token, user } = useAuth();
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMovingAll, setIsMovingAll] = useState<boolean>(false);
@@ -357,10 +359,11 @@ export function useWishlist(
   );
 
   useEffect(() => {
+    setWishlist(null);
     if (enabled) {
       loadData();
     }
-  }, [enabled, loadData]);
+  }, [token, user?.id, enabled, loadData]);
 
   return {
     wishlist,

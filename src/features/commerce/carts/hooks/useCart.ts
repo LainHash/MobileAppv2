@@ -8,6 +8,7 @@ import {
   updateCartItemQuantity,
 } from "../api/cartApi";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { useAuth } from "@/features/auth";
 
 export interface UseCartOptions {
   branchId?: string | null;
@@ -81,6 +82,7 @@ export function useCart(
     enabled = branchIdOrOptions.enabled ?? true;
   }
 
+  const { token, user } = useAuth();
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -291,10 +293,11 @@ export function useCart(
   );
 
   useEffect(() => {
+    setCart(null);
     if (enabled) {
       loadData();
     }
-  }, [enabled, loadData]);
+  }, [token, user?.id, enabled, loadData]);
 
   return {
     cart,

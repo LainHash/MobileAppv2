@@ -8,6 +8,7 @@ import {
 } from "../types/Cart";
 import { getOrCreateSessionId } from "@/common/utils/sessionStorage";
 import { getSelectedBranchId } from "@/features/territory/branches";
+import { getAuthToken } from "@/features/auth";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -45,6 +46,11 @@ async function buildCartRequestConfig(
   const headers: Record<string, string> = {};
   if (sessionId) {
     headers["X-Session-Id"] = sessionId;
+  }
+
+  const token = await getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const params = new URLSearchParams();
