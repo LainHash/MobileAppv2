@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -44,16 +44,23 @@ export default function HomeScreen() {
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [showBranchModal, setShowBranchModal] = useState(false);
+  const [isBranchBannerDismissed, setIsBranchBannerDismissed] = useState(false);
 
-  // Load saved branch id from local storage
-  useEffect(() => {
-    getSelectedBranchId().then((storedId) => {
-      if (storedId) {
-        setSelectedBranchId(storedId);
-      }
-      setIsStorageLoaded(true);
-    });
-  }, []);
+  // Sync saved branch id from local storage on mount & when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      getSelectedBranchId().then((storedId) => {
+        if (isMounted) {
+          setSelectedBranchId(storedId ?? null);
+          setIsStorageLoaded(true);
+        }
+      });
+      return () => {
+        isMounted = false;
+      };
+    }, []),
+  );
 
   // Fetch real data from homeApi
   const {
@@ -67,11 +74,8 @@ export default function HomeScreen() {
   } = useHome(selectedBranchId, { enabled: isStorageLoaded });
 
   const featuredList = useMemo(() => {
-    if (recommendedProducts && recommendedProducts.length > 0) {
-      return recommendedProducts;
-    }
-    return products ? products.slice(0, 6) : [];
-  }, [recommendedProducts, products]);
+    return recommendedProducts ?? [];
+  }, [recommendedProducts]);
 
   // Fetch cart data from cartApi
   const { cart, addItem } = useCart(selectedBranchId, {
@@ -90,12 +94,8 @@ export default function HomeScreen() {
   );
 
   const currentBranch = useMemo(() => {
-    if (!branches || branches.length === 0) return null;
-    if (selectedBranchId) {
-      const found = branches.find((b) => b.id === selectedBranchId);
-      if (found) return found;
-    }
-    return branches[0];
+    if (!branches || !selectedBranchId) return null;
+    return branches.find((b) => b.id === selectedBranchId) || null;
   }, [branches, selectedBranchId]);
 
   const handleSelectBranch = (branchId: string | null) => {
@@ -104,9 +104,7 @@ export default function HomeScreen() {
     setShowBranchModal(false);
   };
 
-  const branchDisplayName = currentBranch
-    ? currentBranch.branchCode || currentBranch.city || "Chi nhánh"
-    : "Haute De Hallen";
+  const branchDisplayName = currentBranch ? currentBranch.city : "";
 
   const handleAddToCart = async (product: Product) => {
     await addItem(product.id, selectedBranchId);
@@ -129,13 +127,34 @@ export default function HomeScreen() {
       {/* Branch selector overlay */}
       {showBranchModal && (
         <View style={styles.branchSelectOverlay}>
-          <Text style={styles.branchSelectTitle}>Chọn chi nhánh phục vụ:</Text>
+          <View style={styles.branchSelectHeader}>
+            <View style={styles.branchSelectTitleRow}>
+              <Ionicons
+                name="location-sharp"
+                size={16}
+                color={Colors.primary}
+              />
+              <Text style={styles.branchSelectTitle}>
+                Chọn chi nhánh phục vụ:
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowBranchModal(false)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="close"
+                size={20}
+                color={Colors.onSurfaceVariant}
+              />
+            </TouchableOpacity>
+          </View>
           <BranchDropdown
             branches={branches}
             value={selectedBranchId}
             onSelect={handleSelectBranch}
-            placeholder="Chọn chi nhánh"
-            hideAllOption
+            placeholder="Chọn chi nhánh phục vụ"
+            hideAllOption={false}
           />
         </View>
       )}
@@ -149,6 +168,68 @@ export default function HomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* PROMPT BANNER: GỢI Ý TÌM CHI NHÁNH TỐI ƯU KHI CHƯA CHỌN */}
+        {isStorageLoaded && !selectedBranchId && !isBranchBannerDismissed && (
+          <View style={styles.optimalBranchPromptCard}>
+            <View style={styles.promptHeaderRow}>
+              <View style={styles.promptIconWrap}>
+                <Ionicons
+                  name="navigate-circle"
+                  size={26}
+                  color={Colors.primary}
+                />
+              </View>
+              <View style={styles.promptTextCol}>
+                <View style={styles.promptBadgeRow}>
+                  <Ionicons
+                    name="sparkles"
+                    size={10}
+                    color={Colors.secondaryGold}
+                  />
+                  <Text style={styles.promptBadgeText}>
+                    GỢI Ý VỊ TRÍ GẦN BẠN
+                  </Text>
+                </View>
+                <Text style={styles.promptTitle}>
+                  Khám phá ẩm thực gần bạn nhất
+                </Text>
+                <Text style={styles.promptDescription}>
+                  Định vị GPS để tìm chi nhánh gần nhất, xem món đặc sắc hôm nay
+                  và giá phục vụ chuẩn xác.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.promptCloseBtn}
+                onPress={() => setIsBranchBannerDismissed(true)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close" size={18} color={Colors.outline} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.promptActionsRow}>
+              <TouchableOpacity
+                style={styles.promptPrimaryBtn}
+                onPress={() => navigation.navigate("OptimalBranch")}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="location" size={14} color={Colors.onPrimary} />
+                <Text style={styles.promptPrimaryBtnText}>
+                  Tìm chi nhánh gần tôi
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.promptSecondaryBtn}
+                onPress={() => setShowBranchModal(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.promptSecondaryBtnText}>Chọn thủ công</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         {/* HERO BRAND BANNER */}
         <View style={styles.heroCard}>
           <View style={styles.heroGradientOverlay} />
@@ -347,7 +428,9 @@ export default function HomeScreen() {
               <View>
                 <View style={styles.sectionOverlineRow}>
                   <Ionicons name="sparkles" size={12} color={Colors.primary} />
-                  <Text style={styles.sectionOverline}>TINH TÚY BẾP TRƯỞNG</Text>
+                  <Text style={styles.sectionOverline}>
+                    TINH TÚY BẾP TRƯỞNG
+                  </Text>
                 </View>
                 <Text style={styles.sectionHeading}>
                   {recommendedProducts && recommendedProducts.length > 0
@@ -386,7 +469,7 @@ export default function HomeScreen() {
                   product.isRecommended ||
                   Boolean(
                     recommendedProducts &&
-                      recommendedProducts.some((r) => r.id === product.id),
+                    recommendedProducts.some((r) => r.id === product.id),
                   );
 
                 return (
@@ -520,7 +603,9 @@ export default function HomeScreen() {
           <View>
             <Text style={styles.sectionOverline}>DANH SÁCH MÓN ĂN</Text>
             <Text style={styles.sectionHeading}>
-              Món ăn tại {branchDisplayName}
+              {branchDisplayName !== ""
+                ? `Món ăn tại ${branchDisplayName}`
+                : "Thực đơn"}
             </Text>
           </View>
           <TouchableOpacity
@@ -604,10 +689,112 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSoft,
     ...Shadows.subtle,
   },
+  branchSelectHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xs,
+  },
+  branchSelectTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   branchSelectTitle: {
     ...Typography.labelMd,
     color: Colors.onSurface,
-    marginBottom: Spacing.xs,
+    fontWeight: "700",
+  },
+
+  // Optimal branch prompt banner
+  optimalBranchPromptCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: "rgba(196, 154, 69, 0.35)",
+    ...Shadows.subtle,
+  },
+  promptHeaderRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  promptIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
+    marginRight: Spacing.sm,
+  },
+  promptTextCol: {
+    flex: 1,
+    paddingRight: Spacing.xs,
+  },
+  promptBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 2,
+  },
+  promptBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.secondaryGold,
+    letterSpacing: 0.5,
+  },
+  promptTitle: {
+    ...Typography.labelLg,
+    color: Colors.onSurface,
+    fontWeight: "700",
+  },
+  promptDescription: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  promptCloseBtn: {
+    padding: 2,
+  },
+  promptActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSoft,
+  },
+  promptPrimaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: Radius.lg,
+    ...Shadows.subtle,
+  },
+  promptPrimaryBtnText: {
+    ...Typography.labelSm,
+    color: Colors.onPrimary,
+    fontWeight: "700",
+  },
+  promptSecondaryBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: Radius.lg,
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
+  },
+  promptSecondaryBtnText: {
+    ...Typography.labelSm,
+    color: Colors.primary,
+    fontWeight: "600",
   },
 
   // Hero Card

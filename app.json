@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MobileAppv2",
-    "slug": "MobileAppv2",
+    "name": "Haute De Hallen",
+    "slug": "haute-de-hallen",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.MobileAppv2"
+      "package": "com.hautedehallen.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"

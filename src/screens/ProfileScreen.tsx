@@ -1,11 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import { PersonalInfoCard, SwitchAccountModal, useAuth } from "@/features/auth";
+import {
+  useBranches,
+  Branch,
+  BranchDropdown,
+  getSelectedBranchId,
+  saveSelectedBranchId,
+} from "@/features/territory/branches";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { HauteBottomBar } from "@/common/components/HauteBottomBar";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
@@ -20,6 +27,34 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [showSwitchModal, setShowSwitchModal] = useState(false);
+
+  const { branches } = useBranches();
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+
+  // Sync selected branch from storage when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      getSelectedBranchId().then((storedId) => {
+        if (isMounted) {
+          setSelectedBranchId(storedId ?? null);
+        }
+      });
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  const currentBranch = useMemo(() => {
+    if (!branches || !selectedBranchId) return null;
+    return branches.find((b) => b.id === selectedBranchId) || null;
+  }, [branches, selectedBranchId]);
+
+  const handleSelectBranch = async (branchId: string | null) => {
+    setSelectedBranchId(branchId);
+    await saveSelectedBranchId(branchId);
+  };
 
   return (
     <View style={styles.screenWrapper}>
@@ -37,6 +72,56 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Branch Selection Section */}
+        <View style={styles.branchCard}>
+          <View style={styles.branchHeaderRow}>
+            <View style={styles.branchIconWrap}>
+              <Ionicons name="storefront-outline" size={20} color={Colors.primary} />
+            </View>
+            <View style={styles.branchInfoCol}>
+              <Text style={styles.branchCardTitle}>Chi nhánh phục vụ</Text>
+              <Text style={styles.branchCardSubtitle} numberOfLines={2}>
+                {currentBranch
+                  ? `${currentBranch.city}${currentBranch.address ? ` • ${currentBranch.address}` : ""}`
+                  : "Chưa chọn chi nhánh (mặc định xem thực đơn chung)"}
+              </Text>
+            </View>
+            {Boolean(selectedBranchId) && (
+              <TouchableOpacity
+                style={styles.clearBranchBtn}
+                onPress={() => handleSelectBranch(null)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.clearBranchText}>Bỏ chọn</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.branchDropdownWrap}>
+            <BranchDropdown
+              branches={branches}
+              value={selectedBranchId}
+              onSelect={handleSelectBranch}
+              placeholder="Chọn chi nhánh phục vụ"
+              hideAllOption={false}
+              style={styles.branchDropdown}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.optimalBranchAction}
+            onPress={() => navigation.navigate("OptimalBranch")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="navigate-circle-outline" size={16} color={Colors.primary} />
+            <Text style={styles.optimalBranchText}>
+              Tìm chi nhánh gần nhất theo GPS
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.outline} />
+          </TouchableOpacity>
+        </View>
+
         {/* Quick Hub Navigation Cards */}
         <View style={styles.hubSection}>
           <TouchableOpacity
@@ -153,6 +238,75 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
+  },
+  branchCard: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    padding: Spacing.md,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    marginBottom: Spacing.md,
+    ...Shadows.subtle,
+  },
+  branchHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  branchIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
+    marginRight: Spacing.md,
+  },
+  branchInfoCol: {
+    flex: 1,
+  },
+  branchCardTitle: {
+    ...Typography.labelLg,
+    color: Colors.onSurface,
+    fontWeight: "700",
+  },
+  branchCardSubtitle: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  clearBranchBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
+  },
+  clearBranchText: {
+    ...Typography.labelSm,
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+  branchDropdownWrap: {
+    marginTop: Spacing.sm,
+  },
+  branchDropdown: {
+    margin: 0,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surface,
+  },
+  optimalBranchAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.xs,
+  },
+  optimalBranchText: {
+    ...Typography.labelSm,
+    color: Colors.primary,
+    flex: 1,
   },
   hubSection: {
     gap: Spacing.sm,
