@@ -24,24 +24,69 @@ export function useOptimalBranch(autoLocate: boolean = false) {
       setIsLoadingLocation(true);
       setError(null);
 
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      // Check if location services (GPS) are enabled on device
+      const isServicesEnabled = await Location.hasServicesEnabledAsync();
+      if (!isServicesEnabled) {
+        console.warn("Location services (GPS) are disabled on this device.");
+      }
+
+      // Check / request foreground permission
+      let { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== Location.PermissionStatus.GRANTED) {
+        const req = await Location.requestForegroundPermissionsAsync();
+        status = req.status;
+      }
       const granted = status === Location.PermissionStatus.GRANTED;
       setHasLocationPermission(granted);
 
       if (!granted) {
-        // Fallback default: Hanoi center (Hoan Kiem) if user denies permission
+        setError("Chưa cấp quyền truy cập vị trí.");
         const fallback: UserCoordinate = {
-          latitude: 21.028511,
-          longitude: 105.854167,
-          address: "Trung tâm TP. Hà Nội (Vị trí mặc định)",
+          latitude: 10.9844,
+          longitude: 106.8687,
+          address: "Biên Hòa / TP. Hồ Chí Minh (Vị trí mặc định)",
         };
         setUserLocation(fallback);
         return fallback;
       }
 
-      const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      // Resilient position fetching:
+      // On Android / Emulators, Accuracy.High or getLastKnownPositionAsync succeeds reliably
+      let position: Location.LocationObject | null = null;
+
+      try {
+        position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+      } catch (highErr) {
+        try {
+          position = await Location.getLastKnownPositionAsync({});
+        } catch (lastErr) {
+          // ignore
+        }
+
+        if (!position) {
+          try {
+            position = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+          } catch (balancedErr) {
+            try {
+              position = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Lowest,
+              });
+            } catch (lowestErr) {
+              console.warn("All position accuracy attempts failed:", lowestErr);
+            }
+          }
+        }
+      }
+
+      if (!position) {
+        throw new Error(
+          "Không thể nhận diện vị trí GPS. Hãy chắc chắn đã bật vị trí và bấm 'Set Location' trên trình giả lập.",
+        );
+      }
 
       const coords: UserCoordinate = {
         latitude: position.coords.latitude,
@@ -61,21 +106,27 @@ export function useOptimalBranch(autoLocate: boolean = false) {
             geo.district || geo.subregion,
             geo.city || geo.region,
           ].filter(Boolean);
-          coords.address = parts.join(", ") || "Vị trí hiện tại của quý khách";
+          coords.address =
+            parts.join(", ") ||
+            `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`;
         }
       } catch {
-        coords.address = "Vị trí GPS hiện tại";
+        coords.address = `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`;
       }
 
       setUserLocation(coords);
       return coords;
     } catch (err: any) {
       console.warn("Failed to get location:", err);
+      setError(
+        err?.message ||
+          "Không thể lấy vị trí hiện tại. Vui lòng kiểm tra GPS và thử lại.",
+      );
       // Fallback
       const fallback: UserCoordinate = {
-        latitude: 21.028511,
-        longitude: 105.854167,
-        address: "Trung tâm TP. Hà Nội",
+        latitude: 10.9844,
+        longitude: 106.8687,
+        address: "Biên Hòa / TP. Hồ Chí Minh (Vị trí mặc định)",
       };
       setUserLocation(fallback);
       return fallback;
