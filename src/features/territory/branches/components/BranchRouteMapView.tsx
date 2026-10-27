@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   Linking,
   Platform,
 } from "react-native";
+import Constants from "expo-constants";
 import MapView, {
   Marker,
   Polyline,
@@ -16,7 +17,11 @@ import MapView, {
   Region,
 } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
-import { Branch, OptimalBranchResponse, NearbyBranchItem } from "../types/Branch";
+import {
+  Branch,
+  OptimalBranchResponse,
+  NearbyBranchItem,
+} from "../types/Branch";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface BranchRouteMapViewProps {
@@ -39,6 +44,17 @@ export function BranchRouteMapView({
   style,
 }: BranchRouteMapViewProps) {
   const mapRef = useRef<MapView>(null);
+  const [isMapReady, setIsMapReady] = useState<boolean>(false);
+
+  // Check if a Google Maps API Key is provided on Android to prevent native crash
+  const googleMapsApiKey =
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    (Constants.expoConfig?.android?.config?.googleMaps as any)?.apiKey;
+
+  const canRenderNativeMap =
+    Platform.OS === "ios" ||
+    (Platform.OS === "android" &&
+      Boolean(googleMapsApiKey && googleMapsApiKey.trim().length > 0));
 
   const activeBranch = selectedBranch || optimalData?.branch;
 
@@ -62,7 +78,13 @@ export function BranchRouteMapView({
 
   // Auto fit map view to cover both user location and optimal branch
   useEffect(() => {
-    if (mapRef.current && hasValidUserCoords && hasValidBranchCoords) {
+    if (
+      canRenderNativeMap &&
+      isMapReady &&
+      mapRef.current &&
+      hasValidUserCoords &&
+      hasValidBranchCoords
+    ) {
       const coords = [
         {
           latitude: userLocation!.latitude,
@@ -90,7 +112,16 @@ export function BranchRouteMapView({
         animated: true,
       });
     }
-  }, [userLocation, branchLat, branchLng, optimalData, hasValidUserCoords, hasValidBranchCoords]);
+  }, [
+    canRenderNativeMap,
+    isMapReady,
+    userLocation,
+    branchLat,
+    branchLng,
+    optimalData,
+    hasValidUserCoords,
+    hasValidBranchCoords,
+  ]);
 
   // Initial region centered on user or branch
   const initialRegion: Region = {
@@ -110,164 +141,279 @@ export function BranchRouteMapView({
 
     let url = "";
     if (hasValidUserCoords) {
-      url = Platform.select({
-        ios: `maps:0,0?saddr=${userLocation!.latitude},${userLocation!.longitude}&daddr=${branchLat},${branchLng}(${destLabel})`,
-        android: `google.navigation:q=${branchLat},${branchLng}&mode=d`,
-        default: `https://www.google.com/maps/dir/?api=1&origin=${userLocation!.latitude},${userLocation!.longitude}&destination=${branchLat},${branchLng}`,
-      }) || `https://www.google.com/maps/dir/?api=1&origin=${userLocation!.latitude},${userLocation!.longitude}&destination=${branchLat},${branchLng}`;
+      url =
+        Platform.select({
+          ios: `maps:0,0?saddr=${userLocation!.latitude},${userLocation!.longitude}&daddr=${branchLat},${branchLng}(${destLabel})`,
+          android: `google.navigation:q=${branchLat},${branchLng}&mode=d`,
+          default: `https://www.google.com/maps/dir/?api=1&origin=${userLocation!.latitude},${userLocation!.longitude}&destination=${branchLat},${branchLng}`,
+        }) ||
+        `https://www.google.com/maps/dir/?api=1&origin=${userLocation!.latitude},${userLocation!.longitude}&destination=${branchLat},${branchLng}`;
     } else {
       url = `https://www.google.com/maps/search/?api=1&query=${branchLat},${branchLng}`;
     }
 
     Linking.openURL(url).catch((err) => {
       console.warn("Failed to open external maps directions:", err);
+      const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${branchLat},${branchLng}`;
+      Linking.openURL(webUrl).catch(() => {});
     });
   };
 
   return (
-    <View style={[styles.container, style]}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider={Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
-        initialRegion={initialRegion}
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-        showsCompass={true}
-        rotateEnabled={true}
-        pitchEnabled={false}
-      >
-        {/* User Marker */}
-        {hasValidUserCoords && (
-          <Marker
-            coordinate={{
-              latitude: userLocation!.latitude,
-              longitude: userLocation!.longitude,
-            }}
-            title="Vị trí của bạn"
-            description={userLocation!.address || "Điểm giao nhận / xuất phát"}
-          >
-            <View style={styles.userMarkerWrap}>
-              <View style={styles.userPulseRing} />
-              <View style={styles.userMarkerDot}>
-                <Ionicons name="person" size={14} color="#FFFFFF" />
-              </View>
+    <View
+      style={[
+        styles.container,
+        canRenderNativeMap && styles.mapContainer,
+        style,
+      ]}
+    >
+      {!canRenderNativeMap ? (
+        <View style={styles.fallbackContainer}>
+          {/* Header indicator */}
+          <View style={styles.fallbackHeader}>
+            <View style={styles.fallbackBadge}>
+              <Ionicons name="map-outline" size={13} color={Colors.primary} />
+              <Text style={styles.fallbackBadgeText}>
+                LỘ TRÌNH ĐIỂM GIAO NHẬN
+              </Text>
             </View>
-          </Marker>
-        )}
-
-        {/* Optimal / Selected Branch Marker */}
-        {hasValidBranchCoords && (
-          <Marker
-            coordinate={{
-              latitude: branchLat!,
-              longitude: branchLng!,
-            }}
-            title={activeBranch?.city || "Chi nhánh Haute De Hallen"}
-            description={activeBranch?.address || ""}
-            onPress={() => activeBranch && onSelectBranch?.(activeBranch)}
-          >
-            <View style={styles.branchMarkerWrap}>
-              <View style={styles.branchBadgeTier}>
-                <Ionicons name="sparkles" size={10} color="#FFFFFF" />
-                <Text style={styles.branchBadgeTierText}>TỐI ƯU</Text>
-              </View>
-              <View style={styles.branchMarkerPin}>
-                <Ionicons name="restaurant" size={16} color={Colors.onPrimary} />
-              </View>
-              <View style={styles.branchMarkerTip} />
-            </View>
-            <Callout>
-              <View style={styles.calloutCard}>
-                <Text style={styles.calloutTitle}>
-                  {activeBranch?.city || "Haute De Hallen"}
-                </Text>
-                <Text style={styles.calloutDesc} numberOfLines={2}>
-                  {activeBranch?.address}
-                </Text>
-                {optimalData && (
-                  <Text style={styles.calloutDistance}>
-                    Khoảng cách: {optimalData.distanceKm} km (
-                    {optimalData.estimatedDeliveryMinutes} phút)
-                  </Text>
-                )}
-              </View>
-            </Callout>
-          </Marker>
-        )}
-
-        {/* Nearby Alternative Branch Markers */}
-        {optimalData?.nearbyBranches?.map((nb: NearbyBranchItem) => {
-          const nbLat = Number(nb.branch.latitude);
-          const nbLng = Number(nb.branch.longitude);
-          if (
-            isNaN(nbLat) ||
-            isNaN(nbLng) ||
-            nbLat === 0 ||
-            nb.branch.id === activeBranch?.id
-          ) {
-            return null;
-          }
-
-          return (
-            <Marker
-              key={nb.branch.id}
-              coordinate={{ latitude: nbLat, longitude: nbLng }}
-              title={nb.branch.city || "Chi nhánh"}
-              description={`Cách ${nb.distanceKm} km`}
-              onPress={() => onSelectBranch?.(nb.branch)}
+            <TouchableOpacity
+              style={styles.openMapsBtn}
+              onPress={openExternalDirections}
+              activeOpacity={0.8}
             >
-              <View style={styles.nearbyMarkerPin}>
-                <Ionicons
-                  name="business"
-                  size={14}
-                  color={Colors.secondaryFixed}
-                />
+              <Ionicons name="navigate-circle" size={16} color="#FFFFFF" />
+              <Text style={styles.openMapsBtnText}>Mở Google Maps</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Visual Route Points */}
+          <View style={styles.fallbackRouteCard}>
+            {/* Origin: User Location */}
+            <View style={styles.routeStepRow}>
+              <View style={styles.stepIconWrapUser}>
+                <Ionicons name="person" size={13} color="#FFFFFF" />
+              </View>
+              <View style={styles.stepInfo}>
+                <Text style={styles.stepLabel}>VỊ TRÍ CỦA BẠN</Text>
+                <Text style={styles.stepValue} numberOfLines={2}>
+                  {userLocation?.address ||
+                    (hasValidUserCoords
+                      ? `${userLocation!.latitude.toFixed(4)}, ${userLocation!.longitude.toFixed(4)}`
+                      : "Đang nhận diện GPS...")}
+                </Text>
+              </View>
+            </View>
+
+            {/* Connecting Route Line with Distance */}
+            <View style={styles.stepConnectorRow}>
+              <View style={styles.stepConnectorLine} />
+              <View style={styles.routePill}>
+                <Ionicons name="bicycle" size={12} color={Colors.secondary} />
+                <Text style={styles.routePillText}>
+                  {optimalData
+                    ? `${optimalData.distanceKm} km • ~${optimalData.estimatedDeliveryMinutes} phút`
+                    : "Đang tính khoảng cách..."}
+                </Text>
+              </View>
+            </View>
+
+            {/* Destination: Restaurant Branch */}
+            <View style={styles.routeStepRow}>
+              <View style={styles.stepIconWrapBranch}>
+                <Ionicons name="restaurant" size={13} color="#FFFFFF" />
+              </View>
+              <View style={styles.stepInfo}>
+                <View style={styles.stepTitleRow}>
+                  <Text style={styles.stepLabelBranch}>
+                    {activeBranch?.city || "CHI NHÁNH HAUTE DE HALLEN"}
+                  </Text>
+                  {optimalData?.isOpenNow !== undefined && (
+                    <Text
+                      style={[
+                        styles.openBadge,
+                        optimalData.isOpenNow
+                          ? styles.openBadgeActive
+                          : styles.openBadgeInactive,
+                      ]}
+                    >
+                      {optimalData.isOpenNow ? "Đang mở cửa" : "Đã đóng cửa"}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.stepValue} numberOfLines={2}>
+                  {activeBranch?.address || "Đang tải địa chỉ chi nhánh..."}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Guide hint */}
+          <View style={styles.fallbackFooterHint}>
+            <Ionicons
+              name="information-circle-outline"
+              size={13}
+              color={Colors.outline}
+            />
+            <Text style={styles.fallbackFooterHintText}>
+              Chạm &quotở Google Maps&quot để xem bản đồ chi tiết và dẫn đường
+              trực tiếp.
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          provider={
+            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+          }
+          initialRegion={initialRegion}
+          showsUserLocation={false}
+          showsMyLocationButton={false}
+          showsCompass={true}
+          rotateEnabled={true}
+          pitchEnabled={false}
+          onMapReady={() => setIsMapReady(true)}
+        >
+          {/* User Marker */}
+          {hasValidUserCoords && (
+            <Marker
+              coordinate={{
+                latitude: userLocation!.latitude,
+                longitude: userLocation!.longitude,
+              }}
+              title="Vị trí của bạn"
+              description={
+                userLocation!.address || "Điểm giao nhận / xuất phát"
+              }
+            >
+              <View style={styles.userMarkerWrap}>
+                <View style={styles.userPulseRing} />
+                <View style={styles.userMarkerDot}>
+                  <Ionicons name="person" size={14} color="#FFFFFF" />
+                </View>
               </View>
             </Marker>
-          );
-        })}
+          )}
 
-        {/* Optimal Route Connecting Polyline */}
-        {hasValidUserCoords && hasValidBranchCoords && (
-          <>
-            {/* Soft Shadow Outline Polyline */}
-            <Polyline
-              coordinates={[
-                {
-                  latitude: userLocation!.latitude,
-                  longitude: userLocation!.longitude,
-                },
-                {
-                  latitude: branchLat!,
-                  longitude: branchLng!,
-                },
-              ]}
-              strokeColor="rgba(0, 0, 0, 0.2)"
-              strokeWidth={6}
-            />
-            {/* Primary Cinnabar Route Polyline */}
-            <Polyline
-              coordinates={[
-                {
-                  latitude: userLocation!.latitude,
-                  longitude: userLocation!.longitude,
-                },
-                {
-                  latitude: branchLat!,
-                  longitude: branchLng!,
-                },
-              ]}
-              strokeColor={Colors.primary}
-              strokeWidth={4}
-              lineDashPattern={[0]}
-            />
-          </>
-        )}
-      </MapView>
+          {/* Optimal / Selected Branch Marker */}
+          {hasValidBranchCoords && (
+            <Marker
+              coordinate={{
+                latitude: branchLat!,
+                longitude: branchLng!,
+              }}
+              title={activeBranch?.city || "Chi nhánh Haute De Hallen"}
+              description={activeBranch?.address || ""}
+              onPress={() => activeBranch && onSelectBranch?.(activeBranch)}
+            >
+              <View style={styles.branchMarkerWrap}>
+                <View style={styles.branchBadgeTier}>
+                  <Ionicons name="sparkles" size={10} color="#FFFFFF" />
+                  <Text style={styles.branchBadgeTierText}>TỐI ƯU</Text>
+                </View>
+                <View style={styles.branchMarkerPin}>
+                  <Ionicons
+                    name="restaurant"
+                    size={16}
+                    color={Colors.onPrimary}
+                  />
+                </View>
+                <View style={styles.branchMarkerTip} />
+              </View>
+              <Callout>
+                <View style={styles.calloutCard}>
+                  <Text style={styles.calloutTitle}>
+                    {activeBranch?.city || "Haute De Hallen"}
+                  </Text>
+                  <Text style={styles.calloutDesc} numberOfLines={2}>
+                    {activeBranch?.address}
+                  </Text>
+                  {optimalData && (
+                    <Text style={styles.calloutDistance}>
+                      Khoảng cách: {optimalData.distanceKm} km (
+                      {optimalData.estimatedDeliveryMinutes} phút)
+                    </Text>
+                  )}
+                </View>
+              </Callout>
+            </Marker>
+          )}
 
-      {/* Floating Route Summary Overlay */}
-      {optimalData && (
+          {/* Nearby Alternative Branch Markers */}
+          {optimalData?.nearbyBranches?.map((nb: NearbyBranchItem) => {
+            const nbLat = Number(nb.branch.latitude);
+            const nbLng = Number(nb.branch.longitude);
+            if (
+              isNaN(nbLat) ||
+              isNaN(nbLng) ||
+              nbLat === 0 ||
+              nb.branch.id === activeBranch?.id
+            ) {
+              return null;
+            }
+
+            return (
+              <Marker
+                key={nb.branch.id}
+                coordinate={{ latitude: nbLat, longitude: nbLng }}
+                title={nb.branch.city || "Chi nhánh"}
+                description={`Cách ${nb.distanceKm} km`}
+                onPress={() => onSelectBranch?.(nb.branch)}
+              >
+                <View style={styles.nearbyMarkerPin}>
+                  <Ionicons
+                    name="business"
+                    size={14}
+                    color={Colors.secondaryFixed}
+                  />
+                </View>
+              </Marker>
+            );
+          })}
+
+          {/* Optimal Route Connecting Polyline */}
+          {hasValidUserCoords && hasValidBranchCoords && (
+            <>
+              {/* Soft Shadow Outline Polyline */}
+              <Polyline
+                coordinates={[
+                  {
+                    latitude: userLocation!.latitude,
+                    longitude: userLocation!.longitude,
+                  },
+                  {
+                    latitude: branchLat!,
+                    longitude: branchLng!,
+                  },
+                ]}
+                strokeColor="rgba(0, 0, 0, 0.2)"
+                strokeWidth={6}
+              />
+              {/* Primary Cinnabar Route Polyline */}
+              <Polyline
+                coordinates={[
+                  {
+                    latitude: userLocation!.latitude,
+                    longitude: userLocation!.longitude,
+                  },
+                  {
+                    latitude: branchLat!,
+                    longitude: branchLng!,
+                  },
+                ]}
+                strokeColor={Colors.primary}
+                strokeWidth={4}
+                lineDashPattern={[0]}
+              />
+            </>
+          )}
+        </MapView>
+      )}
+
+      {/* Floating Route Summary Overlay (Only for live MapView) */}
+      {canRenderNativeMap && optimalData && (
         <View style={styles.floatingOverlay}>
           <View style={styles.routeHeaderRow}>
             <View style={styles.routeBranchInfo}>
@@ -356,13 +502,17 @@ export function BranchRouteMapView({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    height: 380,
+    minHeight: 260,
     borderRadius: Radius.xl,
     overflow: "hidden",
     position: "relative",
     borderWidth: 1,
     borderColor: Colors.borderSoft,
+    backgroundColor: Colors.surfaceContainerLowest,
     ...Shadows.card,
+  },
+  mapContainer: {
+    height: 380,
   },
   map: {
     ...StyleSheet.absoluteFill,
@@ -572,6 +722,159 @@ const styles = StyleSheet.create({
     width: 1,
     height: 24,
     backgroundColor: Colors.borderSoft,
+  },
+  // Fallback Container & Route Elements
+  fallbackContainer: {
+    padding: Spacing.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+  },
+  fallbackHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.sm,
+  },
+  fallbackBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(126, 37, 22, 0.08)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  fallbackBadgeText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
+  openMapsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+  },
+  openMapsBtnText: {
+    ...Typography.labelSm,
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  fallbackRouteCard: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+    marginVertical: Spacing.xs,
+  },
+  routeStepRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+  },
+  stepIconWrapUser: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  stepIconWrapBranch: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.secondary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  stepInfo: {
+    flex: 1,
+  },
+  stepLabel: {
+    ...Typography.labelSm,
+    fontSize: 9,
+    color: Colors.outline,
+    letterSpacing: 0.5,
+  },
+  stepTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 4,
+  },
+  stepLabelBranch: {
+    ...Typography.labelSm,
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
+  stepValue: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    color: Colors.onSurface,
+    marginTop: 1,
+  },
+  stepConnectorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 4,
+    paddingLeft: 12,
+  },
+  stepConnectorLine: {
+    width: 2,
+    height: 24,
+    backgroundColor: Colors.borderSoft,
+  },
+  routePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceContainerHigh,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    marginLeft: Spacing.sm,
+  },
+  routePillText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    color: Colors.onSurfaceVariant,
+    fontWeight: "600",
+  },
+  openBadge: {
+    fontSize: 9,
+    fontWeight: "700",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  openBadgeActive: {
+    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    color: Colors.success,
+  },
+  openBadgeInactive: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    color: Colors.error,
+  },
+  fallbackFooterHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingTop: 4,
+  },
+  fallbackFooterHintText: {
+    ...Typography.bodySm,
+    fontSize: 10,
+    color: Colors.outline,
+    flex: 1,
   },
 });
 

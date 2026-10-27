@@ -141,12 +141,12 @@ export function VoucherSelectorModal({
                   color={Colors.primary}
                 />
               </View>
-              <div>
+              <View>
                 <Text style={styles.headerTitle}>Mã Ưu Đãi & Khuyến Mãi</Text>
                 <Text style={styles.headerSubtitle}>
                   Áp dụng voucher giảm giá cho đơn hàng
                 </Text>
-              </div>
+              </View>
             </View>
             <TouchableOpacity
               onPress={onClose}
@@ -316,7 +316,10 @@ export function VoucherSelectorModal({
 
                         <View style={styles.couponActionRow}>
                           <Text style={styles.couponExpiryText}>
-                            HSD: {new Date(v.endAt).toLocaleDateString("vi-VN")}
+                            HSD:{" "}
+                            {v.endAt
+                              ? new Date(v.endAt).toLocaleDateString("vi-VN")
+                              : "Vô thời hạn"}
                           </Text>
 
                           <TouchableOpacity

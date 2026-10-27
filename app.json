@@ -17,7 +17,12 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.hautedehallen.mobile"
+      "package": "com.hautedehallen.mobile",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
