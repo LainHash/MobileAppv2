@@ -68,6 +68,7 @@ export default function HomeScreen() {
     branches,
     products,
     recommendedProducts,
+    popularProducts,
     isLoading: isHomeLoading,
     error: homeError,
     refresh: refreshHome,
@@ -522,6 +523,196 @@ export default function HomeScreen() {
                           </Text>
                         </View>
                       )}
+
+                      {/* Floating Quick Wishlist Button */}
+                      <TouchableOpacity
+                        style={styles.signatureWishlistBtn}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          toggleWishlist(product);
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.8}
+                        accessibilityLabel={
+                          isInWishlist(product.id)
+                            ? "Bỏ yêu thích"
+                            : "Thêm vào yêu thích"
+                        }
+                      >
+                        <Ionicons
+                          name={
+                            isInWishlist(product.id) ? "heart" : "heart-outline"
+                          }
+                          size={16}
+                          color={
+                            isInWishlist(product.id)
+                              ? Colors.primary
+                              : Colors.onSurfaceVariant
+                          }
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.signatureInfo}>
+                      <Text style={styles.signatureTitle} numberOfLines={1}>
+                        {product.name}
+                      </Text>
+
+                      {Boolean(product.description) && (
+                        <Text
+                          style={styles.signatureSubtitle}
+                          numberOfLines={2}
+                        >
+                          {product.description}
+                        </Text>
+                      )}
+
+                      <View style={styles.signatureBottomRow}>
+                        <View>
+                          <Text style={styles.signaturePrice}>
+                            {formattedPrice || "Đang cập nhật"}
+                          </Text>
+                          {Boolean(product.unitSymbol) && (
+                            <Text style={styles.signaturePortion}>
+                              /{product.unitSymbol}
+                            </Text>
+                          )}
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.signatureAddBtn}
+                          onPress={() => handleAddToCart(product)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons
+                            name="add"
+                            size={18}
+                            color={Colors.onPrimary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* SECTION: POPULAR PRODUCTS FROM API (MÓN BÁN CHẠY NHẤT) */}
+        {popularProducts && popularProducts.length > 0 && (
+          <View style={styles.signatureSection}>
+            <View style={styles.sectionHeaderRow}>
+              <View>
+                <View style={styles.sectionOverlineRow}>
+                  <MaterialCommunityIcons
+                    name="fire"
+                    size={14}
+                    color="#EA580C"
+                  />
+                  <Text style={[styles.sectionOverline, { color: "#EA580C" }]}>
+                    MÓN BÁN CHẠY NHẤT
+                  </Text>
+                </View>
+                <Text style={styles.sectionHeading}>
+                  Món ăn được yêu thích nhất
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("Menu", { branchId: selectedBranchId })
+                }
+                style={styles.viewAllRow}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.viewAllText}>Xem tất cả</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={14}
+                  color={Colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.signatureScrollList}
+            >
+              {popularProducts.map((product) => {
+                const imgUrl = getProductImageUrl(product);
+                const formattedPrice = formatCurrency(
+                  product.unitPrice,
+                  product.currency,
+                );
+
+                return (
+                  <TouchableOpacity
+                    key={`popular-${product.id}`}
+                    style={styles.signatureCard}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      navigation.navigate("ProductDetail", {
+                        productId: product.id,
+                        product,
+                        branchId: selectedBranchId,
+                      })
+                    }
+                  >
+                    <View style={styles.signatureImageWrap}>
+                      {imgUrl ? (
+                        <Image
+                          source={{ uri: imgUrl }}
+                          style={styles.signatureImage}
+                          contentFit="cover"
+                          transition={200}
+                        />
+                      ) : (
+                        <View style={styles.placeholderImg}>
+                          <Ionicons
+                            name="restaurant-outline"
+                            size={32}
+                            color={Colors.outline}
+                          />
+                        </View>
+                      )}
+
+                      {Boolean(product.categoryName) && (
+                        <View style={styles.signatureTagBadge}>
+                          <Text
+                            style={styles.signatureTagText}
+                            numberOfLines={1}
+                          >
+                            {product.categoryName}
+                          </Text>
+                        </View>
+                      )}
+
+                      <View
+                        style={[
+                          styles.signatureRecommendBadge,
+                          {
+                            backgroundColor: "rgba(255, 237, 213, 0.95)",
+                            borderColor: "#FDBA74",
+                          },
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name="fire"
+                          size={11}
+                          color="#EA580C"
+                        />
+                        <Text
+                          style={[
+                            styles.signatureRecommendText,
+                            { color: "#C2410C" },
+                          ]}
+                        >
+                          {product.totalQuantitySold && product.totalQuantitySold > 0
+                            ? `Đã bán ${product.totalQuantitySold}`
+                            : "Bán chạy"}
+                        </Text>
+                      </View>
 
                       {/* Floating Quick Wishlist Button */}
                       <TouchableOpacity

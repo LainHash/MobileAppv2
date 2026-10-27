@@ -12,6 +12,7 @@ export interface Product {
   currency?: string;
   stockStatus: string;
   isRecommended?: boolean;
+  totalQuantitySold?: number;
   primaryImage?: ProductImage;
   images: ProductImage[];
 }

@@ -8,4 +8,5 @@ export interface Home {
   products: Product[];
   recommendedProducts: Product[];
   recommendedProduct?: Product[];
+  popularProducts?: Product[];
 }
