@@ -137,16 +137,27 @@ export function useOptimalBranch(autoLocate: boolean = false) {
 
   // Calculate optimal branch for given coordinates
   const calculateForCoords = useCallback(
-    async (latitude: number, longitude: number, maxRadiusKm: number = 15.0) => {
+    async (
+      latitude: number,
+      longitude: number,
+      maxRadiusKm: number = 15.0,
+      targetBranchId?: string | null,
+      autoSaveBranch: boolean = true,
+    ) => {
       try {
         setIsLoadingOptimal(true);
         setError(null);
 
-        const res = await fetchOptimalBranch(latitude, longitude, maxRadiusKm);
+        const res = await fetchOptimalBranch(
+          latitude,
+          longitude,
+          maxRadiusKm,
+          targetBranchId,
+        );
         if (res.isSucceed && res.data) {
           setOptimalData(res.data);
-          // Auto-save the optimal branch as default branch
-          if (res.data.branch?.id) {
+          // Auto-save the optimal branch as default branch if allowed
+          if (autoSaveBranch && res.data.branch?.id) {
             await saveSelectedBranchId(res.data.branch.id);
           }
           return res.data;
@@ -169,12 +180,26 @@ export function useOptimalBranch(autoLocate: boolean = false) {
   );
 
   // Full flow: locate then calculate optimal branch
-  const locateAndCalculate = useCallback(async () => {
-    const loc = await getCurrentLocation();
-    if (loc) {
-      await calculateForCoords(loc.latitude, loc.longitude);
-    }
-  }, [getCurrentLocation, calculateForCoords]);
+  const locateAndCalculate = useCallback(
+    async (targetBranchId?: any, autoSaveBranch: boolean = true) => {
+      const branchIdStr =
+        typeof targetBranchId === "string" ? targetBranchId : null;
+      const shouldSave =
+        typeof autoSaveBranch === "boolean" ? autoSaveBranch : true;
+      const loc = await getCurrentLocation();
+      if (loc) {
+        return await calculateForCoords(
+          loc.latitude,
+          loc.longitude,
+          15.0,
+          branchIdStr,
+          shouldSave,
+        );
+      }
+      return null;
+    },
+    [getCurrentLocation, calculateForCoords],
+  );
 
   useEffect(() => {
     if (autoLocate) {

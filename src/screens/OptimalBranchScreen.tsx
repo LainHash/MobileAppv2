@@ -109,7 +109,7 @@ export default function OptimalBranchScreen() {
 
           <TouchableOpacity
             style={styles.reLocateBtn}
-            onPress={locateAndCalculate}
+            onPress={() => locateAndCalculate()}
             disabled={isLoading}
             activeOpacity={0.8}
           >

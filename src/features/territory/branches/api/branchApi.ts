@@ -15,6 +15,7 @@ export async function fetchOptimalBranch(
   latitude: number,
   longitude: number,
   maxDeliveryRadiusKm: number = 15.0,
+  targetBranchId?: string | null,
 ): Promise<Result<OptimalBranchResponse>> {
   const res = await axios.get<Result<OptimalBranchResponse>>(
     `${BASE_URL}/api/territory/branches/optimal`,
@@ -23,6 +24,7 @@ export async function fetchOptimalBranch(
         latitude,
         longitude,
         maxDeliveryRadiusKm,
+        ...(targetBranchId ? { targetBranchId } : {}),
       },
     },
   );

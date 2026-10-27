@@ -53,6 +53,9 @@ export interface CreateOrderItemRequest {
 export interface CreateDeliveryOrderRequest {
   branchId: string;
   deliveryAddress: string;
+  latitude?: number;
+  longitude?: number;
+  distanceKm?: number;
   note?: string;
   deliveryFee?: number;
   voucherCode?: string;
@@ -130,6 +133,8 @@ export interface OrderResponse {
   totalAmount: number;
   note?: string;
   deliveryAddress?: string;
+  distanceKm?: number;
+  estimatedDeliveryMinutes?: number;
   totalItems: number;
   createdAt: string;
   updatedAt: string;
@@ -143,6 +148,8 @@ export interface OrderDetailResponse extends OrderResponse {
 export interface DeliveryOrderCheckoutResponse {
   order: OrderDetailResponse;
   payment: PaymentQrResponse;
+  distanceKm?: number;
+  estimatedDeliveryMinutes?: number;
 }
 
 export interface OrderPaymentStatusResponse {

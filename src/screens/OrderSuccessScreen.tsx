@@ -27,7 +27,7 @@ export default function OrderSuccessScreen() {
   const navigation = useNavigation<OrderSuccessNavProp>();
   const insets = useSafeAreaInsets();
 
-  const { orderId, orderCode, payment } = route.params;
+  const { orderId, orderCode, payment, distanceKm, estimatedDeliveryMinutes } = route.params;
   const [copied, setCopied] = useState(false);
 
   const displayCode =
@@ -125,9 +125,11 @@ export default function OrderSuccessScreen() {
             <Text style={styles.infoCardTitle}>Thời gian phục vụ dự kiến</Text>
           </View>
           <Text style={styles.infoCardDesc}>
-            Món ăn sẽ được chế biến tươi nóng và hoàn tất trong vòng 20 - 35
-            phút. Quý khách có thể theo dõi trực tiếp trạng thái món ăn trong
-            mục Chi tiết đơn hàng.
+            {estimatedDeliveryMinutes
+              ? `Đơn hàng dự kiến được giao trong vòng ~${estimatedDeliveryMinutes} phút${
+                  distanceKm ? ` (khoảng cách vận chuyển: ${distanceKm} km)` : ""
+                }. Quý khách có thể theo dõi trực tiếp trạng thái món ăn trong mục Chi tiết đơn hàng.`
+              : "Món ăn sẽ được chế biến tươi nóng và hoàn tất trong vòng 20 - 35 phút. Quý khách có thể theo dõi trực tiếp trạng thái món ăn trong mục Chi tiết đơn hàng."}
           </Text>
         </View>
 

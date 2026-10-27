@@ -23,6 +23,8 @@ import { useAuth } from "@/features/auth";
 import {
   useBranches,
   getSelectedBranchId,
+  saveSelectedBranchId,
+  useOptimalBranch,
 } from "@/features/territory/branches";
 import { formatCurrency, getProductImageUrl } from "@/common/helpers";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
@@ -39,7 +41,7 @@ type CheckoutNavProp = NativeStackNavigationProp<
   "Checkout"
 >;
 
-const DELIVERY_FEE = 15000;
+const DEFAULT_DELIVERY_FEE = 16000;
 
 export default function CheckoutScreen() {
   const route = useRoute<CheckoutRouteProp>();
@@ -67,6 +69,50 @@ export default function CheckoutScreen() {
     () => branches.find((b) => b.id === branchId) || null,
     [branches, branchId],
   );
+
+  // Hook for GPS position and optimal branch / distance derivation
+  const {
+    userLocation,
+    optimalData,
+    isLoading: isLocatingOptimal,
+    locateAndCalculate,
+  } = useOptimalBranch(false);
+
+  // Optimal distance, delivery time, and dynamic shipping fee
+  const [deliveryFee, setDeliveryFee] = useState<number>(DEFAULT_DELIVERY_FEE);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [estimatedDeliveryMinutes, setEstimatedDeliveryMinutes] =
+    useState<number | null>(null);
+  const [isDeliverable, setIsDeliverable] = useState<boolean | null>(true);
+
+  // Auto-locate GPS on mount to compute optimal distance & fee
+  useEffect(() => {
+    if (branchId) {
+      locateAndCalculate(branchId, false);
+    }
+  }, [branchId, locateAndCalculate]);
+
+  // Update distance, delivery minutes and dynamic shipping fee whenever optimalData is updated
+  useEffect(() => {
+    if (optimalData) {
+      const match =
+        optimalData.branch?.id === branchId
+          ? optimalData
+          : optimalData.nearbyBranches?.find((b) => b.branch?.id === branchId);
+
+      if (match) {
+        setDistanceKm(match.distanceKm);
+        setEstimatedDeliveryMinutes(match.estimatedDeliveryMinutes);
+        setDeliveryFee(match.estimatedDeliveryFee || DEFAULT_DELIVERY_FEE);
+        setIsDeliverable(match.isDeliverable);
+      } else {
+        setDistanceKm(optimalData.distanceKm);
+        setEstimatedDeliveryMinutes(optimalData.estimatedDeliveryMinutes);
+        setDeliveryFee(optimalData.estimatedDeliveryFee || DEFAULT_DELIVERY_FEE);
+        setIsDeliverable(optimalData.isDeliverable);
+      }
+    }
+  }, [optimalData, branchId]);
 
   const { cart, isLoading: isCartLoading } = useCart(branchId, {
     enabled: isStorageLoaded,
@@ -126,7 +172,7 @@ export default function CheckoutScreen() {
 
   const grandTotal = Math.max(
     0,
-    subtotal + (items.length > 0 ? DELIVERY_FEE : 0) - discountAmount,
+    subtotal + (items.length > 0 ? deliveryFee : 0) - discountAmount,
   );
 
   // Auto-remove voucher if cart subtotal drops below voucher's minOrderAmount
@@ -145,6 +191,27 @@ export default function CheckoutScreen() {
       );
     }
   }, [subtotal, appliedVoucher]);
+
+  const handleLocateGps = async () => {
+    const data = await locateAndCalculate(branchId, false);
+    if (data?.branch) {
+      if (!address.trim() && userLocation?.address) {
+        setAddress(userLocation.address);
+      }
+    }
+  };
+
+  const handleUseGpsAddress = () => {
+    if (userLocation?.address) {
+      setAddress(userLocation.address);
+    }
+  };
+
+  const handleSwitchToOptimalBranch = async (optimalBranchId: string) => {
+    await saveSelectedBranchId(optimalBranchId);
+    setBranchId(optimalBranchId);
+    locateAndCalculate(optimalBranchId, false);
+  };
 
   const handleConfirmOrder = async () => {
     if (items.length === 0) {
@@ -187,6 +254,14 @@ export default function CheckoutScreen() {
       return;
     }
 
+    if (isDeliverable === false) {
+      Alert.alert(
+        "Vượt quá bán kính phục vụ",
+        `Vị trí nhận hàng cách chi nhánh ${distanceKm ?? ""} km, vượt quá bán kính giao hàng tối đa (15 km). Quý khách vui lòng chọn chi nhánh gần hơn hoặc cập nhật địa chỉ giao hàng.`,
+      );
+      return;
+    }
+
     const orderItems = items.map((it) => {
       const pid = it.product?.id || it.productId || it.id;
       return {
@@ -208,8 +283,11 @@ export default function CheckoutScreen() {
     const res = await submitOrder({
       branchId,
       deliveryAddress: address.trim(),
+      latitude: userLocation?.latitude,
+      longitude: userLocation?.longitude,
+      distanceKm: distanceKm ?? undefined,
       note: fullNote,
-      deliveryFee: DELIVERY_FEE,
+      deliveryFee: deliveryFee,
       voucherCode: appliedVoucher?.voucherCode || undefined,
       items: orderItems,
     });
@@ -220,6 +298,9 @@ export default function CheckoutScreen() {
         orderCode: res.order.orderCode,
         payment: res.payment,
         totalAmount: res.order.totalAmount || grandTotal,
+        distanceKm: res.distanceKm ?? distanceKm ?? undefined,
+        estimatedDeliveryMinutes:
+          res.estimatedDeliveryMinutes ?? estimatedDeliveryMinutes ?? undefined,
       });
     }
   };
@@ -263,7 +344,7 @@ export default function CheckoutScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Branch Card */}
+          {/* Branch & Optimal Distance Card */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.iconCircle}>
@@ -274,7 +355,15 @@ export default function CheckoutScreen() {
                 />
               </View>
               <View style={styles.cardHeaderTextWrap}>
-                <Text style={styles.cardSubtitle}>Chi nhánh phục vụ</Text>
+                <View style={styles.branchStatusRow}>
+                  <Text style={styles.cardSubtitle}>Chi nhánh phục vụ</Text>
+                  {distanceKm != null && (
+                    <View style={styles.distanceBadgePill}>
+                      <Ionicons name="navigate" size={11} color={Colors.primary} />
+                      <Text style={styles.distanceBadgeText}>{distanceKm} km</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.branchName}>
                   {currentBranch
                     ? `Chi nhánh ${currentBranch.branchCode} - ${currentBranch.city}`
@@ -286,6 +375,74 @@ export default function CheckoutScreen() {
                 </Text>
               </View>
             </View>
+
+            {/* Distance, Delivery Time & Shipping Fee Metrics */}
+            <View style={styles.metricsContainer}>
+              <View style={styles.metricItem}>
+                <Ionicons name="speedometer-outline" size={16} color={Colors.secondaryGold} />
+                <Text style={styles.metricLabel}>Khoảng cách</Text>
+                <Text style={styles.metricValue}>
+                  {distanceKm != null ? `${distanceKm} km` : isLocatingOptimal ? "Đang đo..." : "Cần GPS"}
+                </Text>
+              </View>
+              <View style={styles.metricDivider} />
+              <View style={styles.metricItem}>
+                <Ionicons name="time-outline" size={16} color={Colors.secondaryGold} />
+                <Text style={styles.metricLabel}>Giao dự kiến</Text>
+                <Text style={styles.metricValue}>
+                  {estimatedDeliveryMinutes != null
+                    ? `~${estimatedDeliveryMinutes} phút`
+                    : isLocatingOptimal
+                      ? "Đang tính..."
+                      : "15 - 30 phút"}
+                </Text>
+              </View>
+              <View style={styles.metricDivider} />
+              <View style={styles.metricItem}>
+                <Ionicons name="bicycle-outline" size={16} color={Colors.secondaryGold} />
+                <Text style={styles.metricLabel}>Cước vận chuyển</Text>
+                <Text style={styles.metricValueHighlight}>
+                  {formatCurrency(deliveryFee, currency)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Out of delivery radius alert */}
+            {isDeliverable === false && distanceKm != null && (
+              <View style={styles.outOfRangeBanner}>
+                <Ionicons name="warning" size={16} color="#B91C1C" />
+                <Text style={styles.outOfRangeText}>
+                  Cự ly ({distanceKm} km) vượt quá bán kính giao hàng tối đa (15 km) của chi nhánh này.
+                </Text>
+              </View>
+            )}
+
+            {/* Switch to nearer branch suggestion */}
+            {optimalData?.branch &&
+              branchId &&
+              optimalData.branch.id !== branchId &&
+              optimalData.isDeliverable && (
+                <TouchableOpacity
+                  style={styles.switchBranchSuggestion}
+                  onPress={() => handleSwitchToOptimalBranch(optimalData.branch.id)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.switchBranchIconWrap}>
+                    <Ionicons name="sparkles" size={15} color={Colors.secondaryGold} />
+                  </View>
+                  <View style={styles.switchBranchContent}>
+                    <Text style={styles.switchBranchTitle}>
+                      Chi nhánh gần bạn hơn ({optimalData.distanceKm} km)
+                    </Text>
+                    <Text style={styles.switchBranchSubtitle} numberOfLines={1}>
+                      {optimalData.branch.branchCode} - {optimalData.branch.city} (~{optimalData.estimatedDeliveryMinutes} phút, phí ship {formatCurrency(optimalData.estimatedDeliveryFee, currency)})
+                    </Text>
+                  </View>
+                  <View style={styles.switchBranchBtnBadge}>
+                    <Text style={styles.switchBranchBtnText}>Đổi chi nhánh</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
           </View>
 
           {/* Delivery Information Card */}
@@ -299,6 +456,36 @@ export default function CheckoutScreen() {
                 />
               </View>
               <Text style={styles.cardTitle}>Thông tin giao hàng</Text>
+            </View>
+
+            {/* GPS Auto-Locate Button */}
+            <View style={styles.gpsRow}>
+              <TouchableOpacity
+                style={styles.gpsButton}
+                onPress={handleLocateGps}
+                disabled={isLocatingOptimal}
+                activeOpacity={0.7}
+              >
+                {isLocatingOptimal ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Ionicons name="locate" size={16} color={Colors.primary} />
+                )}
+                <Text style={styles.gpsButtonText}>
+                  {isLocatingOptimal ? "Đang định vị GPS..." : "Lấy vị trí GPS hiện tại"}
+                </Text>
+              </TouchableOpacity>
+
+              {Boolean(userLocation?.address) && (
+                <TouchableOpacity
+                  style={styles.useGpsAddrBtn}
+                  onPress={handleUseGpsAddress}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="checkmark-circle-outline" size={15} color={Colors.secondaryGold} />
+                  <Text style={styles.useGpsAddrBtnText}>Điền vào địa chỉ</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -638,9 +825,16 @@ export default function CheckoutScreen() {
               </Text>
             </View>
             <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Phí giao hàng tiêu chuẩn:</Text>
+              <View style={styles.breakdownLabelWithTag}>
+                <Text style={styles.breakdownLabel}>Phí giao hàng:</Text>
+                {distanceKm != null && (
+                  <View style={styles.distanceTag}>
+                    <Text style={styles.distanceTagText}>{distanceKm} km</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.breakdownValue}>
-                {formatCurrency(DELIVERY_FEE, currency)}
+                {formatCurrency(deliveryFee, currency)}
               </Text>
             </View>
 
@@ -711,18 +905,20 @@ export default function CheckoutScreen() {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              (isSubmitting || items.length === 0) &&
+              (isSubmitting || items.length === 0 || isDeliverable === false) &&
                 styles.submitButtonDisabled,
             ]}
             onPress={handleConfirmOrder}
-            disabled={isSubmitting || items.length === 0}
+            disabled={isSubmitting || items.length === 0 || isDeliverable === false}
             activeOpacity={0.88}
           >
             {isSubmitting ? (
               <ActivityIndicator size="small" color={Colors.onPrimary} />
             ) : (
               <View style={styles.submitBtnContent}>
-                <Text style={styles.submitButtonText}>Xác nhận đặt hàng</Text>
+                <Text style={styles.submitButtonText}>
+                  {isDeliverable === false ? "Vượt bán kính (15km)" : "Xác nhận đặt hàng"}
+                </Text>
                 <Ionicons
                   name="arrow-forward"
                   size={18}
@@ -739,7 +935,7 @@ export default function CheckoutScreen() {
           visible={isVoucherModalOpen}
           onClose={() => setIsVoucherModalOpen(false)}
           orderAmount={subtotal}
-          deliveryFee={DELIVERY_FEE}
+          deliveryFee={deliveryFee}
           branchId={branchId}
           onApplyVoucher={(result) => setAppliedVoucher(result)}
           appliedCode={appliedVoucher?.voucherCode}
@@ -1252,5 +1448,186 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     color: "#166534",
+  },
+  branchStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  distanceBadgePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  distanceBadgeText: {
+    ...Typography.labelSm,
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
+  metricsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  metricItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  metricDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: Colors.borderSoft,
+  },
+  metricLabel: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    color: Colors.onSurfaceVariant,
+  },
+  metricValue: {
+    ...Typography.labelMd,
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.onSurface,
+  },
+  metricValueHighlight: {
+    ...Typography.labelMd,
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.primaryContainer,
+  },
+  outOfRangeBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.sm,
+    marginTop: Spacing.sm,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+  },
+  outOfRangeText: {
+    ...Typography.bodySm,
+    fontSize: 11,
+    color: "#991B1B",
+    flex: 1,
+    lineHeight: 16,
+  },
+  switchBranchSuggestion: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEF9C3",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    marginTop: Spacing.sm,
+    borderWidth: 1,
+    borderColor: "#FDE047",
+    gap: 8,
+  },
+  switchBranchIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#FEF08A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  switchBranchContent: {
+    flex: 1,
+  },
+  switchBranchTitle: {
+    ...Typography.labelSm,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#854D0E",
+  },
+  switchBranchSubtitle: {
+    ...Typography.bodySm,
+    fontSize: 10,
+    color: "#A16207",
+    marginTop: 1,
+  },
+  switchBranchBtnBadge: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  switchBranchBtnText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.onPrimary,
+  },
+  gpsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: Spacing.sm,
+    flexWrap: "wrap",
+  },
+  gpsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  gpsButtonText: {
+    ...Typography.labelSm,
+    fontSize: 11,
+    fontWeight: "600",
+    color: Colors.primary,
+  },
+  useGpsAddrBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.secondaryGold,
+  },
+  useGpsAddrBtnText: {
+    ...Typography.labelSm,
+    fontSize: 11,
+    fontWeight: "600",
+    color: Colors.secondaryGold,
+  },
+  distanceTag: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  distanceTagText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "600",
+    color: Colors.primary,
   },
 });

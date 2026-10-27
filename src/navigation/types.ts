@@ -63,6 +63,8 @@ export type RootStackParamList = {
     orderCode?: string;
     payment?: any;
     totalAmount?: number;
+    distanceKm?: number;
+    estimatedDeliveryMinutes?: number;
   };
   Orders:
     | {
