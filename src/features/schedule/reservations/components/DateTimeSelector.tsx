@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
   },
   dateChipSelected: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
+    backgroundColor: "#db2020ff",
+    borderColor: "#db2020ff",
   },
   dayOfWeekText: {
     fontSize: 12,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 9,
-    color: "#0284C7",
+    color: "#db2020ff",
     fontWeight: "600",
     marginTop: 4,
   },
@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
   },
   timeSlotSelected: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
+    backgroundColor: "#db2020ff",
+    borderColor: "#db2020ff",
   },
   timeSlotDisabled: {
     backgroundColor: "#F1F5F9",

@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
   totalPrice: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#007AFF",
+    color: "#c10a0aff",
   },
 });

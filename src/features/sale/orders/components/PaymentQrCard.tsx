@@ -136,9 +136,7 @@ export function PaymentQrCard({
             </Text>
             <TouchableOpacity
               style={styles.copyButton}
-              onPress={() =>
-                copyToClipboard(String(payment.amount), "amount")
-              }
+              onPress={() => copyToClipboard(String(payment.amount), "amount")}
               activeOpacity={0.7}
             >
               <Text style={styles.copyButtonText}>
@@ -179,7 +177,9 @@ export function PaymentQrCard({
           {isPolling ? (
             <View style={styles.checkingRow}>
               <ActivityIndicator size="small" color="#007AFF" />
-              <Text style={styles.checkButtonText}>Đang tự động kiểm tra...</Text>
+              <Text style={styles.checkButtonText}>
+                Đang tự động kiểm tra...
+              </Text>
             </View>
           ) : (
             <Text style={styles.checkButtonText}>
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   amountValue: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#007AFF",
+    color: "#e60e0eff",
   },
   contentValue: {
     fontSize: 14,

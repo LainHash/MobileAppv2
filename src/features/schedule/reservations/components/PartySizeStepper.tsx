@@ -61,10 +61,7 @@ export function PartySizeStepper({
           return (
             <TouchableOpacity
               key={`quick-${size}`}
-              style={[
-                styles.quickChip,
-                isSelected && styles.quickChipSelected,
-              ]}
+              style={[styles.quickChip, isSelected && styles.quickChipSelected]}
               onPress={() => onChange(size)}
               activeOpacity={0.8}
             >
@@ -102,7 +99,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#db2020ff",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -149,7 +146,7 @@ const styles = StyleSheet.create({
   },
   quickChipSelected: {
     backgroundColor: "#EFF6FF",
-    borderColor: "#3B82F6",
+    borderColor: "#db2020ff",
   },
   quickChipText: {
     fontSize: 13,
@@ -157,7 +154,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   quickChipTextSelected: {
-    color: "#2563EB",
+    color: "#db2020ff",
     fontWeight: "700",
   },
 });
