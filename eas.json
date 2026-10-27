@@ -9,7 +9,16 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-restaurantservice.duckdns.org",
+        "EXPO_PUBLIC_BUSINESS_NAME": "Haute De Hallen",
+        "EXPO_PUBLIC_NAME_DISPLAY_ORDER": "family-given",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "393444425874-u18as7b2pr6sp9j97qafkasgtbb3b0if.apps.googleusercontent.com"
+      }
     },
     "production": {
       "autoIncrement": true
