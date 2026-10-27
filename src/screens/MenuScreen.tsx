@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -137,29 +138,12 @@ export default function MenuScreen() {
   }, [products, searchQuery, activeSort]);
 
   const handleAddToCart = async (product: Product) => {
-    await addItem(product.id, selectedBranchId);
+    await addItem(product.id, selectedBranchId, product);
   };
 
-  return (
-    <View style={styles.screenWrapper}>
-      {/* Top App Bar */}
-      <HauteTopBar
-        title="Haute De Hallen"
-        subtitle="FINE ASIAN DINING"
-        cartCount={cartTotalQty}
-        onCartPress={() =>
-          navigation.navigate("Cart", { branchId: selectedBranchId })
-        }
-      />
-
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + (cartTotalQty > 0 ? 150 : 90) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+  const renderHeader = useCallback(
+    () => (
+      <View>
         {/* Search Bar & Tune Filter */}
         <View style={styles.searchSection}>
           <View style={styles.searchInputWrap}>
@@ -183,7 +167,11 @@ export default function MenuScreen() {
                 onPress={() => setSearchQuery("")}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="close-circle" size={16} color={Colors.outline} />
+                <Ionicons
+                  name="close-circle"
+                  size={16}
+                  color={Colors.outline}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -302,25 +290,65 @@ export default function MenuScreen() {
           </View>
         )}
 
-        {/* Products List */}
-        {isProductsLoading ? (
+        {/* Loading Indicator */}
+        {isProductsLoading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primaryContainer} />
+            <ActivityIndicator
+              size="large"
+              color={Colors.primaryContainer}
+            />
             <Text style={styles.loadingText}>Đang tải món ăn...</Text>
           </View>
-        ) : filteredProducts.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="restaurant-outline" size={48} color={Colors.outline} />
-            <Text style={styles.emptyTitle}>Chưa tìm thấy món ăn phù hợp</Text>
-            <Text style={styles.emptySubtitle}>
-              Quý khách vui lòng thử tìm kiếm với từ khóa hoặc danh mục khác.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.productsList}>
-            {filteredProducts.map((product) => (
+        )}
+      </View>
+    ),
+    [
+      searchQuery,
+      activeSort,
+      selectedCategoryId,
+      categories,
+      filteredProducts.length,
+      productsError,
+      isProductsLoading,
+      refreshProducts,
+    ],
+  );
+
+  const renderEmpty = useCallback(() => {
+    if (isProductsLoading) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons
+          name="restaurant-outline"
+          size={48}
+          color={Colors.outline}
+        />
+        <Text style={styles.emptyTitle}>Chưa tìm thấy món ăn phù hợp</Text>
+        <Text style={styles.emptySubtitle}>
+          Quý khách vui lòng thử tìm kiếm với từ khóa hoặc danh mục khác.
+        </Text>
+      </View>
+    );
+  }, [isProductsLoading]);
+
+  return (
+    <View style={styles.screenWrapper}>
+      {/* Top App Bar */}
+      <HauteTopBar
+        title="Haute De Hallen"
+        subtitle="FINE ASIAN DINING"
+        cartCount={cartTotalQty}
+        onCartPress={() =>
+          navigation.navigate("Cart", { branchId: selectedBranchId })
+        }
+      />
+
+      <View style={styles.scrollContainer}>
+        <FlashList
+          data={isProductsLoading ? [] : filteredProducts}
+          renderItem={({ item: product }) => (
+            <View style={styles.productCardWrapper}>
               <ProductCard
-                key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
                 isWishlisted={isInWishlist(product.id)}
@@ -333,10 +361,18 @@ export default function MenuScreen() {
                   })
                 }
               />
-            ))}
-          </View>
-        )}
-      </ScrollView>
+            </View>
+          )}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmpty}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + (cartTotalQty > 0 ? 150 : 90),
+            paddingTop: Spacing.sm,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
 
       {/* Sticky Floating Cart Summary (Hovering above BottomNavBar) */}
       {cartTotalQty > 0 && (
@@ -514,6 +550,10 @@ const styles = StyleSheet.create({
   // Products
   productsList: {
     paddingHorizontal: Spacing.lg,
+  },
+  productCardWrapper: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   loadingContainer: {
     paddingVertical: 40,

@@ -8,7 +8,6 @@ import { RootStackParamList } from "@/navigation/types";
 import { PersonalInfoCard, SwitchAccountModal, useAuth } from "@/features/auth";
 import {
   useBranches,
-  Branch,
   BranchDropdown,
   getSelectedBranchId,
   saveSelectedBranchId,

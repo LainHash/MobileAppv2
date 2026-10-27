@@ -53,6 +53,7 @@ export function ProductCard({
             source={{ uri: imageUrl! }}
             style={styles.image}
             contentFit="cover"
+            cachePolicy="memory-disk"
             transition={200}
             onError={() => setImageError(true)}
             accessibilityLabel={

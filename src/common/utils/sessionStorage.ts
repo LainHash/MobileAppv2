@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { fastStorage } from "./fastStorage";
 
 export const SESSION_STORAGE_KEY = "@session_id";
 export const LEGACY_CART_SESSION_KEY = "@cart_session_id";
@@ -26,19 +26,19 @@ export function generateUUID(): string {
 }
 
 /**
- * Gets the current session id from AsyncStorage.
+ * Gets the current session id from fastStorage.
  * Falls back to legacy cart session id if available and migrates it.
  */
 export async function getSessionId(): Promise<string | null> {
   try {
-    const sessionId = await AsyncStorage.getItem(SESSION_STORAGE_KEY);
+    const sessionId = await fastStorage.getItem(SESSION_STORAGE_KEY);
     if (sessionId) {
       return sessionId;
     }
     // Backward compatibility: migrate from legacy cart session key if exists
-    const legacySessionId = await AsyncStorage.getItem(LEGACY_CART_SESSION_KEY);
+    const legacySessionId = await fastStorage.getItem(LEGACY_CART_SESSION_KEY);
     if (legacySessionId) {
-      await AsyncStorage.setItem(SESSION_STORAGE_KEY, legacySessionId);
+      await fastStorage.setItem(SESSION_STORAGE_KEY, legacySessionId);
       return legacySessionId;
     }
     return null;
@@ -49,15 +49,15 @@ export async function getSessionId(): Promise<string | null> {
 }
 
 /**
- * Saves or removes the session id in AsyncStorage.
+ * Saves or removes the session id in fastStorage.
  */
 export async function saveSessionId(sessionId: string | null): Promise<void> {
   try {
     if (sessionId) {
-      await AsyncStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+      await fastStorage.setItem(SESSION_STORAGE_KEY, sessionId);
     } else {
-      await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
-      await AsyncStorage.removeItem(LEGACY_CART_SESSION_KEY);
+      await fastStorage.removeItem(SESSION_STORAGE_KEY);
+      await fastStorage.removeItem(LEGACY_CART_SESSION_KEY);
     }
   } catch (error) {
     console.error("Failed to save session id to storage", error);
@@ -65,12 +65,12 @@ export async function saveSessionId(sessionId: string | null): Promise<void> {
 }
 
 /**
- * Clears the session id from AsyncStorage.
+ * Clears the session id from fastStorage.
  */
 export async function clearSessionId(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
-    await AsyncStorage.removeItem(LEGACY_CART_SESSION_KEY);
+    await fastStorage.removeItem(SESSION_STORAGE_KEY);
+    await fastStorage.removeItem(LEGACY_CART_SESSION_KEY);
   } catch (error) {
     console.error("Failed to clear session id from storage", error);
   }
