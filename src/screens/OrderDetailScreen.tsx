@@ -499,11 +499,26 @@ export default function OrderDetailScreen() {
               </Text>
             </View>
 
-            {order.discountAmount > 0 && (
+            {((order.discountAmount ?? 0) > 0 ||
+              (order.voucherDiscountAmount ?? 0) > 0) && (
               <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Ưu đãi đặc quyền:</Text>
+                <View style={styles.voucherLabelRow}>
+                  <Text style={styles.priceLabel}>Ưu đãi giảm giá:</Text>
+                  {Boolean(order.voucherCode) && (
+                    <View style={styles.voucherCodeBadge}>
+                      <Text style={styles.voucherCodeBadgeText}>
+                        {order.voucherCode}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={[styles.priceValue, styles.discountText]}>
-                  -{formatCurrency(order.discountAmount)}
+                  -
+                  {formatCurrency(
+                    order.discountAmount ||
+                      order.voucherDiscountAmount ||
+                      0,
+                  )}
                 </Text>
               </View>
             )}
@@ -927,6 +942,25 @@ const styles = StyleSheet.create({
   discountText: {
     color: Colors.error,
     fontWeight: "700",
+  },
+  voucherLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  voucherCodeBadge: {
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+  },
+  voucherCodeBadgeText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#166534",
   },
   divider: {
     height: StyleSheet.hairlineWidth,

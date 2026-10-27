@@ -55,6 +55,7 @@ export interface CreateDeliveryOrderRequest {
   deliveryAddress: string;
   note?: string;
   deliveryFee?: number;
+  voucherCode?: string;
   items?: CreateOrderItemRequest[];
 }
 
@@ -122,6 +123,8 @@ export interface OrderResponse {
   type: OrderType | OrderTypeString | number;
   subtotal: number;
   discountAmount: number;
+  voucherCode?: string;
+  voucherDiscountAmount?: number;
   taxAmount: number;
   deliveryFee: number;
   totalAmount: number;

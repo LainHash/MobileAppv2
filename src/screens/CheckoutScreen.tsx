@@ -26,7 +26,12 @@ import {
 } from "@/features/territory/branches";
 import { formatCurrency, getProductImageUrl } from "@/common/helpers";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
+import {
+  VoucherSelectorModal,
+  ValidateVoucherResultResponse,
+} from "@/features/promotion";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
+
 
 type CheckoutRouteProp = RouteProp<RootStackParamList, "Checkout">;
 type CheckoutNavProp = NativeStackNavigationProp<
@@ -79,6 +84,11 @@ export default function CheckoutScreen() {
   );
   const [showItemDetails, setShowItemDetails] = useState(true);
 
+  // Voucher / Promotion state
+  const [appliedVoucher, setAppliedVoucher] =
+    useState<ValidateVoucherResultResponse | null>(null);
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+
   // Auto-populate from user profile if available
   useEffect(() => {
     if (user) {
@@ -112,10 +122,29 @@ export default function CheckoutScreen() {
     return { subtotal: price, currency: cur };
   }, [items]);
 
+  const discountAmount = appliedVoucher?.discountAmount || 0;
+
   const grandTotal = Math.max(
     0,
-    subtotal + (items.length > 0 ? DELIVERY_FEE : 0),
+    subtotal + (items.length > 0 ? DELIVERY_FEE : 0) - discountAmount,
   );
+
+  // Auto-remove voucher if cart subtotal drops below voucher's minOrderAmount
+  useEffect(() => {
+    if (
+      appliedVoucher &&
+      appliedVoucher.minOrderAmount &&
+      subtotal < appliedVoucher.minOrderAmount
+    ) {
+      const code = appliedVoucher.voucherCode;
+      const minAmount = appliedVoucher.minOrderAmount;
+      setAppliedVoucher(null);
+      Alert.alert(
+        "Mã ưu đãi không khả dụng",
+        `Đơn hàng cần đạt tối thiểu ${formatCurrency(minAmount)} để áp dụng mã ${code}. Mã đã được gỡ bỏ.`,
+      );
+    }
+  }, [subtotal, appliedVoucher]);
 
   const handleConfirmOrder = async () => {
     if (items.length === 0) {
@@ -181,6 +210,7 @@ export default function CheckoutScreen() {
       deliveryAddress: address.trim(),
       note: fullNote,
       deliveryFee: DELIVERY_FEE,
+      voucherCode: appliedVoucher?.voucherCode || undefined,
       items: orderItems,
     });
 
@@ -487,6 +517,105 @@ export default function CheckoutScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Voucher / Promotion Card */}
+          <View style={styles.card}>
+            <View style={styles.cardTitleRowBetween}>
+              <View style={styles.cardTitleRowNoMargin}>
+                <View style={styles.iconCircle}>
+                  <Ionicons
+                    name="pricetag-outline"
+                    size={20}
+                    color={Colors.primary}
+                  />
+                </View>
+                <Text style={styles.cardTitle}>Mã ưu đãi & Voucher</Text>
+              </View>
+              {appliedVoucher && (
+                <TouchableOpacity
+                  onPress={() => setAppliedVoucher(null)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={styles.removeVoucherText}>Gỡ bỏ</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {appliedVoucher ? (
+              <TouchableOpacity
+                style={styles.appliedVoucherBox}
+                onPress={() => setIsVoucherModalOpen(true)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.appliedVoucherLeft}>
+                  <View style={styles.appliedVoucherIconBox}>
+                    <Ionicons
+                      name="ticket"
+                      size={24}
+                      color={Colors.primary}
+                    />
+                  </View>
+                  <View style={styles.appliedVoucherDetails}>
+                    <View style={styles.appliedVoucherHeaderRow}>
+                      <Text style={styles.appliedVoucherCode}>
+                        {appliedVoucher.voucherCode}
+                      </Text>
+                      <View style={styles.appliedBadge}>
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={12}
+                          color="#166534"
+                        />
+                        <Text style={styles.appliedBadgeText}>Đã áp dụng</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.appliedVoucherDiscount}>
+                      Giảm -{formatCurrency(appliedVoucher.discountAmount, currency)}
+                    </Text>
+                    {Boolean(appliedVoucher.voucherName) && (
+                      <Text
+                        style={styles.appliedVoucherTitle}
+                        numberOfLines={1}
+                      >
+                        {appliedVoucher.voucherName}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.changeVoucherBtn}>
+                  <Text style={styles.changeVoucherText}>Đổi</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={14}
+                    color={Colors.secondaryGold}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.selectVoucherRow}
+                onPress={() => setIsVoucherModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.selectVoucherPlaceholderWrap}>
+                  <Text style={styles.selectVoucherPlaceholder}>
+                    Chọn hoặc nhập mã ưu đãi
+                  </Text>
+                  <Text style={styles.selectVoucherSub}>
+                    Áp dụng mã giảm giá trực tiếp vào đơn hàng
+                  </Text>
+                </View>
+                <View style={styles.selectVoucherAction}>
+                  <Text style={styles.selectVoucherActionText}>Chọn mã</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={Colors.secondaryGold}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+
           {/* Price Breakdown */}
           <View style={styles.card}>
             <View style={styles.cardTitleRow}>
@@ -514,6 +643,27 @@ export default function CheckoutScreen() {
                 {formatCurrency(DELIVERY_FEE, currency)}
               </Text>
             </View>
+
+            {discountAmount > 0 && (
+              <View style={styles.breakdownRow}>
+                <View style={styles.breakdownLabelWithTag}>
+                  <Text style={[styles.breakdownLabel, styles.discountLabel]}>
+                    Ưu đãi giảm giá:
+                  </Text>
+                  {Boolean(appliedVoucher?.voucherCode) && (
+                    <View style={styles.voucherTag}>
+                      <Text style={styles.voucherTagText}>
+                        {appliedVoucher?.voucherCode}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.discountValue}>
+                  -{formatCurrency(discountAmount, currency)}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.divider} />
             <View style={styles.breakdownRow}>
               <Text style={styles.totalLabel}>Tổng thanh toán:</Text>
@@ -544,7 +694,16 @@ export default function CheckoutScreen() {
           ]}
         >
           <View style={styles.footerPriceInfo}>
-            <Text style={styles.footerTotalLabel}>Tổng thanh toán</Text>
+            <View style={styles.footerLabelRow}>
+              <Text style={styles.footerTotalLabel}>Tổng thanh toán</Text>
+              {discountAmount > 0 && (
+                <View style={styles.savingsBadge}>
+                  <Text style={styles.savingsBadgeText}>
+                    Tiết kiệm {formatCurrency(discountAmount, currency)}
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.footerTotalPrice}>
               {formatCurrency(grandTotal, currency)}
             </Text>
@@ -574,6 +733,17 @@ export default function CheckoutScreen() {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Voucher Selector Modal */}
+        <VoucherSelectorModal
+          visible={isVoucherModalOpen}
+          onClose={() => setIsVoucherModalOpen(false)}
+          orderAmount={subtotal}
+          deliveryFee={DELIVERY_FEE}
+          branchId={branchId}
+          onApplyVoucher={(result) => setAppliedVoucher(result)}
+          appliedCode={appliedVoucher?.voucherCode}
+        />
       </KeyboardAvoidingView>
     </View>
   );
@@ -913,5 +1083,174 @@ const styles = StyleSheet.create({
   },
   submitBtnIcon: {
     marginLeft: 6,
+  },
+  removeVoucherText: {
+    ...Typography.labelSm,
+    color: Colors.error,
+    fontWeight: "600",
+  },
+  appliedVoucherBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1.5,
+    borderColor: "#86EFAC",
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  appliedVoucherLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  appliedVoucherIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#DCFCE7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  appliedVoucherDetails: {
+    flex: 1,
+  },
+  appliedVoucherHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  appliedVoucherCode: {
+    ...Typography.labelLg,
+    fontWeight: "800",
+    color: "#166534",
+    letterSpacing: 0.5,
+  },
+  appliedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  appliedBadgeText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#166534",
+  },
+  appliedVoucherDiscount: {
+    ...Typography.labelMd,
+    fontWeight: "700",
+    color: Colors.primaryContainer,
+    marginTop: 2,
+  },
+  appliedVoucherTitle: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  changeVoucherBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: Spacing.sm,
+    gap: 2,
+  },
+  changeVoucherText: {
+    ...Typography.labelMd,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
+  },
+  selectVoucherRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: Colors.secondaryGold,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  selectVoucherPlaceholderWrap: {
+    flex: 1,
+  },
+  selectVoucherPlaceholder: {
+    ...Typography.bodyMd,
+    fontWeight: "600",
+    color: Colors.onSurface,
+  },
+  selectVoucherSub: {
+    ...Typography.bodySm,
+    fontSize: 11,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  selectVoucherAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceContainerLowest,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  selectVoucherActionText: {
+    ...Typography.labelSm,
+    color: Colors.secondaryGold,
+    fontWeight: "700",
+  },
+  breakdownLabelWithTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  discountLabel: {
+    color: Colors.primaryContainer,
+    fontWeight: "600",
+  },
+  voucherTag: {
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+  },
+  voucherTagText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#166534",
+  },
+  discountValue: {
+    ...Typography.bodyMd,
+    fontWeight: "700",
+    color: Colors.primaryContainer,
+  },
+  footerLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  savingsBadge: {
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: Radius.full,
+  },
+  savingsBadgeText: {
+    ...Typography.labelSm,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#166534",
   },
 });
