@@ -94,6 +94,7 @@ export default function OrderDetailScreen() {
     isConfirmingDelivery,
     isReporting,
     error,
+    isRealtimeConnected,
     refresh,
     cancel,
     confirmDelivery,
@@ -264,8 +265,16 @@ export default function OrderDetailScreen() {
           {/* Order Header Card */}
           <View style={styles.card}>
             <View style={styles.headerRow}>
-              <View>
-                <Text style={styles.orderCode}>#{orderCode}</Text>
+              <View style={{ flex: 1, marginRight: Spacing.sm }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <Text style={styles.orderCode}>#{orderCode}</Text>
+                  {isRealtimeConnected && (
+                    <View style={styles.liveBadge}>
+                      <View style={styles.liveDot} />
+                      <Text style={styles.liveText}>Live Bếp</Text>
+                    </View>
+                  )}
+                </View>
                 {Boolean(order.createdAt) && (
                   <View style={styles.dateRow}>
                     <Ionicons
@@ -1192,5 +1201,25 @@ const styles = StyleSheet.create({
     ...Typography.labelMedium,
     color: Colors.onPrimary,
     fontWeight: "700",
+  },
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: Radius.full,
+    gap: 4,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#16A34A",
+  },
+  liveText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#166534",
   },
 });

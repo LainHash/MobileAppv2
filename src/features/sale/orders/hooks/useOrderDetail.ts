@@ -6,6 +6,12 @@ import {
   confirmDeliveryReceived as apiConfirmDeliveryReceived,
   reportOrder as apiReportOrder,
 } from "../api/ordersApi";
+import { useOrderRealtime } from "./useOrderRealtime";
+import {
+  OrderPreparationRealtimeEvent,
+  BatchPreparationRealtimeEvent,
+  OrderSyncedRealtimeEvent,
+} from "../api/kitchenHub.service";
 
 export interface UseOrderDetailOptions {
   orderId?: string | null;
@@ -23,6 +29,70 @@ export function useOrderDetail({
   const [isConfirmingDelivery, setIsConfirmingDelivery] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleItemStatusChanged = useCallback(
+    (event: OrderPreparationRealtimeEvent) => {
+      setOrder((prev) => {
+        if (!prev) return prev;
+        const updateList = (list?: any[]) =>
+          list?.map((item) =>
+            item.id === event.orderItemId
+              ? { ...item, preparationStatus: event.newStatus }
+              : item,
+          );
+
+        return {
+          ...prev,
+          orderDetails: updateList(prev.orderDetails),
+          orderItems: updateList(prev.orderItems),
+        };
+      });
+    },
+    [],
+  );
+
+  const handleBatchStatusChanged = useCallback(
+    (event: BatchPreparationRealtimeEvent) => {
+      setOrder((prev) => {
+        if (!prev) return prev;
+        const itemIdsSet = new Set(event.itemIds);
+        const updateList = (list?: any[]) =>
+          list?.map((item) =>
+            itemIdsSet.has(item.id)
+              ? { ...item, preparationStatus: event.status }
+              : item,
+          );
+
+        return {
+          ...prev,
+          orderDetails: updateList(prev.orderDetails),
+          orderItems: updateList(prev.orderItems),
+        };
+      });
+    },
+    [],
+  );
+
+  const handleOrderSynced = useCallback(
+    (event: OrderSyncedRealtimeEvent) => {
+      setOrder((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          status: event.status,
+        };
+      });
+    },
+    [],
+  );
+
+  const { isConnected } = useOrderRealtime({
+    orderId,
+    enabled: Boolean(enabled && orderId),
+    onItemStatusChanged: handleItemStatusChanged,
+    onBatchStatusChanged: handleBatchStatusChanged,
+    onOrderSynced: handleOrderSynced,
+  });
 
   const loadData = useCallback(
     async (isPullRefresh = false) => {
@@ -156,6 +226,7 @@ export function useOrderDetail({
     isConfirmingDelivery,
     isReporting,
     error,
+    isRealtimeConnected: isConnected,
     refresh,
     cancel,
     confirmDelivery,

@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
 import {
   useOrders,
+  useOrderRealtime,
   OrderStatusBadge,
   OrderStatus,
   OrderResponse,
@@ -46,6 +47,13 @@ export default function OrdersScreen() {
   const { orders, isLoading, isRefreshing, error, refresh } = useOrders({
     status: selectedStatus,
     enabled: isAuthenticated,
+  });
+
+  useOrderRealtime({
+    enabled: isAuthenticated,
+    onOrderSynced: () => refresh(),
+    onItemStatusChanged: () => refresh(),
+    onNewOrder: () => refresh(),
   });
 
   const renderOrderItem = ({ item }: { item: OrderResponse }) => {
