@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -32,6 +32,15 @@ type MenuScreenNavigationProp = NativeStackNavigationProp<
   "Menu"
 >;
 
+// Product filter types from backend (Mặc định | Đề xuất | Xu hướng)
+const PRODUCT_TYPE_OPTIONS = [
+  { id: "default", label: "Mặc định", icon: "restaurant-outline" },
+  { id: "recommended", label: "Đề xuất", icon: "sparkles" },
+  { id: "trending", label: "Xu hướng", icon: "flame" },
+] as const;
+
+type ProductTypeOption = (typeof PRODUCT_TYPE_OPTIONS)[number]["id"];
+
 // Dynamic sort options for API products
 const SORT_OPTIONS = [
   { id: "default", label: "Mặc định", icon: "swap-vertical" },
@@ -53,6 +62,8 @@ export default function MenuScreen() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSort, setActiveSort] = useState("default");
+  const [productType, setProductType] = useState<ProductTypeOption>("default");
+  const flashListRef = useRef<any>(null);
 
   // Sync state when route params change
   useEffect(() => {
@@ -81,16 +92,33 @@ export default function MenuScreen() {
 
   const { categories } = useCategories();
 
-  // Fetch products from backend
+  // Fetch products from backend with pagination & type filter
   const {
     products,
     isLoading: isProductsLoading,
     error: productsError,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
     refresh: refreshProducts,
   } = useProducts({
     categoryId: selectedCategoryId,
     branchId: selectedBranchId,
+    type: productType === "default" ? undefined : productType,
+    page: 1,
+    pageSize: 12,
   });
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
+        setPage(newPage);
+        flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }
+    },
+    [page, totalPages, setPage],
+  );
 
   // Cart integration
   const { cart, addItem } = useCart(selectedBranchId);
@@ -175,6 +203,41 @@ export default function MenuScreen() {
               </TouchableOpacity>
             )}
           </View>
+        </View>
+
+        {/* Lựa chọn loại món: Mặc định | Đề xuất | Xu hướng */}
+        <View style={styles.productTypeContainer}>
+          {PRODUCT_TYPE_OPTIONS.map((opt) => {
+            const isSelected = productType === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[
+                  styles.productTypeTab,
+                  isSelected && styles.productTypeTabActive,
+                ]}
+                onPress={() => {
+                  setProductType(opt.id);
+                  setPage(1);
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={opt.icon as any}
+                  size={15}
+                  color={isSelected ? "#FFFFFF" : Colors.onSurfaceVariant}
+                />
+                <Text
+                  style={[
+                    styles.productTypeTabText,
+                    isSelected && styles.productTypeTabTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Dynamic Sort Options */}
@@ -272,7 +335,7 @@ export default function MenuScreen() {
           </View>
           <View style={styles.itemCountBadge}>
             <Text style={styles.itemCountText}>
-              {filteredProducts.length} Món
+              {totalItems > 0 ? `${totalItems} Món` : `${filteredProducts.length} Món`}
             </Text>
           </View>
         </View>
@@ -304,15 +367,134 @@ export default function MenuScreen() {
     ),
     [
       searchQuery,
+      productType,
       activeSort,
       selectedCategoryId,
       categories,
       filteredProducts.length,
+      totalItems,
       productsError,
       isProductsLoading,
       refreshProducts,
+      setPage,
     ],
   );
+
+  const renderPagination = useCallback(() => {
+    if (isProductsLoading || filteredProducts.length === 0) return null;
+
+    return (
+      <View style={styles.paginationWrapper}>
+        <View style={styles.paginationInfo}>
+          <Text style={styles.paginationInfoText}>
+            Hiển thị {(page - 1) * 12 + 1} - {Math.min(page * 12, totalItems || filteredProducts.length)} trên tổng {totalItems || filteredProducts.length} món
+          </Text>
+        </View>
+
+        <View style={styles.paginationControls}>
+          {/* Previous Button */}
+          <TouchableOpacity
+            style={[
+              styles.pageNavBtn,
+              page <= 1 && styles.pageNavBtnDisabled,
+            ]}
+            disabled={page <= 1}
+            onPress={() => handlePageChange(page - 1)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={18}
+              color={page <= 1 ? Colors.outlineVariant : Colors.onSurface}
+            />
+            <Text
+              style={[
+                styles.pageNavBtnText,
+                page <= 1 && styles.pageNavBtnTextDisabled,
+              ]}
+            >
+              Trước
+            </Text>
+          </TouchableOpacity>
+
+          {/* Page Number Chips */}
+          <View style={styles.pageNumbersRow}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .reduce<number[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) {
+                  acc.push(-1); // ellipsis marker
+                }
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) => {
+                if (p === -1) {
+                  return (
+                    <Text key={`ellipsis-${idx}`} style={styles.pageEllipsis}>
+                      …
+                    </Text>
+                  );
+                }
+                const isActive = p === page;
+                return (
+                  <TouchableOpacity
+                    key={`page-${p}`}
+                    style={[
+                      styles.pageNumberBtn,
+                      isActive && styles.pageNumberBtnActive,
+                    ]}
+                    onPress={() => handlePageChange(p)}
+                    activeOpacity={0.75}
+                  >
+                    <Text
+                      style={[
+                        styles.pageNumberText,
+                        isActive && styles.pageNumberTextActive,
+                      ]}
+                    >
+                      {p}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+          </View>
+
+          {/* Next Button */}
+          <TouchableOpacity
+            style={[
+              styles.pageNavBtn,
+              page >= totalPages && styles.pageNavBtnDisabled,
+            ]}
+            disabled={page >= totalPages}
+            onPress={() => handlePageChange(page + 1)}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.pageNavBtnText,
+                page >= totalPages && styles.pageNavBtnTextDisabled,
+              ]}
+            >
+              Sau
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={page >= totalPages ? Colors.outlineVariant : Colors.onSurface}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }, [
+    isProductsLoading,
+    filteredProducts.length,
+    page,
+    totalPages,
+    totalItems,
+    handlePageChange,
+  ]);
 
   const renderEmpty = useCallback(() => {
     if (isProductsLoading) return null;
@@ -345,6 +527,7 @@ export default function MenuScreen() {
 
       <View style={styles.scrollContainer}>
         <FlashList
+          ref={flashListRef}
           data={isProductsLoading ? [] : filteredProducts}
           renderItem={({ item: product }) => (
             <View style={styles.productCardWrapper}>
@@ -366,6 +549,7 @@ export default function MenuScreen() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={renderHeader}
           ListEmptyComponent={renderEmpty}
+          ListFooterComponent={renderPagination}
           contentContainerStyle={{
             paddingBottom: insets.bottom + (cartTotalQty > 0 ? 150 : 90),
             paddingTop: Spacing.sm,
@@ -458,6 +642,43 @@ const styles = StyleSheet.create({
     ...Typography.bodyMd,
     color: Colors.onSurface,
     height: "100%",
+  },
+
+  // Product Type Segmented Control (Mặc định | Đề xuất | Xu hướng)
+  productTypeContainer: {
+    flexDirection: "row",
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
+    padding: 3,
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  productTypeTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: Radius.full,
+  },
+  productTypeTabActive: {
+    backgroundColor: Colors.primaryContainer,
+    ...Shadows.subtle,
+  },
+  productTypeTabText: {
+    ...Typography.labelMd,
+    fontSize: 13,
+    fontWeight: "500",
+    color: Colors.onSurfaceVariant,
+  },
+  productTypeTabTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
 
   // Quick Filter Reel
@@ -609,6 +830,86 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "600",
+  },
+
+  // Pagination Controls
+  paginationWrapper: {
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    alignItems: "center",
+  },
+  paginationInfo: {
+    marginBottom: Spacing.sm,
+  },
+  paginationInfoText: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+  },
+  paginationControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+  },
+  pageNavBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  pageNavBtnDisabled: {
+    opacity: 0.4,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  pageNavBtnText: {
+    ...Typography.labelSm,
+    color: Colors.onSurface,
+    fontWeight: "600",
+  },
+  pageNavBtnTextDisabled: {
+    color: Colors.outlineVariant,
+  },
+  pageNumbersRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginHorizontal: 4,
+  },
+  pageNumberBtn: {
+    minWidth: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: Colors.borderSoft,
+  },
+  pageNumberBtnActive: {
+    backgroundColor: Colors.primaryContainer,
+    borderColor: Colors.primaryContainer,
+  },
+  pageNumberText: {
+    ...Typography.labelSm,
+    fontWeight: "600",
+    color: Colors.onSurface,
+  },
+  pageNumberTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  pageEllipsis: {
+    paddingHorizontal: 4,
+    color: Colors.outline,
+    fontSize: 14,
+    fontWeight: "700",
   },
 
   // Sticky Floating Cart Bar

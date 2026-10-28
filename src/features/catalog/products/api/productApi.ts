@@ -7,6 +7,11 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 export interface ProductApiProps {
   categoryId?: string | null;
   branchId?: string | null;
+  page?: number;
+  pageSize?: number;
+  type?: "default" | "recommended" | "trending" | string | null;
+  filterType?: "Default" | "Recommended" | "Trending" | string | null;
+  keyword?: string | null;
 }
 
 function buildQuery(props?: ProductApiProps): string {
@@ -16,6 +21,21 @@ function buildQuery(props?: ProductApiProps): string {
   }
   if (props?.branchId) {
     params.append("branchId", props.branchId);
+  }
+  if (props?.page) {
+    params.append("page", props.page.toString());
+  }
+  if (props?.pageSize) {
+    params.append("pageSize", props.pageSize.toString());
+  }
+  if (props?.type && props.type !== "default") {
+    params.append("type", props.type);
+  }
+  if (props?.filterType && props.filterType !== "Default") {
+    params.append("filterType", props.filterType);
+  }
+  if (props?.keyword) {
+    params.append("keyword", props.keyword);
   }
   return params.toString();
 }
