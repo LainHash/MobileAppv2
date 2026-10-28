@@ -21,7 +21,7 @@ export interface UseGoogleAuthResult {
 }
 
 export function useGoogleAuth(
-  onSuccess?: (user?: User) => void,
+  onSuccess?: (user?: User, hasPersonalProfile?: boolean) => void,
   onError?: (error: string) => void,
 ): UseGoogleAuthResult {
   const { loginWithGoogle, isLoggingIn } = useAuth();
@@ -65,7 +65,7 @@ export function useGoogleAuth(
         setIsPrompting(false);
         if (res.success) {
           setAuthError(null);
-          onSuccess?.(res.user);
+          onSuccess?.(res.user, res.hasPersonalProfile);
         } else {
           const err = res.error || "Đăng nhập Google thất bại.";
           setAuthError(err);

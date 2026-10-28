@@ -45,10 +45,20 @@ export interface AuthContextType {
   savedAccounts: SavedAccount[];
   login: (
     data: LoginRequest,
-  ) => Promise<{ success: boolean; error?: string; user?: User }>;
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    hasPersonalProfile?: boolean;
+  }>;
   loginWithGoogle: (
     idToken: string,
-  ) => Promise<{ success: boolean; error?: string; user?: User }>;
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    user?: User;
+    hasPersonalProfile?: boolean;
+  }>;
   logout: () => Promise<void>;
   refreshTokens: () => Promise<string | null>;
   refreshMe: () => Promise<User | null>;
@@ -144,6 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const res = await getMeApi(storedToken);
           if (res?.data) {
+            // If user has not completed personal profile, treat as logged out per requirements
+            if (!res.data.personalProfile) {
+              await clearAuthStorage();
+              setToken(null);
+              setUser(null);
+              return;
+            }
             setUser(res.data);
             await saveCachedUser(res.data);
             await recordUserAccount(res.data);
@@ -191,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await loginApi(data);
         const authToken = res?.data?.token;
         const refreshToken = res?.data?.refreshToken;
+        const serverHasProfile = res?.data?.hasPersonalProfile;
 
         if (!authToken) {
           const errMsg =
@@ -209,13 +227,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(profileRes.data);
             await saveCachedUser(profileRes.data);
             await recordUserAccount(profileRes.data);
-            return { success: true, user: profileRes.data };
+            const userHasProfile =
+              serverHasProfile !== undefined
+                ? serverHasProfile
+                : Boolean(profileRes.data.personalProfile);
+            return {
+              success: true,
+              user: profileRes.data,
+              hasPersonalProfile: userHasProfile,
+            };
           }
         } catch (profileErr: any) {
           console.warn("Could not fetch user profile after login", profileErr);
         }
 
-        return { success: true };
+        return {
+          success: true,
+          hasPersonalProfile: serverHasProfile,
+        };
       } catch (err: any) {
         const errMsg =
           err?.response?.data?.message ||
@@ -239,6 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await googleLoginApi(idToken);
         const authToken = res?.data?.token;
         const refreshToken = res?.data?.refreshToken;
+        const serverHasProfile = res?.data?.hasPersonalProfile;
 
         if (!authToken) {
           const errMsg =
@@ -257,7 +287,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(profileRes.data);
             await saveCachedUser(profileRes.data);
             await recordUserAccount(profileRes.data);
-            return { success: true, user: profileRes.data };
+            const userHasProfile =
+              serverHasProfile !== undefined
+                ? serverHasProfile
+                : Boolean(profileRes.data.personalProfile);
+            return {
+              success: true,
+              user: profileRes.data,
+              hasPersonalProfile: userHasProfile,
+            };
           }
         } catch (profileErr: any) {
           console.warn(
@@ -266,7 +304,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
         }
 
-        return { success: true };
+        return {
+          success: true,
+          hasPersonalProfile: serverHasProfile,
+        };
       } catch (err: any) {
         const errMsg =
           err?.response?.data?.message ||

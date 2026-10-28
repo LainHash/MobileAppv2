@@ -10,7 +10,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/types";
-import { LoginForm } from "@/features/auth";
+import { LoginForm, User } from "@/features/auth";
 import { HauteTopBar } from "@/common/components/HauteTopBar";
 import { HauteBottomBar } from "@/common/components/HauteBottomBar";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
@@ -27,7 +27,26 @@ export default function LoginScreen() {
   const route = useRoute<LoginScreenRouteProp>();
   const insets = useSafeAreaInsets();
 
-  const handleSuccess = () => {
+  const handleSuccess = (user?: User, hasPersonalProfile?: boolean) => {
+    const hasProfile =
+      hasPersonalProfile !== undefined
+        ? hasPersonalProfile
+        : Boolean(user?.personalProfile);
+
+    if (!hasProfile) {
+      // Server check: Chưa có thông tin cá nhân -> Chuyển hướng tới nhập TTCN
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: "CompleteProfile",
+            params: { email: user?.email || route.params?.identifier },
+          },
+        ],
+      });
+      return;
+    }
+
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {

@@ -1,6 +1,7 @@
 export interface AuthResponse {
   token: string;
   refreshToken: string;
+  hasPersonalProfile?: boolean;
 }
 
 export interface LoginRequest {

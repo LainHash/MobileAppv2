@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors, Typography, Spacing, Radius, Shadows } from "@/theme";
 
 export interface LoginFormProps {
-  onSuccess?: (user?: User) => void;
+  onSuccess?: (user?: User, hasPersonalProfile?: boolean) => void;
   onError?: (errorMessage: string) => void;
   onForgotPasswordPress?: () => void;
   onRegisterPress?: () => void;
@@ -74,7 +74,11 @@ export function LoginForm({
     });
 
     if (res.success) {
-      onSuccess?.(res.user);
+      const hasProfile =
+        res.hasPersonalProfile !== undefined
+          ? res.hasPersonalProfile
+          : Boolean(res.user?.personalProfile);
+      onSuccess?.(res.user, hasProfile);
     } else {
       onError?.(res.error || "Đăng nhập không thành công");
     }

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { completeProfile as completeProfileApi } from "../api/authApi";
+import { useAuth } from "../hooks/useAuth";
 import {
   getPendingRegisterEmail,
   clearPendingRegisterEmail,
@@ -32,8 +33,10 @@ export function CompleteProfileForm({
   title = "Hoàn thành thông tin cá nhân",
   subtitle = "Bước 3/3: Cung cấp thông tin để hoàn tất tài khoản của bạn",
 }: CompleteProfileFormProps) {
-  const [email, setEmail] = useState<string>(initialEmail || "");
-  const [isEmailLoading, setIsEmailLoading] = useState(!initialEmail);
+  const { user } = useAuth();
+  const effectiveInitialEmail = initialEmail || user?.email || "";
+  const [email, setEmail] = useState<string>(effectiveInitialEmail);
+  const [isEmailLoading, setIsEmailLoading] = useState(!effectiveInitialEmail);
 
   const [lastName, setLastName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -54,13 +57,15 @@ export function CompleteProfileForm({
     let isMounted = true;
     const fetchEmail = async () => {
       try {
-        if (!initialEmail) {
+        const targetEmail = effectiveInitialEmail;
+        if (!targetEmail) {
           const storedEmail = await getPendingRegisterEmail();
           if (isMounted && storedEmail) {
             setEmail(storedEmail);
           }
         } else {
-          await savePendingRegisterEmail(initialEmail);
+          setEmail(targetEmail);
+          await savePendingRegisterEmail(targetEmail);
         }
       } catch (e) {
         console.error("Failed to load pending register email", e);

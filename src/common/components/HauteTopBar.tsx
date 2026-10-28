@@ -20,6 +20,7 @@ interface HauteTopBarProps {
   branchName?: string;
   onBranchPress?: () => void;
   showBack?: boolean;
+  onBackPress?: () => void;
   cartCount?: number;
   hasNotification?: boolean;
   onNotificationPress?: () => void;
@@ -32,6 +33,7 @@ export function HauteTopBar({
   branchName,
   onBranchPress,
   showBack = false,
+  onBackPress,
   cartCount = 0,
   hasNotification = false,
   onNotificationPress,
@@ -64,7 +66,7 @@ export function HauteTopBar({
         {showBack ? (
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => (onBackPress ? onBackPress() : navigation.goBack())}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
